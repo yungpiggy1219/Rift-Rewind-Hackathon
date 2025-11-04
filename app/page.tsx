@@ -1,65 +1,211 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { PlayerInsights } from "@/lib/types";
+import { TrendingUp, Trophy, Target, Users } from "lucide-react";
+import YearEndSummary from "@/components/YearEndSummary";
 
 export default function Home() {
+  const [insights, setInsights] = useState<PlayerInsights | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [summonerName, setSummonerName] = useState("");
+
+  const fetchInsights = async () => {
+    if (!summonerName.trim()) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/insights?playerId=${encodeURIComponent(summonerName)}`
+      );
+      const data = await response.json();
+      setInsights(data);
+    } catch (error) {
+      console.error("Error fetching insights:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold text-white mb-4">Rift Rewind</h1>
+          <p className="text-xl text-blue-200 mb-8">
+            AI-Powered League of Legends Insights
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+          {/* Search */}
+          <div className="max-w-md mx-auto flex gap-4">
+            <input
+              type="text"
+              placeholder="Enter your summoner name"
+              value={summonerName}
+              onChange={(e) => setSummonerName(e.target.value)}
+              className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onKeyPress={(e) => e.key === "Enter" && fetchInsights()}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <button
+              onClick={fetchInsights}
+              disabled={loading}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? "Loading..." : "Analyze"}
+            </button>
+          </div>
         </div>
-      </main>
+
+        {/* Results */}
+        {insights && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Stats Cards */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
+              <div className="flex items-center gap-3 mb-2">
+                <Trophy className="text-yellow-400" size={24} />
+                <h3 className="text-lg font-semibold">Win Rate</h3>
+              </div>
+              <p className="text-3xl font-bold">
+                {Math.round(insights.winRate * 100)}%
+              </p>
+              <p className="text-sm text-gray-300">
+                {insights.totalGames} games played
+              </p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
+              <div className="flex items-center gap-3 mb-2">
+                <TrendingUp className="text-green-400" size={24} />
+                <h3 className="text-lg font-semibold">Best Month</h3>
+              </div>
+              <p className="text-2xl font-bold">
+                {insights.yearEndSummary.bestMonth}
+              </p>
+              <p className="text-sm text-gray-300">Peak performance</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
+              <div className="flex items-center gap-3 mb-2">
+                <Target className="text-red-400" size={24} />
+                <h3 className="text-lg font-semibold">Main Role</h3>
+              </div>
+              <p className="text-2xl font-bold">
+                {insights.yearEndSummary.favoriteRole}
+              </p>
+              <p className="text-sm text-gray-300">Most played</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
+              <div className="flex items-center gap-3 mb-2">
+                <Users className="text-purple-400" size={24} />
+                <h3 className="text-lg font-semibold">Champions</h3>
+              </div>
+              <p className="text-2xl font-bold">
+                {insights.favoriteChampions.length}
+              </p>
+              <p className="text-sm text-gray-300">In rotation</p>
+            </div>
+          </div>
+        )}
+
+        {insights && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Favorite Champions */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+              <h2 className="text-2xl font-bold text-white mb-4">
+                Favorite Champions
+              </h2>
+              <div className="space-y-3">
+                {insights.favoriteChampions.map((champ, index) => (
+                  <div
+                    key={index}
+                    className="flex justify-between items-center bg-white/5 rounded-lg p-3"
+                  >
+                    <div>
+                      <p className="text-white font-semibold">
+                        {champ.championName}
+                      </p>
+                      <p className="text-gray-300 text-sm">
+                        {champ.gamesPlayed} games
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white font-bold">
+                        {Math.round(champ.winRate * 100)}%
+                      </p>
+                      <p className="text-gray-300 text-sm">
+                        {champ.avgKDA.toFixed(1)} KDA
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Insights */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+              <h2 className="text-2xl font-bold text-white mb-4">
+                Your Strengths
+              </h2>
+              <div className="space-y-2 mb-6">
+                {insights.strengths.map((strength, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-gray-200">{strength}</p>
+                  </div>
+                ))}
+              </div>
+
+              <h3 className="text-xl font-bold text-white mb-4">
+                Areas to Improve
+              </h3>
+              <div className="space-y-2">
+                {insights.improvementAreas.map((area, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-gray-200">{area}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Fun Facts */}
+        {insights && (
+          <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-lg p-6">
+            <h2 className="text-2xl font-bold text-white mb-4">🎉 Fun Facts</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {insights.yearEndSummary.funFacts.map((fact, index) => (
+                <div key={index} className="bg-white/5 rounded-lg p-4">
+                  <p className="text-gray-200">{fact}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Year-End Summary */}
+        {insights && (
+          <div className="mt-8">
+            <YearEndSummary playerId={summonerName} />
+          </div>
+        )}
+
+        {/* Demo Message */}
+        {!insights && !loading && (
+          <div className="text-center text-white/70 mt-12">
+            <p className="text-lg mb-4">
+              Enter any summoner name to see a demo with mock data!
+            </p>
+            <p className="text-sm">
+              This is a hackathon prototype - real League API integration coming
+              soon.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
