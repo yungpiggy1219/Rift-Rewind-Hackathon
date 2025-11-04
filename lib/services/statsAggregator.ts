@@ -80,8 +80,8 @@ export class StatsAggregator {
     const championStats: ChampionStats[] = Array.from(championMap.entries())
       .map(([championName, data]) => {
         const champKDA = data.deaths > 0 
-          ? (data.kills + data.assists) / data.deaths / data.games
-          : (data.kills + data.assists) / data.games;
+          ? (data.kills + data.assists) / data.deaths
+          : (data.kills + data.assists);
         
         return {
           championName,
