@@ -15,9 +15,9 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Fetch real data from Riot API
-    console.log(`🔍 Fetching data for ${gameName}#${tagLine}...`);
-    const matchData = await riotAPI.getRecentMatches(gameName, tagLine, 20);
+    // Fetch real data from Riot API - get ALL 2025 matches for year-end review
+    console.log(`🔍 Fetching 2025 year-end data for ${gameName}#${tagLine}...`);
+    const matchData = await riotAPI.get2025Matches(gameName, tagLine);
     
     if (matchData.length === 0) {
       return NextResponse.json({ 
@@ -27,13 +27,18 @@ export async function GET(request: NextRequest) {
 
     console.log(`📊 Analyzing ${matchData.length} matches...`);
 
+    // Get account info to include PUUID in response
+    const account = await riotAPI.getAccountByRiotId(gameName, tagLine);
+    
     // Analyze matches using MatchAnalyzer (static methods)
     const playerName = `${gameName}#${tagLine}`;
     const insights = MatchAnalyzer.analyzeMatches(matchData, playerName);
     
-    // Add additional metadata
+    // Add additional metadata including PUUID
     insights.dataSource = 'riot-api';
     insights.matchCount = matchData.length;
+    insights.puuid = account.puuid;
+    insights.region = account.regionDisplay;
 
     // Try to generate AI insights if AWS is configured
     if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {

@@ -1,26 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PlayerInsights } from "@/lib/types";
-import { TrendingUp, Trophy, Target, Users } from "lucide-react";
-import YearEndSummary from "@/components/YearEndSummary";
+import { Sparkles, Play } from "lucide-react";
+import YearEndSlideshow from "@/components/YearEndSlideshow";
+import RiotIdInput from "@/components/RiotIdInput";
+
+type AppState = 'entry' | 'loading' | 'menu' | 'slideshow';
 
 export default function Home() {
+  const [appState, setAppState] = useState<AppState>('entry');
   const [insights, setInsights] = useState<PlayerInsights | null>(null);
   const [loading, setLoading] = useState(false);
   const [gameName, setGameName] = useState("");
   const [tagLine, setTagLine] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (appState === 'slideshow') {
+        if (e.key === 'Escape') {
+          setAppState('menu');
+        }
+      }
+    };
 
-  const fetchInsights = async () => {
-    if (!gameName.trim() || !tagLine.trim()) return;
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [appState]);
 
+  const fetchInsights = useCallback(async (inputGameName: string, inputTagLine: string) => {
+    setGameName(inputGameName);
+    setTagLine(inputTagLine);
     setLoading(true);
     setError(null);
+    setAppState('loading');
+    
     try {
       const url = `/api/insights?gameName=${encodeURIComponent(
-        gameName
-      )}&tagLine=${encodeURIComponent(tagLine)}`;
+        inputGameName
+      )}&tagLine=${encodeURIComponent(inputTagLine)}`;
       const response = await fetch(url);
       const data = await response.json();
 
@@ -28,20 +47,8 @@ export default function Home() {
         throw new Error(data.error || "Failed to fetch insights");
       }
 
-      if (data.debug) {
-        // Debug mode - display raw data
-        console.log("Debug data:", data.debugInfo);
-        setError(
-          `DEBUG MODE: Found ${
-            data.debugInfo.matchCount
-          } matches. First match participants: ${data.debugInfo.allParticipantNames.join(
-            ", "
-          )}`
-        );
-        setInsights(null);
-      } else {
-        setInsights(data);
-      }
+      setInsights(data);
+      setAppState('menu');
     } catch (error: unknown) {
       console.error("Error fetching insights:", error);
       setError(
@@ -49,250 +56,152 @@ export default function Home() {
           ? error.message
           : "An error occurred while fetching insights"
       );
-      setInsights(null);
+      setAppState('entry');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  return (
+  // Entry Screen Component - Memoized to prevent re-renders
+  const EntryScreen = useCallback(() => (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center">
+      <div className="text-center max-w-2xl mx-auto px-4">
+        <div className="mb-8">
+          <Sparkles className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+          <h1 className="text-6xl font-bold text-white mb-4">
+            See your 2025 League Year in Review
+          </h1>
+          <p className="text-xl text-blue-200 mb-8">
+            Discover your journey through the Rift with personalized insights
+          </p>
+        </div>
+
+        <RiotIdInput 
+          onSubmit={fetchInsights}
+          loading={loading}
+          error={error}
+        />
+
+        <div className="text-white/60 text-sm">
+          <p>✨ Powered by Riot Games API • 🔒 Your data stays private</p>
+        </div>
+      </div>
+    </div>
+  ), [loading, error, fetchInsights]);
+
+  // Loading Screen Component
+  const LoadingScreen = () => (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full mx-auto mb-8"></div>
+        <h2 className="text-3xl font-bold text-white mb-4">
+          Analyzing your entire 2025 League journey...
+        </h2>
+        <p className="text-blue-200 mb-8">
+          Fetching ALL your 2025 matches for the complete year-end review
+        </p>
+        <p className="text-blue-300 text-sm mb-8">
+          This may take a moment for players with many games 🎮
+        </p>
+        <div className="bg-white/10 rounded-full h-2 w-64 mx-auto">
+          <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full animate-pulse w-3/4"></div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Menu Screen Component
+  const MenuScreen = () => (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-white mb-4">Rift Rewind</h1>
-          <p className="text-xl text-blue-200 mb-8">
-            AI-Powered League of Legends Insights
+          <h1 className="text-4xl font-bold text-white mb-4">
+            Welcome back, {gameName}#{tagLine}!
+          </h1>
+          <p className="text-xl text-blue-200">
+            Your 2025 League journey is ready to explore
           </p>
+        </div>
 
-          {/* Search */}
-          <div className="max-w-lg mx-auto">
-            <div className="flex gap-2 mb-4">
-              <input
-                type="text"
-                placeholder="Game Name (e.g., Faker)"
-                value={gameName}
-                onChange={(e) => setGameName(e.target.value)}
-                className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                onKeyDown={(e) => e.key === "Enter" && fetchInsights()}
-              />
-              <div className="flex items-center text-white font-bold text-xl">
-                #
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Quick Stats Preview */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8">
+            <h2 className="text-2xl font-bold text-white mb-6">Quick Stats</h2>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-300">Total Games</span>
+                <span className="text-white font-bold text-xl">{insights?.totalGames}</span>
               </div>
-              <input
-                type="text"
-                placeholder="Tag (e.g., KR1)"
-                value={tagLine}
-                onChange={(e) => setTagLine(e.target.value)}
-                className="w-24 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                onKeyDown={(e) => e.key === "Enter" && fetchInsights()}
-              />
+              <div className="flex justify-between items-center">
+                <span className="text-gray-300">Win Rate</span>
+                <span className="text-white font-bold text-xl">{Math.round((insights?.winRate || 0) * 100)}%</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-300">Main Role</span>
+                <span className="text-white font-bold text-xl">{insights?.yearEndSummary.favoriteRole}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-300">Top Champion</span>
+                <span className="text-white font-bold text-xl">{insights?.favoriteChampions[0]?.championName}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Year-End Recap Option */}
+          <div className="bg-gradient-to-br from-purple-600/20 to-pink-600/20 backdrop-blur-sm rounded-2xl p-8 border border-purple-500/30">
+            <div className="text-center">
+              <Sparkles className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-4">Year-End Recap</h2>
+              <p className="text-gray-300 mb-6">
+                Experience your League journey through an interactive slideshow with personalized insights, achievements, and memorable moments.
+              </p>
               <button
-                onClick={fetchInsights}
-                disabled={loading || !gameName.trim() || !tagLine.trim()}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                onClick={() => setAppState('slideshow')}
+                className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 font-semibold flex items-center justify-center gap-2"
               >
-                {loading ? "Loading..." : "Analyze"}
+                <Play className="w-5 h-5" />
+                Start Year-End Recap
               </button>
             </div>
-            <p className="text-blue-200 text-sm">
-              Enter your Riot ID (Game Name + Tag Line)
-            </p>
           </div>
         </div>
 
-        {/* Data Source Indicator */}
-        {insights && (
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-white text-sm">
-              <div className="w-2 h-2 rounded-full bg-green-400"></div>
-              Live data from Riot API ({insights.matchCount || 0} matches
-              analyzed)
-            </div>
-          </div>
-        )}
-
-        {/* Results */}
-        {insights && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {/* Stats Cards */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
-              <div className="flex items-center gap-3 mb-2">
-                <Trophy className="text-yellow-400" size={24} />
-                <h3 className="text-lg font-semibold">Win Rate</h3>
-              </div>
-              <p className="text-3xl font-bold">
-                {Math.round(insights.winRate * 100)}%
-              </p>
-              <p className="text-sm text-gray-300">
-                {insights.totalGames} games played
-              </p>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
-              <div className="flex items-center gap-3 mb-2">
-                <TrendingUp className="text-green-400" size={24} />
-                <h3 className="text-lg font-semibold">Best Month</h3>
-              </div>
-              <p className="text-2xl font-bold">
-                {insights.yearEndSummary.bestMonth}
-              </p>
-              <p className="text-sm text-gray-300">Peak performance</p>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
-              <div className="flex items-center gap-3 mb-2">
-                <Target className="text-red-400" size={24} />
-                <h3 className="text-lg font-semibold">Main Role</h3>
-              </div>
-              <p className="text-2xl font-bold">
-                {insights.yearEndSummary.favoriteRole}
-              </p>
-              <p className="text-sm text-gray-300">Most played</p>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
-              <div className="flex items-center gap-3 mb-2">
-                <Users className="text-purple-400" size={24} />
-                <h3 className="text-lg font-semibold">Champions</h3>
-              </div>
-              <p className="text-2xl font-bold">
-                {insights.favoriteChampions.length}
-              </p>
-              <p className="text-sm text-gray-300">In rotation</p>
-            </div>
-          </div>
-        )}
-
-        {insights && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Favorite Champions */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-              <h2 className="text-2xl font-bold text-white mb-4">
-                Favorite Champions
-              </h2>
-              <div className="space-y-3">
-                {insights.favoriteChampions.map((champ, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center bg-white/5 rounded-lg p-3"
-                  >
-                    <div>
-                      <p className="text-white font-semibold">
-                        {champ.championName}
-                      </p>
-                      <p className="text-gray-300 text-sm">
-                        {champ.gamesPlayed} games
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-white font-bold">
-                        {Math.round(champ.winRate * 100)}%
-                      </p>
-                      <p className="text-gray-300 text-sm">
-                        {champ.avgKDA.toFixed(1)} KDA
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Insights */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-              <h2 className="text-2xl font-bold text-white mb-4">
-                Your Strengths
-              </h2>
-              <div className="space-y-2 mb-6">
-                {insights.strengths.map((strength, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-gray-200">{strength}</p>
-                  </div>
-                ))}
-              </div>
-
-              <h3 className="text-xl font-bold text-white mb-4">
-                Areas to Improve
-              </h3>
-              <div className="space-y-2">
-                {insights.improvementAreas.map((area, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-gray-200">{area}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Fun Facts */}
-        {insights && (
-          <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-lg p-6">
-            <h2 className="text-2xl font-bold text-white mb-4">🎉 Fun Facts</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {insights.yearEndSummary.funFacts.map((fact, index) => (
-                <div key={index} className="bg-white/5 rounded-lg p-4">
-                  <p className="text-gray-200">{fact}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Year-End Summary */}
-        {insights && (
-          <div className="mt-8">
-            <YearEndSummary playerId={`${gameName}#${tagLine}`} />
-          </div>
-        )}
-
-        {/* Error Message */}
-        {error && (
-          <div className="max-w-md mx-auto mt-8 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-            <p className="text-red-200 text-center">{error}</p>
-          </div>
-        )}
-
-        {/* Setup Instructions */}
-        {!insights && !loading && !error && (
-          <div className="text-center text-white/70 mt-12">
-            <p className="text-lg mb-6">
-              Ready to analyze your League performance!
-            </p>
-            <div className="max-w-2xl mx-auto space-y-4 text-sm">
-              <div className="bg-white/5 rounded-lg p-4">
-                <h3 className="text-white font-semibold mb-2">
-                  ✅ API Connected
-                </h3>
-                <p>
-                  Riot API is configured and ready to fetch your match data from
-                  all regions.
-                </p>
-                <p className="text-xs mt-1 text-green-300">
-                  Multi-region search enabled (Americas, Europe, Asia, SEA)
-                </p>
-              </div>
-              <div className="bg-white/5 rounded-lg p-4">
-                <h3 className="text-white font-semibold mb-2">🎮 How to Use</h3>
-                <p>
-                  Enter your Riot ID (Game Name + Tag) to get detailed insights
-                </p>
-                <p className="text-xs mt-1">
-                  Example: YourName#NA1 or YourName#EUW
-                </p>
-              </div>
-              <div className="bg-white/5 rounded-lg p-4">
-                <h3 className="text-white font-semibold mb-2">
-                  🤖 Optional: AI Features
-                </h3>
-                <p>Add AWS credentials for personalized coaching insights</p>
-              </div>
-            </div>
-          </div>
-        )}
+        <div className="text-center mt-12">
+          <button
+            onClick={() => {
+              setAppState('entry');
+              setInsights(null);
+              setGameName('');
+              setTagLine('');
+            }}
+            className="text-blue-300 hover:text-white transition-colors"
+          >
+            ← Try a different summoner
+          </button>
+        </div>
       </div>
     </div>
+  );
+
+  // Slideshow Component
+  const SlideshowScreen = () => {
+    if (!insights) return null;
+
+    return (
+      <YearEndSlideshow 
+        insights={insights} 
+        onBack={() => setAppState('menu')} 
+      />
+    );
+  };
+
+  // Main render logic
+  return (
+    <>
+      {appState === 'entry' && <EntryScreen key="entry" />}
+      {appState === 'loading' && <LoadingScreen key="loading" />}
+      {appState === 'menu' && <MenuScreen key="menu" />}
+      {appState === 'slideshow' && <SlideshowScreen key="slideshow" />}
+    </>
   );
 }

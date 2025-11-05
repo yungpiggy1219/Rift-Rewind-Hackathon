@@ -34,6 +34,8 @@ export interface PlayerInsights {
   dataSource?: string;
   matchCount?: number;
   aiGeneratedInsights?: string;
+  puuid?: string;
+  region?: string;
 }
 
 export interface ChampionStats {
