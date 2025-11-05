@@ -101,6 +101,20 @@ npm run dev
 
 ## 🚨 Common Issues
 
+### "Riot API key is not configured"
+- Make sure you added `RIOT_API_KEY` to `.env.local`
+- Get your key from https://developer.riotgames.com/
+- Development keys expire every 24 hours
+
+### "Summoner not found"
+- Check the spelling of the summoner name
+- Make sure you're using the correct region (currently NA1)
+- Try a well-known summoner like "Faker"
+
+### "Rate limit exceeded"
+- Wait a few seconds and try again
+- The app will automatically retry with backoff
+
 ### AWS Bedrock Not Working?
 - Check your credentials in `.env.local`
 - Ensure you have Bedrock access in your AWS region
@@ -109,10 +123,6 @@ npm run dev
 ### TypeScript Errors?
 - Run `npm run build` to check for issues
 - Most errors are from missing types - add them to `lib/types.ts`
-
-### API Rate Limits?
-- Riot API has rate limits - implement caching
-- Use mock data for development to avoid limits
 
 ## 📝 Submission Checklist
 

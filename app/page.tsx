@@ -8,20 +8,48 @@ import YearEndSummary from "@/components/YearEndSummary";
 export default function Home() {
   const [insights, setInsights] = useState<PlayerInsights | null>(null);
   const [loading, setLoading] = useState(false);
-  const [summonerName, setSummonerName] = useState("");
+  const [gameName, setGameName] = useState("");
+  const [tagLine, setTagLine] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const fetchInsights = async () => {
-    if (!summonerName.trim()) return;
+    if (!gameName.trim() || !tagLine.trim()) return;
 
     setLoading(true);
+    setError(null);
     try {
-      const response = await fetch(
-        `/api/insights?playerId=${encodeURIComponent(summonerName)}`
-      );
+      const url = `/api/insights?gameName=${encodeURIComponent(
+        gameName
+      )}&tagLine=${encodeURIComponent(tagLine)}`;
+      const response = await fetch(url);
       const data = await response.json();
-      setInsights(data);
-    } catch (error) {
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch insights");
+      }
+
+      if (data.debug) {
+        // Debug mode - display raw data
+        console.log("Debug data:", data.debugInfo);
+        setError(
+          `DEBUG MODE: Found ${
+            data.debugInfo.matchCount
+          } matches. First match participants: ${data.debugInfo.allParticipantNames.join(
+            ", "
+          )}`
+        );
+        setInsights(null);
+      } else {
+        setInsights(data);
+      }
+    } catch (error: unknown) {
       console.error("Error fetching insights:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while fetching insights"
+      );
+      setInsights(null);
     } finally {
       setLoading(false);
     }
@@ -38,24 +66,51 @@ export default function Home() {
           </p>
 
           {/* Search */}
-          <div className="max-w-md mx-auto flex gap-4">
-            <input
-              type="text"
-              placeholder="Enter your summoner name"
-              value={summonerName}
-              onChange={(e) => setSummonerName(e.target.value)}
-              className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onKeyPress={(e) => e.key === "Enter" && fetchInsights()}
-            />
-            <button
-              onClick={fetchInsights}
-              disabled={loading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? "Loading..." : "Analyze"}
-            </button>
+          <div className="max-w-lg mx-auto">
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                placeholder="Game Name (e.g., Faker)"
+                value={gameName}
+                onChange={(e) => setGameName(e.target.value)}
+                className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onKeyDown={(e) => e.key === "Enter" && fetchInsights()}
+              />
+              <div className="flex items-center text-white font-bold text-xl">
+                #
+              </div>
+              <input
+                type="text"
+                placeholder="Tag (e.g., KR1)"
+                value={tagLine}
+                onChange={(e) => setTagLine(e.target.value)}
+                className="w-24 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onKeyDown={(e) => e.key === "Enter" && fetchInsights()}
+              />
+              <button
+                onClick={fetchInsights}
+                disabled={loading || !gameName.trim() || !tagLine.trim()}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loading ? "Loading..." : "Analyze"}
+              </button>
+            </div>
+            <p className="text-blue-200 text-sm">
+              Enter your Riot ID (Game Name + Tag Line)
+            </p>
           </div>
         </div>
+
+        {/* Data Source Indicator */}
+        {insights && (
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-white text-sm">
+              <div className="w-2 h-2 rounded-full bg-green-400"></div>
+              Live data from Riot API ({insights.matchCount || 0} matches
+              analyzed)
+            </div>
+          </div>
+        )}
 
         {/* Results */}
         {insights && (
@@ -189,20 +244,52 @@ export default function Home() {
         {/* Year-End Summary */}
         {insights && (
           <div className="mt-8">
-            <YearEndSummary playerId={summonerName} />
+            <YearEndSummary playerId={`${gameName}#${tagLine}`} />
           </div>
         )}
 
-        {/* Demo Message */}
-        {!insights && !loading && (
+        {/* Error Message */}
+        {error && (
+          <div className="max-w-md mx-auto mt-8 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
+            <p className="text-red-200 text-center">{error}</p>
+          </div>
+        )}
+
+        {/* Setup Instructions */}
+        {!insights && !loading && !error && (
           <div className="text-center text-white/70 mt-12">
-            <p className="text-lg mb-4">
-              Enter any summoner name to see a demo with mock data!
+            <p className="text-lg mb-6">
+              Ready to analyze your League performance!
             </p>
-            <p className="text-sm">
-              This is a hackathon prototype - real League API integration coming
-              soon.
-            </p>
+            <div className="max-w-2xl mx-auto space-y-4 text-sm">
+              <div className="bg-white/5 rounded-lg p-4">
+                <h3 className="text-white font-semibold mb-2">
+                  ✅ API Connected
+                </h3>
+                <p>
+                  Riot API is configured and ready to fetch your match data from
+                  all regions.
+                </p>
+                <p className="text-xs mt-1 text-green-300">
+                  Multi-region search enabled (Americas, Europe, Asia, SEA)
+                </p>
+              </div>
+              <div className="bg-white/5 rounded-lg p-4">
+                <h3 className="text-white font-semibold mb-2">🎮 How to Use</h3>
+                <p>
+                  Enter your Riot ID (Game Name + Tag) to get detailed insights
+                </p>
+                <p className="text-xs mt-1">
+                  Example: YourName#NA1 or YourName#EUW
+                </p>
+              </div>
+              <div className="bg-white/5 rounded-lg p-4">
+                <h3 className="text-white font-semibold mb-2">
+                  🤖 Optional: AI Features
+                </h3>
+                <p>Add AWS credentials for personalized coaching insights</p>
+              </div>
+            </div>
           </div>
         )}
       </div>

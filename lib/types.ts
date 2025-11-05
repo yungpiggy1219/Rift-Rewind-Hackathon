@@ -31,6 +31,9 @@ export interface PlayerInsights {
   strengths: string[];
   improvementAreas: string[];
   yearEndSummary: YearEndSummary;
+  dataSource?: string;
+  matchCount?: number;
+  aiGeneratedInsights?: string;
 }
 
 export interface ChampionStats {

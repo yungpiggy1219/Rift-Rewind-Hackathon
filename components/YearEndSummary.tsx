@@ -10,15 +10,23 @@ interface YearEndSummaryProps {
 export default function YearEndSummary({ playerId }: YearEndSummaryProps) {
   const [summary, setSummary] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const generateSummary = async () => {
     setLoading(true);
+    setError(null);
     try {
       const response = await fetch(`/api/year-summary?playerId=${encodeURIComponent(playerId)}`);
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate summary');
+      }
+      
       setSummary(data.summary);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error generating summary:', error);
+      setError(error instanceof Error ? error.message : 'Failed to generate summary');
     } finally {
       setLoading(false);
     }
@@ -86,7 +94,13 @@ export default function YearEndSummary({ playerId }: YearEndSummaryProps) {
         </div>
       )}
 
-      {!summary && !loading && (
+      {error && (
+        <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
+          <p className="text-red-200">{error}</p>
+        </div>
+      )}
+
+      {!summary && !loading && !error && (
         <p className="text-gray-300">
           Generate an AI-powered year-end summary of your League of Legends journey!
         </p>

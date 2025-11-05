@@ -4,17 +4,17 @@ An AI agent that transforms League of Legends match data into personalized insig
 
 ## Features
 
-- 📊 **Performance Analytics**: Track your growth over time
+- 📊 **Performance Analytics**: Track your growth over time with real match data
 - 🎯 **Personalized Insights**: AI-powered coaching recommendations  
 - 🏆 **Year-End Summaries**: Shareable highlights and achievements
-- 👥 **Social Comparisons**: See how you stack up with friends
 - 📈 **Trend Analysis**: Identify patterns in your gameplay
+- 🔥 **Live Data**: Real-time analysis from Riot Games API
 
 ## Tech Stack
 
 - **Frontend**: Next.js 16 with TypeScript
 - **AI**: AWS Bedrock for insights generation
-- **Data**: League of Legends API
+- **Data**: League of Legends API (Riot Games)
 - **Styling**: Tailwind CSS
 
 ## Getting Started
@@ -24,24 +24,45 @@ An AI agent that transforms League of Legends match data into personalized insig
 npm install
 ```
 
-2. Set up environment variables:
+2. Get your Riot API key:
+   - Go to https://developer.riotgames.com/
+   - Sign in and generate an API key
+
+3. Set up environment variables:
 ```bash
 cp .env.example .env.local
-# Add your AWS credentials and League API key
+# Add your Riot API key (required)
+# Add AWS credentials (optional for AI features)
 ```
 
-3. Run the development server:
+4. Run the development server:
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000)
+5. Open [http://localhost:3000](http://localhost:3000)
 
-## Development Roadmap
+## Required Setup
+
+### Riot API Key (Required)
+```env
+RIOT_API_KEY=RGAPI-your-api-key-here
+```
+
+### AWS Credentials (Optional - for AI insights)
+```env
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_REGION=us-east-1
+```
+
+## Development Status
 
 - [x] Project setup
-- [ ] Mock data integration
-- [ ] AWS Bedrock integration
-- [ ] League API integration
-- [ ] Insights generation
-- [ ] Social sharing features
+- [x] Real League API integration
+- [x] Match data analysis
+- [x] Performance insights
+- [x] AWS Bedrock integration
+- [x] Year-end summaries
+- [x] Error handling
+- [x] Social sharing features
