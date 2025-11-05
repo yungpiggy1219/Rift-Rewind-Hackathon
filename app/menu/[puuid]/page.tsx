@@ -5,6 +5,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { Play, RotateCcw } from 'lucide-react';
 import useSWR from 'swr';
 import SummonerCard from '../../components/SummonerCard';
+import { getChampionName } from '../../../src/lib/champions';
 
 interface SummonerProfile {
   id: string;
@@ -23,6 +24,17 @@ interface RankedInfo {
   leaguePoints: number;
   wins: number;
   losses: number;
+}
+
+interface ChampionMastery {
+  championId: number;
+  championLevel: number;
+  championPoints: number;
+  lastPlayTime: number;
+  championPointsSinceLastLevel: number;
+  championPointsUntilNextLevel: number;
+  chestGranted: boolean;
+  tokensEarned: number;
 }
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -79,6 +91,17 @@ export default function HomePage() {
   // Fetch ranked info (using PUUID, not summonerId)
   const { data: rankedInfo, error: rankedError } = useSWR<RankedInfo[]>(
     puuid ? `/api/ranked/${puuid}` : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 60000, // Cache for 60 seconds
+    }
+  );
+
+  // Fetch champion mastery
+  const { data: masteryData, error: masteryError } = useSWR<ChampionMastery[]>(
+    puuid ? `/api/mastery/${puuid}` : null,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -246,6 +269,25 @@ export default function HomePage() {
                     {rankedInfo[0].leaguePoints}
                   </div>
                   <div className="text-sm text-gray-300">League Points</div>
+                </div>
+              </div>
+            )}
+
+            {masteryData && masteryData.length > 0 && (
+              <div className="mt-8">
+                <h3 className="text-xl font-bold text-white mb-4 text-center">Top Champion Mastery</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  {masteryData.slice(0, 3).map((mastery) => (
+                    <div key={mastery.championId} className="text-center">
+                      <div className="text-2xl font-bold text-purple-400">
+                        {getChampionName(mastery.championId)}
+                      </div>
+                      <div className="text-sm text-gray-300">Level {mastery.championLevel}</div>
+                      <div className="text-xs text-gray-400">
+                        {mastery.championPoints.toLocaleString()} pts
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
