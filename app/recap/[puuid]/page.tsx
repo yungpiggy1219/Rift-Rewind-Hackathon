@@ -5,6 +5,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { AgentId } from '@/src/lib/types';
 import AgentPicker from '@/src/components/AgentPicker';
 import RecapFlow from '@/src/components/RecapFlow';
+import SummonerCard from '../../components/SummonerCard';
 import { ArrowLeft } from 'lucide-react';
 
 export default function RecapPage() {
@@ -35,51 +36,7 @@ export default function RecapPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Header */}
-      <div className="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700 sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/')}
-                className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                New Recap
-              </button>
-              
-              <div className="text-white">
-                <span className="font-bold">{playerName}</span>
-                {tagLine && <span className="text-gray-400">#{tagLine}</span>}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-6">
-              {/* Season Picker */}
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-400">Season</label>
-                <select
-                  value={season}
-                  onChange={(e) => handleSeasonChange(e.target.value)}
-                  className="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="2025">2025</option>
-                  <option value="2024">2024</option>
-                </select>
-              </div>
-
-              {/* Agent Picker */}
-              <div className="min-w-[200px]">
-                <AgentPicker 
-                  selectedAgent={agentId} 
-                  onAgentChange={handleAgentChange} 
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="relative min-h-screen bg-gray-900">
 
       {/* Recap Flow */}
       <RecapFlow 
@@ -87,6 +44,15 @@ export default function RecapPage() {
         season={season}
         agentId={agentId}
         playerName={`${playerName}${tagLine ? `#${tagLine}` : ''}`}
+      />
+
+      {/* Top-right Summoner Card (below back button) */}
+      <SummonerCard
+        profile={undefined}
+        playerName={playerName}
+        tagLine={tagLine}
+        rankedInfo={undefined}
+        containerClassName="absolute top-20 left-8 z-20"
       />
     </div>
   );

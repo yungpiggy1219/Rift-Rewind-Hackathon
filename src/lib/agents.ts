@@ -28,24 +28,6 @@ export const AGENTS: Record<AgentId, AgentPersona> = {
     catchphrases: ["Eureka!", "Indeed, a wise choice", "Science is so amazing!"],
     voiceStyle: "Speaks like a professor, uses scientific explanations, patient and educational"
   },
-  kayle: {
-    id: "kayle",
-    name: "Kayle",
-    title: "The Righteous",
-    personality: "Judgmental, righteous, focused on improvement and justice",
-    tone: "Authoritative, moral, inspiring but stern",
-    catchphrases: ["Justice takes wing", "Into the fray!", "Weakness is a choice"],
-    voiceStyle: "Speaks with divine authority, focuses on judgment and improvement, inspirational but demanding"
-  },
-  draven: {
-    id: "draven",
-    name: "Draven",
-    title: "The Glorious Executioner",
-    personality: "Narcissistic, dramatic, obsessed with glory and spectacle",
-    tone: "Boastful, theatrical, self-aggrandizing",
-    catchphrases: ["Welcome to the League of Draven!", "Draven does it all!", "It's all skill!"],
-    voiceStyle: "Everything is about Draven, dramatic flair, treats everything like a performance"
-  }
 };
 
 export function buildNarration(request: NarrationRequest): NarrationResponse {

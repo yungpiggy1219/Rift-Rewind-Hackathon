@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { Play, RotateCcw } from 'lucide-react';
 import useSWR from 'swr';
+import SummonerCard from '../../components/SummonerCard';
 
 interface SummonerProfile {
   id: string;
@@ -24,8 +25,7 @@ interface RankedInfo {
   losses: number;
 }
 
-const fetcher = (url: string, options?: RequestInit): Promise<unknown> => 
-  fetch(url, options).then(res => res.json());
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function HomePage() {
   const params = useParams();
@@ -66,13 +66,13 @@ export default function HomePage() {
   }, []);
 
   // Fetch summoner profile
-  const { data: profile, error: profileError } = useSWR(
+  const { data: profile, error: profileError } = useSWR<SummonerProfile>(
     `/api/profile/${puuid}`,
     fetcher
   );
 
   // Fetch ranked info
-  const { data: rankedInfo, error: rankedError } = useSWR(
+  const { data: rankedInfo, error: rankedError } = useSWR<RankedInfo[]>(
     profile ? `/api/ranked/${profile.id}` : null,
     fetcher
   );
@@ -166,41 +166,14 @@ export default function HomePage() {
       {/* Background Overlay */}
       <div className="absolute inset-0 bg-black/40"></div>
 
-      {/* Top Left - Summoner Info */}
-      <div className="absolute top-8 left-8 z-10">
-        <div className="bg-black/60 backdrop-blur-sm rounded-lg p-6 border border-white/20">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              {profile?.profileIconId ? (
-                <img 
-                  src={`https://ddragon.leagueoflegends.com/cdn/14.1.1/img/profileicon/${profile.profileIconId}.png`}
-                  alt="Profile Icon"
-                  className="w-14 h-14 rounded-full"
-                />
-              ) : (
-                <span className="text-white font-bold text-xl">
-                  {playerName.charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
-            
-            <div>
-              <h1 className="text-2xl font-bold text-white">
-                {playerName}
-                {tagLine && <span className="text-gray-300">#{tagLine}</span>}
-              </h1>
-              <div className="flex items-center gap-4 text-gray-300 text-sm">
-                <span>Level {profile?.summonerLevel || 'N/A'}</span>
-                {rankedInfo?.[0] && (
-                  <span>
-                    {rankedInfo[0].tier} {rankedInfo[0].rank} ({rankedInfo[0].leaguePoints} LP)
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Top Left - Summoner Info (reusable component) */}
+      <SummonerCard
+        profile={profile}
+        playerName={playerName}
+        tagLine={tagLine}
+        rankedInfo={rankedInfo}
+        containerClassName="absolute top-8 left-8 z-10"
+      />
 
       {/* Bottom Right - Start Recap Button */}
       <div className="absolute bottom-8 right-8 z-10">

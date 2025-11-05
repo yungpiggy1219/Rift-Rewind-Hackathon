@@ -25,6 +25,22 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Lock the app to the viewport: prevent page scrolling and ensure full-viewport layout */
+html, body, #__next {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow: hidden; /* prevent scrolling */
+  -webkit-overflow-scrolling: auto;
+  overscroll-behavior: none;
+}
+
+#__next > div {
+  /* Ensure the immediate app root also fills the viewport */
+  height: 100%;
+  width: 100%;
+}
+
 /* Custom animations for slideshow */
 @keyframes fade-in {
   from {
