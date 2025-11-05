@@ -35,13 +35,19 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
-    const summonerId = resolvedParams.summonerId;
+    const puuid = resolvedParams.summonerId; // Actually a PUUID despite the param name
+    
+    console.log(`[mastery] Fetching champion mastery for PUUID: ${puuid}`);
     
     // Get platform for this region
     const platform = REGION_TO_PLATFORM[RIOT_REGION] || 'na1';
     
-    // Fetch champion mastery by summoner ID
-    const url = `https://${platform}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-summoner/${summonerId}`;
+    console.log(`[mastery] Using platform: ${platform}`);
+    
+    // Fetch champion mastery by PUUID (fixed double slash)
+    const url = `https://${platform}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}`;
+    console.log(`[mastery] Request URL: ${url}`);
+    
     const mastery = await riotRequest(url) as Array<{
       championId: number;
       championLevel: number;
@@ -53,9 +59,18 @@ export async function GET(
       tokensEarned: number;
     }>;
     
+    console.log(`[mastery] Champion mastery fetched successfully. Total champions: ${mastery.length}`);
+    if (mastery.length > 0) {
+      console.log(`[mastery] Top 3 champions:`, mastery.slice(0, 3).map(m => ({
+        championId: m.championId,
+        level: m.championLevel,
+        points: m.championPoints
+      })));
+    }
+    
     return NextResponse.json(mastery);
   } catch (error) {
-    console.error('Mastery API error:', error);
+    console.error('[mastery] Mastery API error:', error);
     
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to fetch champion mastery' },

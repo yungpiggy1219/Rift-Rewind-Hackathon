@@ -35,13 +35,19 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
-    const summonerId = resolvedParams.summonerId;
+    const puuid = resolvedParams.summonerId; // Actually a PUUID despite the param name
+    
+    console.log(`[ranked] Fetching ranked info for PUUID: ${puuid}`);
     
     // Get platform for this region
     const platform = REGION_TO_PLATFORM[RIOT_REGION] || 'na1';
     
-    // Fetch ranked info by summoner ID
-    const url = `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerId}`;
+    console.log(`[ranked] Using platform: ${platform}`);
+    
+    // Fetch ranked info by PUUID (fixed double slash)
+    const url = `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}`;
+    console.log(`[ranked] Request URL: ${url}`);
+    
     const rankedInfo = await riotRequest(url) as Array<{
       queueType: string;
       tier: string;
@@ -51,9 +57,11 @@ export async function GET(
       losses: number;
     }>;
     
+    console.log(`[ranked] Ranked info fetched successfully:`, JSON.stringify(rankedInfo, null, 2));
+    
     return NextResponse.json(rankedInfo);
   } catch (error) {
-    console.error('Ranked API error:', error);
+    console.error('[ranked] Ranked API error:', error);
     
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to fetch ranked info' },

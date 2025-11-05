@@ -11,6 +11,8 @@ export default function LoginPage() {
   const [summonerLevel, setSummonerLevel] = useState<number | null>(null);
   const [summonerIcon, setSummonerIcon] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [debugLoading, setDebugLoading] = useState(false);
+  const [debugResult, setDebugResult] = useState<{ matches: number; hours: number; puuid?: string } | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,6 +79,56 @@ export default function LoginPage() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDebugMatchHistory = async () => {
+    if (!gameName || !tagLine) {
+      setError("Please enter game name and tag line first");
+      return;
+    }
+
+    setDebugLoading(true);
+    setError(null);
+    setDebugResult(null);
+
+    try {
+      // First, get the PUUID
+      const summonerResponse = await fetch('/api/summoner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameName, tagLine })
+      });
+
+      const summonerData = await summonerResponse.json();
+      if (!summonerResponse.ok) {
+        throw new Error(summonerData.error || "Failed to resolve summoner");
+      }
+
+      const puuid = summonerData.puuid;
+
+      // Fetch match IDs
+      const matchResponse = await fetch(`/api/test-matches?puuid=${puuid}&season=2025`);
+      const matchData = await matchResponse.json();
+
+      if (!matchResponse.ok) {
+        throw new Error(matchData.error || "Failed to fetch matches");
+      }
+
+      setDebugResult({
+        puuid,
+        matches: matchData.totalMatchIds || 0,
+        hours: 0 // Not fetching hours to avoid rate limits
+      });
+    } catch (error: unknown) {
+      console.error("Error fetching match history:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while fetching match history"
+      );
+    } finally {
+      setDebugLoading(false);
     }
   };
 
@@ -187,6 +239,35 @@ export default function LoginPage() {
                 </>
               )}
             </button>
+
+            {/* Debug Button */}
+            <button
+              type="button"
+              onClick={handleDebugMatchHistory}
+              disabled={debugLoading || !gameName || !tagLine}
+              className="w-full px-6 py-3 bg-yellow-600/90 hover:bg-yellow-700/90 disabled:bg-gray-600/50 text-white rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-xl border border-white/20 backdrop-blur-sm"
+            >
+              {debugLoading ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  Fetching Match History...
+                </>
+              ) : (
+                "🔍 Debug: Get 2025 Match History"
+              )}
+            </button>
+
+            {/* Debug Result Display */}
+            {debugResult && (
+              <div className="p-4 bg-green-900/30 border border-green-500/50 rounded-xl backdrop-blur-sm">
+                <h3 className="text-green-300 font-bold mb-2">Match History Result:</h3>
+                <div className="text-white text-sm space-y-1">
+                  <p>PUUID: <span className="font-mono text-xs">{debugResult.puuid?.substring(0, 20)}...</span></p>
+                  <p>Total Match IDs Found: <span className="font-bold text-green-400">{debugResult.matches}</span></p>
+                  <p className="text-xs text-gray-400 italic">Note: Only counting IDs to avoid rate limits</p>
+                </div>
+              </div>
+            )}
           </form>
         </div>
 

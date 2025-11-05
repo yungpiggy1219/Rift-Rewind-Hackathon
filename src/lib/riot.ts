@@ -62,13 +62,17 @@ export async function fetchMatchIds(
 
 export async function fetchMatchDetail(matchId: string): Promise<MatchData | null> {
   const data = await riotRequest(`/lol/match/v5/matches/${matchId}`) as {
-    metadata: { matchId: string };
+    metadata: { 
+      matchId: string;
+      participants: string[]; // Array of PUUIDs
+    };
     info: {
       gameCreation: number;
       gameDuration: number;
       gameMode: string;
       gameType: string;
       participants: Array<{
+        puuid: string;
         summonerName?: string;
         riotIdGameName?: string;
         championId: number;
@@ -94,6 +98,7 @@ export async function fetchMatchDetail(matchId: string): Promise<MatchData | nul
     gameMode: data.info.gameMode,
     gameType: data.info.gameType,
     participants: data.info.participants.map((p) => ({
+      puuid: p.puuid,
       summonerName: p.summonerName || p.riotIdGameName || 'Unknown',
       championId: p.championId,
       championName: p.championName,
@@ -114,7 +119,191 @@ export async function computeAggregates(puuid: string, season: string): Promise<
   const cached = await cache.get<PlayerAggregates>(cacheKey);
   if (cached) return cached;
 
-  // TODO: Implement real aggregation by fetching all matches for the season
-  // For now, return N/A structure since we don't have real data
-  throw new Error('No match data available - aggregation requires real Riot API data');
+  // Determine season year range (e.g., 2025 -> Jan 1 2025 to Dec 31 2025)
+  const seasonYear = parseInt(season);
+  const startTimestamp = new Date(`${seasonYear}-01-01T00:00:00Z`).getTime();
+  const endTimestamp = new Date(`${seasonYear}-12-31T23:59:59Z`).getTime();
+
+  // Step 1: Fetch all match IDs (just IDs, no details yet)
+  const allMatchIds: string[] = [];
+  let start = 0;
+  const batchSize = 100;
+  const maxBatches = 20; // Max 2000 matches
+  let batchCount = 0;
+  
+  console.log(`[computeAggregates] Fetching match IDs for ${season} (${startTimestamp} to ${endTimestamp})`);
+  
+  // Use /lol/match/v5/matches/by-puuid/{puuid}/ids to get all match IDs
+  while (batchCount < maxBatches) {
+    console.log(`[computeAggregates] Fetching batch ${batchCount + 1} at start=${start}`);
+    
+    const { ids, nextStart } = await fetchMatchIds(puuid, undefined, start, batchSize);
+    
+    // No more matches available
+    if (ids.length === 0) {
+      console.log(`[computeAggregates] No more matches found, stopping`);
+      break;
+    }
+    
+    console.log(`[computeAggregates] Got ${ids.length} match IDs in batch ${batchCount + 1}`);
+    
+    allMatchIds.push(...ids);
+    batchCount++;
+    
+    // If we got fewer matches than requested, we've reached the end
+    if (ids.length < batchSize) {
+      console.log(`[computeAggregates] Got fewer than ${batchSize} matches, reached end of history`);
+      break;
+    }
+    
+    start = nextStart;
+  }
+  
+  console.log(`[computeAggregates] Total match IDs collected: ${allMatchIds.length}`);
+
+  // Step 2: Initialize aggregates structure
+  const months: Record<string, { matches: number; hours: number }> = {};
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  let totalMatches = 0;
+  let totalHours = 0;
+  const kdaSeries: number[] = [];
+  const gpmSeries: number[] = [];
+  const winRateSeries: number[] = [];
+  let peakKills = 0;
+  let peakDeaths = 0;
+  let peakAssists = 0;
+  let peakGpm = 0;
+  let peakDate = '';
+  let peakMatchId = '';
+  
+  // Step 3: Fetch match details and filter by season timestamp
+  console.log(`[computeAggregates] Processing match details for season ${season}...`);
+  
+  for (const matchId of allMatchIds) {
+    try {
+      const match = await fetchMatchDetail(matchId);
+      if (!match) {
+        console.warn(`[computeAggregates] Failed to fetch match ${matchId}`);
+        continue;
+      }
+      
+      // Filter by season timestamp - skip if outside season
+      if (match.gameCreation < startTimestamp) {
+        console.log(`[computeAggregates] Match ${matchId} is before season start, stopping further processing`);
+        // Since matches are ordered newest to oldest, we can stop here
+        break;
+      }
+      
+      if (match.gameCreation > endTimestamp) {
+        console.log(`[computeAggregates] Match ${matchId} is after season end, skipping`);
+        continue;
+      }
+      
+      // Find player in participants by PUUID
+      const playerData = match.participants.find(p => p.puuid === puuid);
+      
+      if (!playerData) {
+        console.warn(`Player not found in match ${matchId}`);
+        continue;
+      }
+      
+      // Calculate month
+      const matchDate = new Date(match.gameCreation);
+      const monthKey = `${monthNames[matchDate.getMonth()]}`;
+      
+      if (!months[monthKey]) {
+        months[monthKey] = { matches: 0, hours: 0 };
+      }
+      
+      const hours = match.gameDuration / 3600; // Convert seconds to hours
+      months[monthKey].matches += 1;
+      months[monthKey].hours += hours;
+      
+      totalMatches += 1;
+      totalHours += hours;
+      
+      // Calculate KDA
+      const kda = playerData.deaths === 0 
+        ? (playerData.kills + playerData.assists) 
+        : (playerData.kills + playerData.assists) / playerData.deaths;
+      kdaSeries.push(kda);
+      
+      // Calculate GPM
+      const gpm = (playerData.goldEarned / match.gameDuration) * 60;
+      gpmSeries.push(gpm);
+      
+      // Track win rate
+      winRateSeries.push(playerData.win ? 1 : 0);
+      
+      // Track peak performance
+      if (playerData.kills > peakKills) {
+        peakKills = playerData.kills;
+        peakDeaths = playerData.deaths;
+        peakAssists = playerData.assists;
+        peakGpm = gpm;
+        peakDate = matchDate.toISOString().split('T')[0];
+        peakMatchId = matchId;
+      }
+    } catch (error) {
+      console.error(`Error processing match ${matchId}:`, error);
+      continue;
+    }
+  }
+
+  console.log(`[computeAggregates] Finished processing. Total matches in season: ${totalMatches}, Total hours: ${totalHours.toFixed(1)}`);
+
+  // Calculate averages and trends
+  const startKda = kdaSeries.slice(0, 10).reduce((a, b) => a + b, 0) / Math.min(10, kdaSeries.length);
+  const endKda = kdaSeries.slice(-10).reduce((a, b) => a + b, 0) / Math.min(10, kdaSeries.length);
+  const kdaTrendSlope = endKda - startKda;
+  
+  const startGpm = gpmSeries.slice(0, 10).reduce((a, b) => a + b, 0) / Math.min(10, gpmSeries.length);
+  const endGpm = gpmSeries.slice(-10).reduce((a, b) => a + b, 0) / Math.min(10, gpmSeries.length);
+  const gpmDeltaPct = startGpm > 0 ? ((endGpm - startGpm) / startGpm) * 100 : 0;
+  
+  const startWinRate = winRateSeries.slice(0, 10).reduce((a, b) => a + b, 0) / Math.min(10, winRateSeries.length);
+  const endWinRate = winRateSeries.slice(-10).reduce((a, b) => a + b, 0) / Math.min(10, winRateSeries.length);
+  const winRateDeltaPct = startWinRate > 0 ? ((endWinRate - startWinRate) / startWinRate) * 100 : 0;
+
+  const aggregates: PlayerAggregates = {
+    timeframe: {
+      start: `${seasonYear}-01-01`,
+      end: `${seasonYear}-12-31`
+    },
+    totals: {
+      matches: totalMatches,
+      hours: Math.round(totalHours * 10) / 10
+    },
+    months,
+    gpm: {
+      start: Math.round(startGpm),
+      end: Math.round(endGpm),
+      deltaPct: Math.round(gpmDeltaPct * 10) / 10,
+      series: gpmSeries.map(v => Math.round(v))
+    },
+    kda: {
+      start: Math.round(startKda * 100) / 100,
+      end: Math.round(endKda * 100) / 100,
+      trendSlope: Math.round(kdaTrendSlope * 100) / 100,
+      series: kdaSeries.map(v => Math.round(v * 100) / 100)
+    },
+    winRate: {
+      start: Math.round(startWinRate * 100),
+      end: Math.round(endWinRate * 100),
+      deltaPct: Math.round(winRateDeltaPct * 10) / 10,
+      series: winRateSeries
+    },
+    peak: {
+      date: peakDate,
+      kills: peakKills,
+      deaths: peakDeaths,
+      assists: peakAssists,
+      gpm: Math.round(peakGpm),
+      matchId: peakMatchId
+    }
+  };
+
+  await cache.set(cacheKey, aggregates);
+  return aggregates;
 }

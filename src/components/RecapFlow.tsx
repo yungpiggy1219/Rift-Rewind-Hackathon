@@ -64,29 +64,53 @@ export default function RecapFlow({ puuid, season, agentId, playerName }: RecapF
     };
   }, []);
 
-  // Fetch scene data
+  // Fetch scene data - include POST body in cache key to prevent refetching
+  const sceneKey = currentSceneId ? [
+    `/api/insights/${currentSceneId}`,
+    puuid,
+    season
+  ] : null;
+
   const { data: sceneData, error: sceneError, isLoading: sceneLoading } = useSWR(
-    currentSceneId ? `/api/insights/${currentSceneId}` : null,
-    (url: string) => fetcher(url, {
+    sceneKey,
+    ([url, _puuid, _season]: [string, string, string]) => fetcher(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ puuid, season })
-    })
+      body: JSON.stringify({ puuid: _puuid, season: _season })
+    }),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 60000, // Don't refetch for 60 seconds
+    }
   );
 
-  // Fetch narration
+  // Fetch narration - include all dependencies in cache key
+  const narrationKey = sceneData ? [
+    `/api/narrate`,
+    agentId,
+    currentSceneId,
+    (sceneData as any)?.insight,
+    playerName
+  ] : null;
+
   const { data: narration, error: narrationError, isLoading: narrationLoading } = useSWR(
-    sceneData ? `/api/narrate` : null,
-    (url: string) => fetcher(url, {
+    narrationKey,
+    ([url, _agentId, _sceneId, _insight, _playerName]: [string, string, string, any, string | undefined]) => fetcher(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        agentId,
-        sceneId: currentSceneId,
-        insight: (sceneData as any)?.insight,
-        playerName
+        agentId: _agentId,
+        sceneId: _sceneId,
+        insight: _insight,
+        playerName: _playerName
       })
-    })
+    }),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 60000, // Don't refetch for 60 seconds
+    }
   );
 
   const isLoading = sceneLoading || narrationLoading;

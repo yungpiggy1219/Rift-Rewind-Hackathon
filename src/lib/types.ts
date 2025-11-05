@@ -69,6 +69,7 @@ export interface RiotAccount {
 }
 
 export interface MatchParticipant {
+  puuid: string;
   summonerName: string;
   championId: number;
   championName: string;

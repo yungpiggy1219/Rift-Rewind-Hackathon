@@ -31,6 +31,13 @@ export default function SummonerCard({
   rankedInfo,
   containerClassName = 'absolute top-8 left-8 z-10'
 }: Props) {
+  const getQueueDisplay = (queueType?: string) => {
+    if (!queueType) return 'RANKED';
+    if (queueType.includes('SOLO')) return 'Solo/Duo';
+    if (queueType.includes('FLEX')) return 'Flex';
+    return 'RANKED';
+  };
+
   return (
     <div className={containerClassName}>
       <div className="bg-black/60 backdrop-blur-sm rounded-lg p-6 border border-white/20">
@@ -54,12 +61,16 @@ export default function SummonerCard({
               {playerName}
               {tagLine && <span className="text-gray-300">#{tagLine}</span>}
             </h1>
-            <div className="flex items-center gap-4 text-gray-300 text-sm">
-              <span>Level {profile?.summonerLevel ?? 'N/A'}</span>
-              {rankedInfo?.[0] && (
-                <span>
-                  {rankedInfo[0].tier} {rankedInfo[0].rank} ({rankedInfo[0].leaguePoints} LP)
-                </span>
+            <div className="text-gray-300 text-sm">
+              <div>Level {profile?.summonerLevel ?? 'N/A'}</div>
+              {rankedInfo && rankedInfo.length > 0 ? (
+                rankedInfo.map((rank, index) => (
+                  <div key={rank.queueType || index}>
+                    {getQueueDisplay(rank.queueType)}: {rank.tier ? rank.tier.charAt(0).toUpperCase() + rank.tier.slice(1).toLowerCase() : 'Unranked'} {rank.rank} ({rank.leaguePoints} LP)
+                  </div>
+                ))
+              ) : (
+                <div>UNRANKED</div>
               )}
             </div>
           </div>

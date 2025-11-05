@@ -68,13 +68,23 @@ export default function HomePage() {
   // Fetch summoner profile
   const { data: profile, error: profileError } = useSWR<SummonerProfile>(
     `/api/profile/${puuid}`,
-    fetcher
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 60000, // Cache for 60 seconds
+    }
   );
 
-  // Fetch ranked info
+  // Fetch ranked info (using PUUID, not summonerId)
   const { data: rankedInfo, error: rankedError } = useSWR<RankedInfo[]>(
-    profile ? `/api/ranked/${profile.id}` : null,
-    fetcher
+    puuid ? `/api/ranked/${puuid}` : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 60000, // Cache for 60 seconds
+    }
   );
 
   const isLoading = !profile && !profileError;

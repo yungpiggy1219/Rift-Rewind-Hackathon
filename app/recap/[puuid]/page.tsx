@@ -7,6 +7,28 @@ import AgentPicker from '@/src/components/AgentPicker';
 import RecapFlow from '@/src/components/RecapFlow';
 import SummonerCard from '../../components/SummonerCard';
 import { ArrowLeft } from 'lucide-react';
+import useSWR from 'swr';
+
+interface SummonerProfile {
+  id: string;
+  accountId: string;
+  puuid: string;
+  name: string;
+  profileIconId: number;
+  revisionDate: number;
+  summonerLevel: number;
+}
+
+interface RankedInfo {
+  queueType: string;
+  tier: string;
+  rank: string;
+  leaguePoints: number;
+  wins: number;
+  losses: number;
+}
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function RecapPage() {
   const params = useParams();
@@ -18,6 +40,28 @@ export default function RecapPage() {
   const [season, setSeason] = useState(searchParams.get('season') || '2025');
   const playerName = searchParams.get('name') || 'Summoner';
   const tagLine = searchParams.get('tag') || '';
+
+  // Fetch summoner profile
+  const { data: profile } = useSWR<SummonerProfile>(
+    `/api/profile/${puuid}`,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 60000, // Cache for 60 seconds
+    }
+  );
+
+  // Fetch ranked info (using PUUID, not summonerId)
+  const { data: rankedInfo } = useSWR<RankedInfo[]>(
+    puuid ? `/api/ranked/${puuid}` : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 60000, // Cache for 60 seconds
+    }
+  );
 
   // Update URL when agent changes
   useEffect(() => {
@@ -46,12 +90,12 @@ export default function RecapPage() {
         playerName={`${playerName}${tagLine ? `#${tagLine}` : ''}`}
       />
 
-      {/* Top-right Summoner Card (below back button) */}
+      {/* Top-left Summoner Card (below back button) */}
       <SummonerCard
-        profile={undefined}
+        profile={profile}
         playerName={playerName}
         tagLine={tagLine}
-        rankedInfo={undefined}
+        rankedInfo={rankedInfo}
         containerClassName="absolute top-20 left-8 z-20"
       />
     </div>
