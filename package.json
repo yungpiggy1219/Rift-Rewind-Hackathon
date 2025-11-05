@@ -1,5 +1,5 @@
 {
-  "name": "rift-rewind-hackathon",
+  "name": "rift-rewind",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,22 +9,25 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.0.0",
+    "@upstash/redis": "^1.35.6",
+    "axios": "^1.6.0",
+    "lucide-react": "^0.400.0",
+    "next": "16.0.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "next": "16.0.1",
-    "@aws-sdk/client-bedrock-runtime": "^3.0.0",
-    "axios": "^1.6.0",
     "recharts": "^2.8.0",
-    "lucide-react": "^0.400.0"
+    "swr": "^2.3.6",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
-    "eslint-config-next": "16.0.1"
+    "eslint-config-next": "16.0.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
