@@ -7,31 +7,26 @@ export async function computePathForward(ctx: { puuid: string; season: string })
   return {
     sceneId: "path_forward",
     insight: {
-      summary: "Ready for Platinum - Focus on vision control and late-game decision making",
+      summary: "No improvement roadmap available",
       details: [
-        "Your mechanics and laning are already at Platinum level",
-        "Improving vision score by 20% would increase win rate by an estimated 8%",
-        "Late-game shot calling practice could unlock your next rank breakthrough",
-        "Consider expanding to 2-3 champions per role for better draft flexibility"
+        "Unable to generate personalized improvement recommendations",
+        "Path forward analysis requires current rank and performance data",
+        "This feature provides targeted advice based on your strengths and weaknesses"
       ],
-      action: "Set a goal to reach Platinum by focusing on macro play and vision control over the next 2 months",
+      action: "Play ranked games to establish current skill level and enable personalized improvement recommendations",
       metrics: [
-        { label: "Current Trajectory", value: "Platinum Ready", trend: "up" },
-        { label: "Key Focus Area", value: "Vision Control", context: "20% improvement needed" },
-        { label: "Estimated Timeline", value: "2 months", context: "to next rank" },
-        { label: "Success Probability", value: 78, unit: "%", trend: "up" }
+        { label: "Current Trajectory", value: "N/A" },
+        { label: "Key Focus Area", value: "N/A" },
+        { label: "Estimated Timeline", value: "N/A" },
+        { label: "Success Probability", value: "N/A" }
       ],
       vizData: {
         type: "goal",
-        currentRank: "Gold II",
-        targetRank: "Platinum IV", 
-        progress: 65,
-        keyAreas: [
-          { area: "Vision Control", current: 45, target: 65, priority: "high" },
-          { area: "Late Game", current: 55, target: 70, priority: "high" },
-          { area: "Champion Pool", current: 70, target: 80, priority: "medium" }
-        ],
-        timeline: "2 months"
+        currentRank: "N/A",
+        targetRank: "N/A", 
+        progress: 0,
+        keyAreas: [],
+        timeline: "N/A"
       }
     }
   };

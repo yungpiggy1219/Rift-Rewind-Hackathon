@@ -32,8 +32,8 @@ export default function Home() {
         throw new Error(data.error || "Failed to resolve summoner");
       }
 
-      // Redirect to recap page with default agent
-      router.push(`/recap/${data.puuid}?agent=velkoz&season=2025&name=${encodeURIComponent(inputGameName)}&tag=${encodeURIComponent(inputTagLine)}`);
+      // Redirect to menu page
+      router.push(`/menu/${data.puuid}?name=${encodeURIComponent(inputGameName)}&tag=${encodeURIComponent(inputTagLine)}&season=2025`);
     } catch (error: unknown) {
       console.error("Error resolving summoner:", error);
       setError(

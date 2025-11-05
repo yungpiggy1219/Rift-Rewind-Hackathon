@@ -7,30 +7,22 @@ export async function computeAram(ctx: { puuid: string; season: string }): Promi
   return {
     sceneId: "aram",
     insight: {
-      summary: "ARAM Enthusiast - 45 games of chaotic fun on the Howling Abyss",
+      summary: "No ARAM data available",
       details: [
-        "Your ARAM win rate of 62% shows strong teamfight skills",
-        "Highest damage game: 52,000 damage as Jinx",
-        "Most played ARAM champion: Lux (8 games)",
-        "Average game length: 22 minutes - you prefer decisive battles"
+        "Unable to analyze ARAM performance",
+        "ARAM analysis requires match history from Howling Abyss games",
+        "This feature tracks teamfight skills and champion diversity in ARAM"
       ],
-      action: "Your ARAM skills translate well to Summoner's Rift teamfights - apply this confidence to ranked games",
+      action: "Play ARAM games to enable fun mode analysis and teamfight skill assessment",
       metrics: [
-        { label: "ARAM Games", value: 45, unit: " games" },
-        { label: "ARAM Win Rate", value: 62, unit: "%", trend: "up" },
-        { label: "Highest Damage", value: 52000, context: "as Jinx" },
-        { label: "Favorite Pick", value: "Lux", context: "8 games played" }
+        { label: "ARAM Games", value: "N/A" },
+        { label: "ARAM Win Rate", value: "N/A" },
+        { label: "Highest Damage", value: "N/A" },
+        { label: "Favorite Pick", value: "N/A" }
       ],
       vizData: {
         type: "infographic",
-        stats: {
-          totalGames: 45,
-          winRate: 62,
-          avgDamage: 28500,
-          favoriteChampion: "Lux",
-          longestGame: "38:42",
-          shortestGame: "12:15"
-        }
+        stats: {}
       }
     }
   };

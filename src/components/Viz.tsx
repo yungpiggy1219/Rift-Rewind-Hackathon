@@ -11,6 +11,16 @@ interface VizProps {
 export default function Viz({ kind, data }: VizProps) {
   switch (kind) {
     case 'line':
+      if (!data.series || data.series.length === 0) {
+        return (
+          <div className="h-64 w-full flex items-center justify-center bg-gray-800 rounded-lg">
+            <div className="text-center text-gray-400">
+              <div className="text-lg font-semibold mb-2">No Growth Data</div>
+              <div className="text-sm">Trend analysis requires multiple matches</div>
+            </div>
+          </div>
+        );
+      }
       return (
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -66,6 +76,16 @@ export default function Viz({ kind, data }: VizProps) {
       );
 
     case 'radar':
+      if (!data.values || data.values.length === 0) {
+        return (
+          <div className="h-64 w-full flex items-center justify-center bg-gray-800 rounded-lg">
+            <div className="text-center text-gray-400">
+              <div className="text-lg font-semibold mb-2">No Playstyle Data</div>
+              <div className="text-sm">Requires match history to analyze playstyle patterns</div>
+            </div>
+          </div>
+        );
+      }
       return (
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -95,7 +115,7 @@ export default function Viz({ kind, data }: VizProps) {
     case 'heatmap':
       return (
         <div className="grid grid-cols-4 gap-2 p-4">
-          {data.months?.map((month: any) => (
+          {data.months?.length > 0 ? data.months.map((month: any) => (
             <div 
               key={month.month}
               className="bg-gray-700 rounded-lg p-3 text-center"
@@ -107,15 +127,27 @@ export default function Viz({ kind, data }: VizProps) {
               <div className="text-lg font-bold text-white">{month.matches}</div>
               <div className="text-xs text-gray-400">{month.hours}h</div>
             </div>
-          )) || (
-            <div className="col-span-4 text-center text-gray-400">
-              No heatmap data available
+          )) : (
+            <div className="col-span-4 text-center text-gray-400 py-8">
+              <div className="text-lg font-semibold mb-2">No Data Available</div>
+              <div className="text-sm">Activity data requires match history access</div>
             </div>
           )}
         </div>
       );
 
     case 'highlight':
+      if (!data.peakGame) {
+        return (
+          <div className="bg-gray-800 border border-gray-600 rounded-lg p-6">
+            <div className="text-center text-gray-400">
+              <div className="text-3xl font-bold mb-2">N/A</div>
+              <div className="text-lg mb-2">No Peak Performance Data</div>
+              <div className="text-sm">Requires match history to identify best games</div>
+            </div>
+          </div>
+        );
+      }
       return (
         <div className="bg-gradient-to-br from-yellow-900/30 to-orange-900/30 border border-yellow-700/50 rounded-lg p-6">
           <div className="text-center">
@@ -135,27 +167,39 @@ export default function Viz({ kind, data }: VizProps) {
       );
 
     case 'badge':
+      if (!data.allies || data.allies.length === 0) {
+        return (
+          <div className="text-center text-gray-400 py-8">
+            <div className="text-lg font-semibold mb-2">No Ally Data</div>
+            <div className="text-sm">Play duo queue games to track ally synergy</div>
+          </div>
+        );
+      }
       return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {data.allies?.map((ally: any, index: number) => (
+          {data.allies.map((ally: any, index: number) => (
             <div key={index} className="bg-gray-700 rounded-lg p-4 text-center">
               <div className="font-bold text-white">{ally.name}</div>
               <div className="text-sm text-gray-400">{ally.role}</div>
               <div className="text-lg text-green-400">{ally.winRate}%</div>
               <div className="text-xs text-gray-500">{ally.games} games</div>
             </div>
-          )) || (
-            <div className="col-span-3 text-center text-gray-400">
-              No ally data available
-            </div>
-          )}
+          ))}
         </div>
       );
 
     case 'infographic':
+      if (!data.stats || Object.keys(data.stats).length === 0) {
+        return (
+          <div className="text-center text-gray-400 py-8">
+            <div className="text-lg font-semibold mb-2">No ARAM Data</div>
+            <div className="text-sm">Play ARAM games to see fun mode statistics</div>
+          </div>
+        );
+      }
       return (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
-          {data.stats && Object.entries(data.stats).map(([key, value]) => (
+          {Object.entries(data.stats).map(([key, value]) => (
             <div key={key} className="bg-gray-700 rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-blue-400">{value as string}</div>
               <div className="text-sm text-gray-300 capitalize">
@@ -167,6 +211,14 @@ export default function Viz({ kind, data }: VizProps) {
       );
 
     case 'goal':
+      if (!data.keyAreas || data.keyAreas.length === 0 || data.currentRank === "N/A") {
+        return (
+          <div className="text-center text-gray-400 py-8">
+            <div className="text-lg font-semibold mb-2">No Improvement Path</div>
+            <div className="text-sm">Play ranked games to get personalized improvement recommendations</div>
+          </div>
+        );
+      }
       return (
         <div className="space-y-4">
           <div className="bg-gray-700 rounded-lg p-4">
@@ -182,7 +234,7 @@ export default function Viz({ kind, data }: VizProps) {
             </div>
           </div>
           
-          {data.keyAreas?.map((area: any, index: number) => (
+          {data.keyAreas.map((area: any, index: number) => (
             <div key={index} className="bg-gray-700 rounded-lg p-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-300">{area.area}</span>

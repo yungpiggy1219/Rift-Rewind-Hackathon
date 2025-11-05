@@ -7,28 +7,22 @@ export async function computeSocial(ctx: { puuid: string; season: string }): Pro
   return {
     sceneId: "social_comparison",
     insight: {
-      summary: "Above average performance - you're in the top 35% of players in your rank",
+      summary: "No peer comparison data available",
       details: [
-        "Your KDA of 2.1 is 15% higher than the average Gold player",
-        "CS per minute ranks in the 60th percentile for your role",
-        "Vision score is slightly below average but improving",
-        "Your champion mastery depth exceeds 70% of similar players"
+        "Unable to compare performance against similar players",
+        "Social comparison requires rank and performance data",
+        "This feature benchmarks your stats against players of similar skill level"
       ],
-      action: "You're performing well above average - focus on consistency to climb to the next rank tier",
+      action: "Play ranked games to establish performance baselines for peer comparison",
       metrics: [
-        { label: "Overall Ranking", value: 65, unit: "th percentile", trend: "up" },
-        { label: "KDA vs Peers", value: 115, unit: "% of average", trend: "up" },
-        { label: "CS Ranking", value: 60, unit: "th percentile", trend: "stable" },
-        { label: "Mastery Depth", value: 70, unit: "th percentile", trend: "up" }
+        { label: "Overall Ranking", value: "N/A" },
+        { label: "KDA vs Peers", value: "N/A" },
+        { label: "CS Ranking", value: "N/A" },
+        { label: "Mastery Depth", value: "N/A" }
       ],
       vizData: {
         type: "bar",
-        comparisons: [
-          { category: "KDA", yourScore: 115, average: 100, percentile: 65 },
-          { category: "CS/Min", yourScore: 108, average: 100, percentile: 60 },
-          { category: "Vision", yourScore: 95, average: 100, percentile: 45 },
-          { category: "Damage", yourScore: 112, average: 100, percentile: 68 }
-        ]
+        comparisons: []
       }
     }
   };

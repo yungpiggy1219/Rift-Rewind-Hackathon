@@ -7,24 +7,23 @@ export async function computeSignatureStyle(ctx: { puuid: string; season: string
   return {
     sceneId: "signature_style",
     insight: {
-      summary: "Aggressive Carry Player - You prefer high-impact champions and decisive plays",
+      summary: "No playstyle data available",
       details: [
-        "75% of your games are on damage-dealing champions",
-        "You favor champions with mobility and outplay potential", 
-        "Your average game time suggests you prefer decisive, action-packed matches",
-        "Strong preference for mid-game power spikes and team fighting"
+        "Unable to analyze champion preferences and playstyle patterns",
+        "Signature style analysis requires detailed match history",
+        "This feature needs access to champion selection and performance data"
       ],
-      action: "Consider expanding your champion pool to include more utility-focused picks for team composition flexibility",
+      action: "Play ranked games with different champions to establish playstyle patterns",
       metrics: [
-        { label: "Playstyle", value: "Aggressive Carry", context: "High damage, high risk" },
-        { label: "Role Flexibility", value: 65, unit: "%", trend: "stable" },
-        { label: "Champion Pool", value: 12, unit: " champions", trend: "up" },
-        { label: "Signature Champions", value: 3, context: "Yasuo, Jinx, Lee Sin" }
+        { label: "Playstyle", value: "N/A" },
+        { label: "Role Flexibility", value: "N/A" },
+        { label: "Champion Pool", value: "N/A" },
+        { label: "Signature Champions", value: "N/A" }
       ],
       vizData: {
         type: "radar",
         categories: ["Aggression", "Farming", "Roaming", "Team Fighting", "Objective Control", "Vision"],
-        values: [85, 70, 60, 80, 65, 45],
+        values: [],
         maxValue: 100
       }
     }
