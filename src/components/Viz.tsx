@@ -1,7 +1,7 @@
 'use client';
 
 import { VizKind } from '@/src/lib/types';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Cell } from 'recharts';
 
 interface VizProps {
   kind: VizKind;
@@ -12,21 +12,30 @@ export default function Viz({ kind, data }: VizProps) {
   switch (kind) {
     case 'line':
       if (!data.series || data.series.length === 0) {
-        return (
-          <div className="h-64 w-full flex items-center justify-center bg-gray-800 rounded-lg">
-            <div className="text-center text-gray-400">
-              <div className="text-lg font-semibold mb-2">No Growth Data</div>
-              <div className="text-sm">Trend analysis requires multiple matches</div>
+        // Check for alternative data format (gold_share chartData)
+        if (!data.chartData || data.chartData.length === 0) {
+          return (
+            <div className="h-64 w-full flex items-center justify-center bg-gray-800 rounded-lg">
+              <div className="text-center text-gray-400">
+                <div className="text-lg font-semibold mb-2">No Data Available</div>
+                <div className="text-sm">Trend analysis requires multiple matches</div>
+              </div>
             </div>
-          </div>
-        );
+          );
+        }
       }
+      
+      // Use chartData if available (gold_share format), otherwise use series
+      const lineChartData = data.chartData || data.series?.[0]?.data || [];
+      const dataKey = data.chartData ? 'goldPerMinute' : 'value';
+      const xAxisKey = data.chartData ? 'month' : 'month';
+      
       return (
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data.series?.[0]?.data || []}>
+            <LineChart data={lineChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="month" stroke="#9CA3AF" />
+              <XAxis dataKey={xAxisKey} stroke="#9CA3AF" tick={{ fontSize: 11 }} />
               <YAxis stroke="#9CA3AF" />
               <Tooltip 
                 contentStyle={{ 
@@ -34,32 +43,62 @@ export default function Viz({ kind, data }: VizProps) {
                   border: '1px solid #374151',
                   borderRadius: '8px'
                 }}
+                formatter={(value: number) => {
+                  if (data.type === 'gold_statistics') {
+                    return [`${value} GPM`, 'Gold Per Minute'];
+                  }
+                  return value.toLocaleString();
+                }}
               />
-              {data.series?.map((series: any, index: number) => (
+              {data.series ? (
+                data.series.map((series: any, index: number) => (
+                  <Line 
+                    key={series.name}
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke={series.color || '#3B82F6'}
+                    strokeWidth={2}
+                  />
+                ))
+              ) : (
                 <Line 
-                  key={series.name}
                   type="monotone" 
-                  dataKey="value" 
-                  stroke={series.color || '#3B82F6'}
+                  dataKey={dataKey}
+                  stroke="#F59E0B"
                   strokeWidth={2}
+                  dot={{ fill: '#F59E0B' }}
                 />
-              ))}
+              )}
             </LineChart>
           </ResponsiveContainer>
         </div>
       );
 
     case 'bar':
+      // Handle different bar chart data formats
+      let barChartData;
+      
+      if (data.type === 'damage_statistics' || data.type === 'damage_taken_statistics' || data.type === 'healing_statistics') {
+        // New damage/healing stats format with categories and values arrays
+        barChartData = data.categories?.map((cat: string, i: number) => ({
+          category: cat,
+          value: data.values?.[i] || 0
+        })) || [];
+      } else {
+        // Legacy format with scores and benchmarks
+        barChartData = data.categories?.map((cat: string, i: number) => ({
+          category: cat,
+          score: data.scores?.[i] || 0,
+          benchmark: data.benchmarks?.[i] || 0
+        })) || [];
+      }
+      
       return (
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data.categories?.map((cat: string, i: number) => ({
-              category: cat,
-              score: data.scores?.[i] || 0,
-              benchmark: data.benchmarks?.[i] || 0
-            })) || []}>
+            <BarChart data={barChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="category" stroke="#9CA3AF" />
+              <XAxis dataKey="category" stroke="#9CA3AF" tick={{ fontSize: 11 }} />
               <YAxis stroke="#9CA3AF" />
               <Tooltip 
                 contentStyle={{ 
@@ -67,9 +106,27 @@ export default function Viz({ kind, data }: VizProps) {
                   border: '1px solid #374151',
                   borderRadius: '8px'
                 }}
+                formatter={(value: number) => {
+                  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+                  return value.toLocaleString();
+                }}
               />
-              <Bar dataKey="score" fill="#3B82F6" />
-              <Bar dataKey="benchmark" fill="#6B7280" opacity={0.5} />
+              {barChartData[0]?.value !== undefined ? (
+                <Bar dataKey="value">
+                  {barChartData.map((entry: any, index: number) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={data.colors?.[index] || "#3B82F6"} 
+                    />
+                  ))}
+                </Bar>
+              ) : (
+                <>
+                  <Bar dataKey="score" fill="#3B82F6" />
+                  <Bar dataKey="benchmark" fill="#6B7280" opacity={0.5} />
+                </>
+              )}
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -138,10 +138,33 @@ export async function set(key: string, value: any, ttl: number = DEFAULT_TTL): P
 
 export async function del(key: string): Promise<void> {
   try {
+    console.log(`[cache.del] Deleting cache key: ${key}`);
+    
     if (redis) {
       await redis.del(key);
+      console.log(`[cache.del] Deleted from Redis: ${key}`);
     } else {
+      // Delete from memory cache
+      const wasInMemory = memoryCache.has(key);
       memoryCache.delete(key);
+      if (wasInMemory) {
+        console.log(`[cache.del] Deleted from memory: ${key}`);
+      }
+      
+      // Delete from file cache (server-side only)
+      if (isServer && fs && path && CACHE_DIR) {
+        try {
+          const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+          const filePath = path.join(CACHE_DIR, `${safeKey}.json`);
+          
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log(`[cache.del] Deleted from file cache: ${key}`);
+          }
+        } catch (fileError) {
+          console.warn(`[cache.del] Error deleting file cache for ${key}:`, fileError);
+        }
+      }
     }
   } catch (error) {
     console.warn('Cache delete error:', error);
@@ -172,3 +195,54 @@ setInterval(() => {
     }
   }
 }, 60000); // Clean up every minute
+
+// Clear all cache entries matching a pattern (useful for clearing user-specific cache)
+export async function clearPattern(pattern: string): Promise<number> {
+  let clearedCount = 0;
+  
+  try {
+    console.log(`[cache.clearPattern] Clearing cache entries matching: ${pattern}`);
+    
+    if (redis) {
+      // For Redis, use SCAN to find matching keys
+      const keys = await redis.keys(pattern);
+      if (keys && keys.length > 0) {
+        await Promise.all(keys.map(key => redis!.del(key)));
+        clearedCount = keys.length;
+        console.log(`[cache.clearPattern] Cleared ${clearedCount} keys from Redis`);
+      }
+    } else {
+      // Clear from memory cache
+      for (const key of memoryCache.keys()) {
+        if (key.includes(pattern.replace('*', ''))) {
+          memoryCache.delete(key);
+          clearedCount++;
+        }
+      }
+      console.log(`[cache.clearPattern] Cleared ${clearedCount} keys from memory`);
+      
+      // Clear from file cache (server-side only)
+      if (isServer && fs && path && CACHE_DIR) {
+        try {
+          const files = fs.readdirSync(CACHE_DIR);
+          const patternMatch = pattern.replace('*', '');
+          
+          for (const file of files) {
+            if (file.includes(patternMatch)) {
+              const filePath = path.join(CACHE_DIR, file);
+              fs.unlinkSync(filePath);
+              clearedCount++;
+            }
+          }
+          console.log(`[cache.clearPattern] Cleared ${clearedCount} total keys including file cache`);
+        } catch (fileError) {
+          console.warn(`[cache.clearPattern] Error clearing file cache:`, fileError);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('[cache.clearPattern] Error:', error);
+  }
+  
+  return clearedCount;
+}

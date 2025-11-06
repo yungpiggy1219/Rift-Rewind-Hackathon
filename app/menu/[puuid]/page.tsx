@@ -54,6 +54,27 @@ export default function HomePage() {
   // Preloading state
   const [isPreloading, setIsPreloading] = useState(false);
   const [preloadStatus, setPreloadStatus] = useState('');
+  const [isClearingCache, setIsClearingCache] = useState(false);
+
+  // Clear cache function
+  const clearCache = async () => {
+    setIsClearingCache(true);
+    try {
+      const response = await fetch(`/api/clear-cache?puuid=${puuid}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[Menu] Cache cleared:', data);
+        alert(`Successfully cleared ${data.keysCleared?.length || 0} cache entries. The data will be refreshed on next load.`);
+      } else {
+        throw new Error('Failed to clear cache');
+      }
+    } catch (error) {
+      console.error('[Menu] Error clearing cache:', error);
+      alert('Failed to clear cache. Please try again.');
+    } finally {
+      setIsClearingCache(false);
+    }
+  };
 
   // Force landscape orientation on mobile
   useEffect(() => {
@@ -180,7 +201,7 @@ export default function HomePage() {
       // Step 2: Fetch all match details in batches
       setPreloadStatus(`Found ${matchIds.length} matches. Loading match details...`);
       
-      const batchSize = 50; // Reduced batch size to avoid rate limiting
+      const batchSize = 100; // Reduced batch size to avoid rate limiting
       let processedCount = 0;
       let successCount = 0;
       let failCount = 0;
@@ -385,6 +406,26 @@ export default function HomePage() {
             <div className="text-sm text-white font-medium">{preloadStatus}</div>
           </div>
         )}
+        
+        {/* Clear Cache Button */}
+        <button
+          onClick={clearCache}
+          disabled={isClearingCache || isPreloading}
+          className="w-full flex items-center justify-center gap-2 px-6 py-2 bg-gray-700/80 hover:bg-gray-600/80 disabled:bg-gray-800/50 backdrop-blur-sm text-white rounded-lg transition-all duration-200 font-medium text-sm border border-white/20"
+        >
+          {isClearingCache ? (
+            <>
+              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+              Clearing Cache...
+            </>
+          ) : (
+            <>
+              <RotateCcw className="w-4 h-4" />
+              Clear Cache & Refresh Data
+            </>
+          )}
+        </button>
+        
         <button
           onClick={startRecap}
           disabled={isPreloading}

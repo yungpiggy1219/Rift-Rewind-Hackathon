@@ -106,7 +106,7 @@ export async function computeSignatureChampion(ctx: { puuid: string; matchIds: s
     const top3Champions = championList.slice(0, 3);
     
     return {
-      sceneId: "signature_style",
+      sceneId: "signature_champion",
       vizKind: "radar",
       insight: {
         summary: `${mostPlayedChampion.championName} is your signature champion. ${mostPlayedChampion.games} games played with ${winRate.toFixed(1)}% win rate.`,
@@ -181,7 +181,7 @@ export async function computeSignatureChampion(ctx: { puuid: string; matchIds: s
     
     // Fallback to mock data if real data fails
     return {
-      sceneId: "signature_style",
+      sceneId: "signature_champion",
       vizKind: "radar",
       insight: {
         summary: "Unable to load champion data. Using sample data for demonstration.",

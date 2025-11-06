@@ -5,15 +5,15 @@ export type SceneId =
   | "damage_share"
   | "damage_taken"
   | "total_healed"
-  | "gold_share"
-  | "growth_over_time" 
-  | "peak_performance" 
-  | "weaknesses" 
-  | "allies" 
-  | "aram" 
-  | "social_comparison" 
-  | "legacy" 
-  | "path_forward";
+  | "gold_share";
+  // | "growth_over_time" 
+  // | "peak_performance" 
+  // | "weaknesses" 
+  // | "allies" 
+  // | "aram" 
+  // | "social_comparison" 
+  // | "legacy" 
+  // | "path_forward";
 
 export interface SceneMetric {
   label: string;
@@ -86,7 +86,12 @@ export interface MatchParticipant {
   deaths: number;
   assists: number;
   totalDamageDealt: number;
+  totalDamageDealtToChampions?: number;
+  totalDamageTaken?: number;
+  totalHeal?: number;
+  totalHealsOnTeammates?: number;
   goldEarned: number;
+  goldSpent?: number;
   win: boolean;
   role: string;
   lane: string;

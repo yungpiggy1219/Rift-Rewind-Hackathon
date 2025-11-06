@@ -3,6 +3,10 @@ import { computeYearInMotion } from './compute/computeYearInMotion';
 import { computeSignatureChampion } from './compute/computeSignatureChampion';
 import { computeGrowth } from './compute/computeGrowth';
 import { computePeak } from './compute/computePeak';
+import { computeDamageShare } from './compute/computeDamageShare';
+import { computeDamageTaken } from './compute/computeDamageTaken';
+import { computeHealed } from './compute/computeHealed';
+import { computeGoldShare } from './compute/computeGoldShare';
 // import { computeWeaknesses } from './compute/computeWeaknesses';
 // import { computeAllies } from './compute/computeAllies';
 // import { computeAram } from './compute/computeAram';
@@ -23,30 +27,31 @@ export const sceneRegistry: Record<SceneId, SceneDefinition> = {
     vizKind: "heatmap"
   },
   signature_champion: {
-    label: "Signature Style",
+    label: "Signature Champion",
     compute: computeSignatureChampion,
     vizKind: "radar"
   },
   damage_share: {
     label: "Damage Share",
-    compute: computeSignatureChampion,
-    vizKind: "radar"
+    compute: computeDamageShare,
+    vizKind: "bar"
   },
   damage_taken: {
     label: "Damage Taken",
-    compute: computeSignatureChampion,
-    vizKind: "radar"
+    compute: computeDamageTaken,
+    vizKind: "bar"
   },
   total_healed: {
     label: "Total Healed",
-    compute: computeSignatureChampion,
-    vizKind: "radar"
+    compute: computeHealed,
+    vizKind: "bar"
   },
   gold_share: {
     label: "Gold Share",
-    compute: computeSignatureChampion,
-    vizKind: "radar"
+    compute: computeGoldShare,
+    vizKind: "line"
   },
+
   growth_over_time: {
     label: "Growth Over Time",
     compute: computeGrowth,
@@ -57,34 +62,35 @@ export const sceneRegistry: Record<SceneId, SceneDefinition> = {
     compute: computePeak,
     vizKind: "highlight"
   },
- /*  weaknesses: {
+    /*
+  weaknesses: {
     label: "Areas for Growth",
-    compute: computeWeaknesses,
+    compute: async () => ({ sceneId: "weaknesses", vizKind: "bar", insight: { summary: "Coming soon", details: [], action: "", metrics: [], vizData: {} } }),
     vizKind: "bar"
   },
   allies: {
     label: "Trusted Allies",
-    compute: computeAllies,
+    compute: async () => ({ sceneId: "allies", vizKind: "badge", insight: { summary: "Coming soon", details: [], action: "", metrics: [], vizData: {} } }),
     vizKind: "badge"
   },
   aram: {
     label: "ARAM Adventures",
-    compute: computeAram,
+    compute: async () => ({ sceneId: "aram", vizKind: "infographic", insight: { summary: "Coming soon", details: [], action: "", metrics: [], vizData: {} } }),
     vizKind: "infographic"
   },
   social_comparison: {
     label: "Among Peers",
-    compute: computeSocial,
+    compute: async () => ({ sceneId: "social_comparison", vizKind: "bar", insight: { summary: "Coming soon", details: [], action: "", metrics: [], vizData: {} } }),
     vizKind: "bar"
   },
   legacy: {
     label: "Your Legacy",
-    compute: computeLegacy,
-    vizKind: "highlight"
+    compute: async () => ({ sceneId: "legacy", vizKind: "timeline", insight: { summary: "Coming soon", details: [], action: "", metrics: [], vizData: {} } }),
+    vizKind: "timeline"
   },
   path_forward: {
     label: "Path Forward",
-    compute: computePathForward,
+    compute: async () => ({ sceneId: "path_forward", vizKind: "goal", insight: { summary: "Coming soon", details: [], action: "", metrics: [], vizData: {} } }),
     vizKind: "goal"
   } */
 };
@@ -96,14 +102,15 @@ export const SCENE_ORDER: SceneId[] = [
   "damage_taken",
   "total_healed",
   "gold_share",
-  "growth_over_time",
-  "peak_performance",
-  "weaknesses",
-  "allies",
-  "aram",
-  "social_comparison",
-  "legacy",
-  "path_forward"
+  // "growth_over_time",
+  // "peak_performance"
+  // Uncomment as these are implemented:
+  // "weaknesses",
+  // "allies",
+  // "aram",
+  // "social_comparison",
+  // "legacy",
+  // "path_forward"
 ];
 
 export function getSceneDefinition(sceneId: SceneId): SceneDefinition {

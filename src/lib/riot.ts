@@ -174,6 +174,7 @@ export async function fetchMatchDetail(matchId: string, targetPuuid?: string): P
           totalHeal?: number;
           totalHealsOnTeammates?: number;
           goldEarned?: number;
+          goldSpent?: number;
           win?: boolean;
           teamPosition?: string;
           role?: string;
@@ -229,6 +230,7 @@ export async function fetchMatchDetail(matchId: string, targetPuuid?: string): P
           totalHeal: p.totalHeal,
           totalHealsOnTeammates: p.totalHealsOnTeammates,
           goldEarned: p.goldEarned!,
+          goldSpent: p.goldSpent,
           win: p.win!,
           role: p.individualPosition || p.role || '',
           lane: p.lane || 'NONE',
