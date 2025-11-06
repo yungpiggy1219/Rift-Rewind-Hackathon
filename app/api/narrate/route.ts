@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as cache from '@/src/lib/cache';
 import { AgentId, SceneId, SceneInsight, NarrationResponse } from '@/src/lib/types';
+import { generateAgentNarration } from '@/lib/aws-bedrock';
 
-// For now, return a simple narration without calling external AI
-// You can integrate AWS Bedrock or other AI services later
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -32,11 +31,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(cachedNarration);
     }
 
-    console.log(`[Narrate API] Cache miss, generating narration...`);
+    console.log(`[Narrate API] Cache miss, generating narration with AWS Bedrock...`);
 
-    // Generate simple narration based on the insight
-    // This is a placeholder - you can integrate with AWS Bedrock or other AI services
-    const narration = generateSimpleNarration(agentId, sceneId, insight);
+    // Check if AWS credentials are configured
+    const hasAWSCredentials = process.env.AWS_ACCESS_KEY_ID && 
+                              process.env.AWS_SECRET_ACCESS_KEY &&
+                              process.env.AWS_REGION;
+
+    let narration: NarrationResponse;
+
+    if (hasAWSCredentials) {
+      try {
+        // Use AWS Bedrock for AI-generated narration
+        narration = await generateAgentNarration(agentId, sceneId, insight, playerName || 'Summoner');
+        console.log(`[Narrate API] Generated AI narration successfully`);
+      } catch (awsError) {
+        console.error('[Narrate API] AWS Bedrock error, falling back to simple narration:', awsError);
+        // Fall back to simple narration if AWS fails
+        narration = generateSimpleNarration(agentId, sceneId, insight, playerName);
+      }
+    } else {
+      console.log(`[Narrate API] AWS credentials not configured, using simple narration`);
+      // Use simple narration if AWS not configured
+      narration = generateSimpleNarration(agentId, sceneId, insight, playerName);
+    }
 
     // Cache the narration for 1 hour
     await cache.setLong(cacheKey, narration);
@@ -55,22 +73,25 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Simple narration generator (placeholder for AI integration)
+// Simple narration generator (fallback when AWS is not available)
 function generateSimpleNarration(
   agentId: AgentId,
   sceneId: SceneId,
-  insight: SceneInsight
+  insight: SceneInsight,
+  playerName?: string
 ): NarrationResponse {
+  const name = playerName || 'Summoner';
+  
   // Agent personalities
   const agentIntros: Record<AgentId, string> = {
-    'velkoz': "Greetings, mortal. I am Vel'Koz, the Eye of the Void, and I have analyzed your performance.",
-    'teemo': "Hehe! Teemo here! I've been tracking your moves all year long!",
-    'heimer': "Eureka! Professor Heimerdinger at your service. I've computed some fascinating metrics!",
-    'kayle': "Justice has been served. I, Kayle the Righteous, have observed your journey.",
-    'draven': "DRAVEN has reviewed your plays, and here's what the BEST has to say!"
+    'velkoz': `Greetings, mortal ${name}. I am Vel'Koz, the Eye of the Void, and I have analyzed your performance.`,
+    'teemo': `Hehe! Captain Teemo here, ${name}! I've been tracking your moves all year long!`,
+    'heimer': `Eureka! Professor Heimerdinger at your service, ${name}. I've computed some fascinating metrics!`,
+    'kayle': `${name}, justice has been served. I, Kayle the Righteous, have observed your journey.`,
+    'draven': `Welcome to the League of Draven, ${name}! DRAVEN has reviewed your plays!`
   };
 
-  const intro = agentIntros[agentId] || "Let me tell you about your year...";
+  const intro = agentIntros[agentId] || `Let me tell you about your year, ${name}...`;
   
   return {
     title: `${sceneId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
