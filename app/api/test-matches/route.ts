@@ -36,27 +36,26 @@ export async function GET(request: NextRequest) {
 
     console.log(`[test-matches] Starting fetch for PUUID: ${puuid}, Season: ${season}`);
 
-    // Calculate season timestamps
-    const seasonYear = parseInt(season);
-    const startTimestamp = new Date(`${seasonYear}-01-01T00:00:00Z`).getTime();
-    const endTimestamp = new Date(`${seasonYear}-12-31T23:59:59Z`).getTime();
+    // Calculate season timestamps (January 1, 2025 to November 5, 2025)
+    const startTimestamp = 1735689600; // January 1st, 2025 00:00:00 UTC in seconds
+    const endTimestamp = 1762387199; // November 5th, 2025 23:59:59 UTC in seconds
 
-    console.log(`[test-matches] Season range: ${startTimestamp} to ${endTimestamp}`);
+    console.log(`[test-matches] Season range: ${new Date(startTimestamp * 1000).toISOString()} to ${new Date(endTimestamp * 1000).toISOString()}`);
 
     // Fetch all match IDs
     const allMatchIds: string[] = [];
     let start = 0;
     const batchSize = 100;
-    const maxBatches = 20;
     let batchCount = 0;
 
-    while (batchCount < maxBatches) {
-      console.log(`[test-matches] Fetching batch ${batchCount + 1} at start=${start}`);
+    while (true) {
+      batchCount++;
+      console.log(`[test-matches] Test: Fetching batch ${batchCount} at start=${start}`);
       
       const path = `/lol/match/v5/matches/by-puuid/${puuid}/ids?count=${batchSize}&start=${start}`;
       const ids = await riotRequest(path) as string[];
       
-      console.log(`[test-matches] Batch ${batchCount + 1}: Got ${ids.length} match IDs`);
+      console.log(`[test-matches] Batch ${batchCount}: Got ${ids.length} match IDs`);
 
       if (ids.length === 0) {
         console.log(`[test-matches] No more matches, stopping`);
@@ -64,7 +63,6 @@ export async function GET(request: NextRequest) {
       }
 
       allMatchIds.push(...ids);
-      batchCount++;
 
       if (ids.length < batchSize) {
         console.log(`[test-matches] Got fewer than ${batchSize} matches, reached end`);
@@ -74,15 +72,22 @@ export async function GET(request: NextRequest) {
       start += ids.length;
     }
 
-    console.log(`[test-matches] FINAL RESULT: ${allMatchIds.length} total match IDs fetched`);
+    // Remove duplicates (though Riot API shouldn't return duplicates)
+    const uniqueMatchIds = [...new Set(allMatchIds)];
+
+    // Store as comma-separated string
+    const matchesString = uniqueMatchIds.join(',');
+
+    console.log(`[test-matches] FINAL RESULT: ${uniqueMatchIds.length} unique match IDs collected`);
 
     return NextResponse.json({
       success: true,
       puuid,
       season,
-      totalMatchIds: allMatchIds.length,
-      matchIds: allMatchIds.slice(0, 10), // Show first 10 IDs as sample
-      note: 'Only counting match IDs, not fetching details to avoid rate limits'
+      totalMatches: uniqueMatchIds.length,
+      matchesString,
+      duplicatesRemoved: allMatchIds.length - uniqueMatchIds.length,
+      note: `All match IDs stored as comma-separated string, ${uniqueMatchIds.length} unique matches found`
     });
   } catch (error) {
     console.error('[test-matches] Error:', error);

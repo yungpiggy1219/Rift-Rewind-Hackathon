@@ -82,7 +82,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleDebugMatchHistory = async () => {
+  const fetchAllMatchIds = async () => {
     if (!gameName || !tagLine) {
       setError("Please enter game name and tag line first");
       return;
@@ -107,25 +107,27 @@ export default function LoginPage() {
 
       const puuid = summonerData.puuid;
 
-      // Fetch match IDs
-      const matchResponse = await fetch(`/api/test-matches?puuid=${puuid}&season=2025`);
+      // Fetch and cache all match IDs for 2025
+      const matchResponse = await fetch(`/api/match-ids?puuid=${puuid}`);
       const matchData = await matchResponse.json();
 
       if (!matchResponse.ok) {
-        throw new Error(matchData.error || "Failed to fetch matches");
+        throw new Error(matchData.error || "Failed to fetch match IDs");
       }
 
       setDebugResult({
         puuid,
-        matches: matchData.totalMatchIds || 0,
-        hours: 0 // Not fetching hours to avoid rate limits
+        matches: matchData.totalMatches || 0,
+        hours: 0
       });
+
+      console.log('Match IDs fetched and cached:', matchData);
     } catch (error: unknown) {
-      console.error("Error fetching match history:", error);
+      console.error("Error fetching match IDs:", error);
       setError(
         error instanceof Error
           ? error.message
-          : "An error occurred while fetching match history"
+          : "An error occurred while fetching match IDs"
       );
     } finally {
       setDebugLoading(false);
@@ -240,20 +242,20 @@ export default function LoginPage() {
               )}
             </button>
 
-            {/* Debug Button */}
+            {/* Fetch Match IDs Button */}
             <button
               type="button"
-              onClick={handleDebugMatchHistory}
+              onClick={fetchAllMatchIds}
               disabled={debugLoading || !gameName || !tagLine}
               className="w-full px-6 py-3 bg-yellow-600/90 hover:bg-yellow-700/90 disabled:bg-gray-600/50 text-white rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-xl border border-white/20 backdrop-blur-sm"
             >
               {debugLoading ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                  Fetching Match History...
+                  Fetching Match IDs...
                 </>
               ) : (
-                "🔍 Debug: Get 2025 Match History"
+                "🔍 Fetch & Cache 2025 Match IDs"
               )}
             </button>
 
@@ -263,8 +265,8 @@ export default function LoginPage() {
                 <h3 className="text-green-300 font-bold mb-2">Match History Result:</h3>
                 <div className="text-white text-sm space-y-1">
                   <p>PUUID: <span className="font-mono text-xs">{debugResult.puuid?.substring(0, 20)}...</span></p>
-                  <p>Total Match IDs Found: <span className="font-bold text-green-400">{debugResult.matches}</span></p>
-                  <p className="text-xs text-gray-400 italic">Note: Only counting IDs to avoid rate limits</p>
+                  <p>Total Match IDs: <span className="font-bold text-green-400">{debugResult.matches}</span></p>
+                  <p className="text-xs text-gray-400 italic">Match IDs fetched and cached for 2025 season</p>
                 </div>
               </div>
             )}

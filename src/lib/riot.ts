@@ -119,23 +119,22 @@ export async function computeAggregates(puuid: string, season: string): Promise<
   const cached = await cache.get<PlayerAggregates>(cacheKey);
   if (cached) return cached;
 
-  // Determine season year range (e.g., 2025 -> Jan 1 2025 to Dec 31 2025)
-  const seasonYear = parseInt(season);
-  const startTimestamp = new Date(`${seasonYear}-01-01T00:00:00Z`).getTime();
-  const endTimestamp = new Date(`${seasonYear}-12-31T23:59:59Z`).getTime();
+  // Determine season year range (Jan 1 2025 to Nov 5 2025)
+    const startTimestamp = 1735689600; // January 1st, 2025 00:00:00 UTC in seconds
+    const endTimestamp = 1762387199; // November 5th, 2025 23:59:59 UTC in seconds
 
-  // Step 1: Fetch all match IDs (just IDs, no details yet)
-  const allMatchIds: string[] = [];
+  console.log(`[computeAggregates] Fetching match IDs for ${season}`);
+  
+  // Step 1: Fetch all match IDs using dedicated endpoint (which caches them)
+  let allMatchIds: string[] = [];
   let start = 0;
   const batchSize = 100;
-  const maxBatches = 20; // Max 2000 matches
   let batchCount = 0;
   
-  console.log(`[computeAggregates] Fetching match IDs for ${season} (${startTimestamp} to ${endTimestamp})`);
-  
-  // Use /lol/match/v5/matches/by-puuid/{puuid}/ids to get all match IDs
-  while (batchCount < maxBatches) {
-    console.log(`[computeAggregates] Fetching batch ${batchCount + 1} at start=${start}`);
+  // Fetch all match IDs until we get less than a full batch
+  while (true) {
+    batchCount++;
+    console.log(`[computeAggregates] Fetching batch ${batchCount} at start=${start}`);
     
     const { ids, nextStart } = await fetchMatchIds(puuid, undefined, start, batchSize);
     
@@ -148,9 +147,7 @@ export async function computeAggregates(puuid: string, season: string): Promise<
     console.log(`[computeAggregates] Got ${ids.length} match IDs in batch ${batchCount + 1}`);
     
     allMatchIds.push(...ids);
-    batchCount++;
     
-    // If we got fewer matches than requested, we've reached the end
     if (ids.length < batchSize) {
       console.log(`[computeAggregates] Got fewer than ${batchSize} matches, reached end of history`);
       break;
@@ -159,7 +156,10 @@ export async function computeAggregates(puuid: string, season: string): Promise<
     start = nextStart;
   }
   
-  console.log(`[computeAggregates] Total match IDs collected: ${allMatchIds.length}`);
+  // Remove duplicates
+  allMatchIds = [...new Set(allMatchIds)];
+  
+  console.log(`[computeAggregates] Total unique match IDs collected: ${allMatchIds.length}`);
 
   // Step 2: Initialize aggregates structure
   const months: Record<string, { matches: number; hours: number }> = {};
@@ -268,8 +268,8 @@ export async function computeAggregates(puuid: string, season: string): Promise<
 
   const aggregates: PlayerAggregates = {
     timeframe: {
-      start: `${seasonYear}-01-01`,
-      end: `${seasonYear}-12-31`
+      start: '2025-01-01',
+      end: '2025-11-05'
     },
     totals: {
       matches: totalMatches,

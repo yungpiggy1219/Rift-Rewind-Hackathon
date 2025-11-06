@@ -85,6 +85,7 @@ export default function HomePage() {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
       dedupingInterval: 60000, // Cache for 60 seconds
+      shouldRetryOnError: false, // Don't retry on error
     }
   );
 
@@ -96,6 +97,7 @@ export default function HomePage() {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
       dedupingInterval: 60000, // Cache for 60 seconds
+      shouldRetryOnError: false, // Don't retry on error
     }
   );
 
@@ -107,6 +109,7 @@ export default function HomePage() {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
       dedupingInterval: 60000, // Cache for 60 seconds
+      shouldRetryOnError: false, // Don't retry on error
     }
   );
 

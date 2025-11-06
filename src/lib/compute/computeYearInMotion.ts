@@ -3,41 +3,25 @@ import { computeAggregates } from '../riot';
 
 export async function computeYearInMotion(ctx: { puuid: string; season: string }): Promise<ScenePayload> {
   try {
+    // For scene 1, we only need basic stats: total matches, total hours, and peak month
     const aggregates = await computeAggregates(ctx.puuid, ctx.season);
     
-    // Calculate activity heatmap data
-    const monthlyActivity = Object.entries(aggregates.months).map(([month, data]) => ({
-      month,
-      matches: data.matches,
-      hours: Math.round(data.hours * 10) / 10,
-      intensity: Math.min(data.matches / 10, 1) // Normalize to 0-1 scale
-    }));
-
-    // Find peak activity month (by hours spent, not just matches)
-    const peakMonth = monthlyActivity.reduce((peak, current) => 
-      current.hours > peak.hours ? current : peak
+    // Find peak month by hours played
+    const peakMonth = Object.entries(aggregates.months).reduce((peak, [month, data]) => 
+      data.hours > peak.hours ? { month, hours: data.hours } : peak,
+      { month: 'N/A', hours: 0 }
     );
-
-    // Calculate consistency score
-    const avgMatches = aggregates.totals.matches / Math.max(monthlyActivity.length, 1);
-    const variance = monthlyActivity.reduce((sum, month) => 
-      sum + Math.pow(month.matches - avgMatches, 2), 0) / Math.max(monthlyActivity.length, 1);
-    const consistencyScore = Math.max(0, 100 - (Math.sqrt(variance) / avgMatches) * 100);
 
     return {
       sceneId: "year_in_motion",
       insight: {
-        summary: `${aggregates.totals.matches} matches. ${Math.round(aggregates.totals.hours)} hours of data collected. ${peakMonth.month} — your peak of activity — demonstrated unrelenting commitment. Fascinating levels of consistency... for a human.`,
+        summary: `${aggregates.totals.matches} matches. ${Math.round(aggregates.totals.hours)} hours of data collected. ${peakMonth.month} — your peak of activity.`,
         details: [
           `You played ${aggregates.totals.matches} matches in ${ctx.season}`,
           `Total time invested: ${Math.round(aggregates.totals.hours)} hours`,
-          `Peak activity: ${peakMonth.month} with ${Math.round(peakMonth.hours)} hours played`,
-          `${monthlyActivity.length} months of gameplay tracked`,
-          `Consistency score: ${Math.round(consistencyScore)}%`
+          `Peak activity: ${peakMonth.month} with ${Math.round(peakMonth.hours)} hours played`
         ],
-        action: consistencyScore < 50 
-          ? "Consider establishing a more regular play schedule to build momentum"
-          : "Your consistent engagement shows dedication - maintain this rhythm",
+        action: "Your gaming journey shows dedication - keep pushing forward",
         metrics: [
           {
             label: "Total Matches",
@@ -53,20 +37,14 @@ export async function computeYearInMotion(ctx: { puuid: string; season: string }
             label: "Peak Month",
             value: peakMonth.month,
             context: `${Math.round(peakMonth.hours)} hours`
-          },
-          {
-            label: "Consistency",
-            value: Math.round(consistencyScore),
-            unit: "%",
-            trend: consistencyScore > 60 ? "up" : "stable"
           }
         ],
         vizData: {
-          type: "heatmap",
-          months: monthlyActivity,
+          type: "basic_stats",
+          totalMatches: aggregates.totals.matches,
+          totalHours: Math.round(aggregates.totals.hours),
           peakMonth: peakMonth.month,
-          avgMatches: Math.round(avgMatches),
-          totalHours: Math.round(aggregates.totals.hours)
+          peakHours: Math.round(peakMonth.hours)
         }
       }
     };
@@ -85,15 +63,14 @@ export async function computeYearInMotion(ctx: { puuid: string; season: string }
         metrics: [
           { label: "Total Matches", value: 0, unit: "" },
           { label: "Time Invested", value: 0, unit: " hours" },
-          { label: "Peak Month", value: "N/A" },
-          { label: "Consistency", value: 0, unit: "%" }
+          { label: "Peak Month", value: "N/A" }
         ],
         vizData: {
-          type: "heatmap",
-          months: [],
-          peakMonth: null,
-          avgMatches: 0,
-          totalHours: 0
+          type: "basic_stats",
+          totalMatches: 0,
+          totalHours: 0,
+          peakMonth: "N/A",
+          peakHours: 0
         }
       }
     };
