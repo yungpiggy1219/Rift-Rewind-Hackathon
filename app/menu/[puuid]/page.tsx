@@ -155,90 +155,116 @@ export default function HomePage() {
 
   const startRecap = async () => {
     setIsPreloading(true);
-    setPreloadStatus('Checking cached data...');
+    setPreloadStatus('Fetching match list...');
     
     try {
       // Step 1: Get all match IDs
       const matchIdsResponse = await fetch(`/api/match-ids?puuid=${puuid}`);
+      if (!matchIdsResponse.ok) {
+        throw new Error('Failed to fetch match IDs');
+      }
+      
       const matchIdsData = await matchIdsResponse.json();
       const matchIds: string[] = matchIdsData.matchIds || [];
       
-      console.log(`[Menu] Found ${matchIds.length} total matches to cache`);
-      
-      // Step 2: Check if we already have cached data by testing a few random matches
-      const sampleSize = Math.min(5, matchIds.length);
-      const sampleMatches = matchIds.slice(0, sampleSize);
-      
-      setPreloadStatus('Checking existing cache...');
-      let alreadyCachedCount = 0;
-      
-      for (const matchId of sampleMatches) {
-        try {
-          const response = await fetch(`/api/matches/${matchId}`, { 
-            method: 'GET',
-            cache: 'force-cache' // Try to get from cache only
-          });
-          if (response.ok) {
-            alreadyCachedCount++;
-          }
-        } catch {
-          // Not cached
-        }
-      }
-      
-      const cacheRatio = alreadyCachedCount / sampleSize;
-      
-      if (cacheRatio >= 0.8) {
-        // Most data is already cached, skip caching
-        console.log(`[Menu] Data already cached (${Math.round(cacheRatio * 100)}% cache hit rate)`);
-        setPreloadStatus(`Data already cached. Loading recap...`);
-        
+      if (matchIds.length === 0) {
+        setPreloadStatus('No matches found for 2025. Continuing anyway...');
         setTimeout(() => {
           router.push(`/recap/${puuid}?agent=velkoz&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
-        }, 500);
+        }, 1500);
         return;
       }
       
-      // Step 3: Cache missing data
-      setPreloadStatus(`Found ${matchIds.length} matches. Caching match details...`);
+      console.log(`[Menu] Found ${matchIds.length} total matches to process`);
       
-      const batchSize = 10;
-      let cachedCount = 0;
+      // Step 2: Fetch all match details in batches
+      setPreloadStatus(`Found ${matchIds.length} matches. Loading match details...`);
+      
+      const batchSize = 5; // Reduced batch size to avoid rate limiting
+      let processedCount = 0;
+      let successCount = 0;
+      let failCount = 0;
       
       for (let i = 0; i < matchIds.length; i += batchSize) {
         const batch = matchIds.slice(i, i + batchSize);
-        setPreloadStatus(`Caching matches ${cachedCount + 1}-${Math.min(cachedCount + batchSize, matchIds.length)} of ${matchIds.length}...`);
+        const batchEnd = Math.min(i + batchSize, matchIds.length);
         
+        setPreloadStatus(`Loading matches ${i + 1}-${batchEnd} of ${matchIds.length}... (${successCount} success, ${failCount} failed)`);
+        
+        // Fetch matches in parallel within the batch
         const batchPromises = batch.map(async (matchId) => {
           try {
+            console.log(`[Menu] Fetching match ${matchId}`);
             const response = await fetch(`/api/matches/${matchId}`);
+            
             if (response.ok) {
-              await response.json(); // This will cache the match data
-              return true;
+              const matchData = await response.json();
+              console.log(`[Menu] ✓ Successfully cached match ${matchId}`);
+              return { success: true, matchId };
+            } else {
+              let errorMessage = `HTTP ${response.status} ${response.statusText}`;
+              try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorMessage;
+                console.error(`[Menu] ✗ Failed to fetch match ${matchId}:`, {
+                  status: response.status,
+                  statusText: response.statusText,
+                  error: errorData
+                });
+              } catch (parseError) {
+                const errorText = await response.text();
+                console.error(`[Menu] ✗ Failed to fetch match ${matchId}:`, {
+                  status: response.status,
+                  statusText: response.statusText,
+                  body: errorText
+                });
+              }
+              return { success: false, matchId, error: errorMessage };
             }
-            return false;
           } catch (error) {
-            console.warn(`Failed to cache match ${matchId}:`, error);
-            return false;
+            console.error(`[Menu] ✗ Exception while fetching match ${matchId}:`, {
+              error: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined
+            });
+            return { success: false, matchId, error: error instanceof Error ? error.message : String(error) };
           }
         });
         
         const results = await Promise.all(batchPromises);
-        cachedCount += results.filter(Boolean).length;
         
-        // Small delay between batches to avoid overwhelming the API
+        // Count successes and failures
+        results.forEach(result => {
+          if (result.success) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        });
+        
+        processedCount += results.length;
+        
+        // Small delay between batches to avoid overwhelming the API (respect rate limits)
         if (i + batchSize < matchIds.length) {
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise(resolve => setTimeout(resolve, 300));
         }
       }
       
-      console.log(`[Menu] Successfully cached ${cachedCount} out of ${matchIds.length} matches`);
-      setPreloadStatus(`Cached ${cachedCount} matches. Loading recap...`);
+      console.log(`[Menu] Finished processing ${processedCount} matches: ${successCount} success, ${failCount} failed`);
       
-      // Step 4: Navigate to recap after caching is complete
+      if (successCount === 0) {
+        setPreloadStatus('Failed to load match data. Check your API key and try again.');
+        setTimeout(() => {
+          setIsPreloading(false);
+        }, 3000);
+        return;
+      }
+      
+      setPreloadStatus(`Loaded ${successCount}/${matchIds.length} matches. Starting recap...`);
+      
+      // Step 3: Navigate to recap after caching is complete
       setTimeout(() => {
         router.push(`/recap/${puuid}?agent=velkoz&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
-      }, 500);
+      }, 1000);
       
     } catch (error) {
       console.error('Error preloading match data:', error);
@@ -247,7 +273,7 @@ export default function HomePage() {
       // Navigate anyway after a short delay
       setTimeout(() => {
         router.push(`/recap/${puuid}?agent=velkoz&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
-      }, 1000);
+      }, 2000);
     }
   };
 

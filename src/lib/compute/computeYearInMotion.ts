@@ -1,35 +1,54 @@
-import { ScenePayload, MatchData } from '../types';
+import { ScenePayload, MatchParticipant } from '../types';
 import { fetchMatchDetail } from '../riot';
+
+// Type guard to check if participant has full match data
+function isFullParticipant(participant: MatchParticipant): participant is MatchParticipant {
+  return participant && 'kills' in participant && 'deaths' in participant && 'assists' in participant;
+}
 
 export async function computeYearInMotion(ctx: { puuid: string; matchIds: string[] }): Promise<ScenePayload> {
   console.log(`[computeYearInMotion] Starting for ${ctx.puuid} - CALCULATING REAL STATS`);
   
   try {
     const matchIds = ctx.matchIds || [];
-    console.log(`[computeYearInMotion] Using ${matchIds.length} cached match IDs`);
+    console.log(`[computeYearInMotion] Processing ${matchIds.length} match IDs from cache`);
     
     if (matchIds.length === 0) {
       throw new Error('No matches found');
     }
     
-    // Step 2: Fetch match details for analysis
+    // Step 2: Fetch match details from cache for analysis
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const monthlyHours: Record<string, number> = {};
     let totalMatches = 0;
     let totalSeconds = 0;
     let bestKDA = { kda: 0, kills: 0, deaths: 0, assists: 0, matchId: '', date: '' };
+    let cacheHits = 0;
+    let cacheMisses = 0;
     
-    // Process matches in batches to avoid overwhelming the API
-    const batchSize = 10;
+    // Process matches in batches
+    const batchSize = 20; // Increased since we're reading from cache
+    console.log(`[computeYearInMotion] Processing in batches of ${batchSize}...`);
+    
     for (let i = 0; i < matchIds.length; i += batchSize) {
       const batch = matchIds.slice(i, i + batchSize);
+      console.log(`[computeYearInMotion] Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(matchIds.length / batchSize)} (${batch.length} matches)`);
       
       const matchPromises = batch.map(async (matchId) => {
         try {
-          // Use cached data directly via fetchMatchDetail
-          return await fetchMatchDetail(matchId);
+          // fetchMatchDetail automatically reads from cache first
+          const match = await fetchMatchDetail(matchId, ctx.puuid);
+          if (match) {
+            cacheHits++;
+            return match;
+          } else {
+            cacheMisses++;
+            console.warn(`[computeYearInMotion] No cached data for match ${matchId}`);
+            return null;
+          }
         } catch (error) {
-          console.warn(`Failed to fetch match ${matchId}:`, error);
+          cacheMisses++;
+          console.warn(`[computeYearInMotion] Failed to fetch match ${matchId}:`, error);
           return null;
         }
       });
@@ -41,7 +60,16 @@ export async function computeYearInMotion(ctx: { puuid: string; matchIds: string
         
         // Find player's participant data
         const playerParticipant = match.participants.find(p => p.puuid === ctx.puuid);
-        if (!playerParticipant) continue;
+        if (!playerParticipant) {
+          console.warn(`[computeYearInMotion] Player ${ctx.puuid} not found in match ${match.gameId}`);
+          continue;
+        }
+        
+        // Check if this is full participant data (not just name)
+        if (!isFullParticipant(playerParticipant)) {
+          console.warn(`[computeYearInMotion] Match ${match.gameId} has incomplete participant data`);
+          continue;
+        }
         
         totalMatches++;
         totalSeconds += match.gameDuration || 0;
@@ -63,19 +91,17 @@ export async function computeYearInMotion(ctx: { puuid: string; matchIds: string
         if (kda > bestKDA.kda) {
           bestKDA = {
             kda,
-            kills,
-            deaths,
-            assists,
+            kills: kills || 0,
+            deaths: deaths || 0,
+            assists: assists || 0,
             matchId: match.gameId,
             date: matchDate.toLocaleDateString()
           };
         }
       }
       
-      // Small delay between batches to be nice to the API
-      if (i + batchSize < matchIds.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+      // Log progress
+      console.log(`[computeYearInMotion] Progress: ${totalMatches} matches processed so far (${cacheHits} hits, ${cacheMisses} misses)`);
     }
     
     const totalHours = totalSeconds / 3600;
@@ -91,8 +117,12 @@ export async function computeYearInMotion(ctx: { puuid: string; matchIds: string
       }
     }
     
-    console.log(`[computeYearInMotion] Processed ${totalMatches} matches, ${totalHours.toFixed(1)} hours total`);
-    console.log(`[computeYearInMotion] Best KDA: ${bestKDA.kda.toFixed(2)} (${bestKDA.kills}/${bestKDA.deaths}/${bestKDA.assists})`);
+    console.log(`[computeYearInMotion] ✅ Completed analysis:`);
+    console.log(`  - Processed ${totalMatches} matches`);
+    console.log(`  - Total time: ${totalHours.toFixed(1)} hours`);
+    console.log(`  - Cache efficiency: ${cacheHits} hits / ${cacheMisses} misses`);
+    console.log(`  - Best KDA: ${bestKDA.kda.toFixed(2)} (${bestKDA.kills}/${bestKDA.deaths}/${bestKDA.assists})`);
+    console.log(`  - Peak month: ${peakMonth} (${peakHours.toFixed(1)} hours)`);
     
     return {
       sceneId: "year_in_motion",

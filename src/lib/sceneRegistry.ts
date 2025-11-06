@@ -3,12 +3,12 @@ import { computeYearInMotion } from './compute/computeYearInMotion';
 import { computeSignatureStyle } from './compute/computeSignatureStyle';
 import { computeGrowth } from './compute/computeGrowth';
 import { computePeak } from './compute/computePeak';
-import { computeWeaknesses } from './compute/computeWeaknesses';
-import { computeAllies } from './compute/computeAllies';
-import { computeAram } from './compute/computeAram';
-import { computeSocial } from './compute/computeSocial';
-import { computeLegacy } from './compute/computeLegacy';
-import { computePathForward } from './compute/computePathForward';
+// import { computeWeaknesses } from './compute/computeWeaknesses';
+// import { computeAllies } from './compute/computeAllies';
+// import { computeAram } from './compute/computeAram';
+// import { computeSocial } from './compute/computeSocial';
+// import { computeLegacy } from './compute/computeLegacy';
+// import { computePathForward } from './compute/computePathForward';
 
 export interface SceneDefinition {
   label: string;
@@ -37,7 +37,7 @@ export const sceneRegistry: Record<SceneId, SceneDefinition> = {
     compute: computePeak,
     vizKind: "highlight"
   },
-  weaknesses: {
+ /*  weaknesses: {
     label: "Areas for Growth",
     compute: computeWeaknesses,
     vizKind: "bar"
@@ -66,7 +66,7 @@ export const sceneRegistry: Record<SceneId, SceneDefinition> = {
     label: "Path Forward",
     compute: computePathForward,
     vizKind: "goal"
-  }
+  } */
 };
 
 export const SCENE_ORDER: SceneId[] = [

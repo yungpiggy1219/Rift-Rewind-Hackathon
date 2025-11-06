@@ -1,6 +1,4 @@
 import { Redis } from '@upstash/redis';
-import fs from 'fs';
-import path from 'path';
 
 // Optional Redis client - falls back to in-memory if not configured
 let redis: Redis | null = null;
@@ -19,25 +17,29 @@ try {
 // In-memory cache for development (fallback)
 const memoryCache = new Map<string, { data: any; expires: number }>();
 
-// File-based cache directory
-const CACHE_DIR = path.join(process.cwd(), '.cache');
+// File-based cache directory (server-side only)
+const isServer = typeof window === 'undefined';
+let CACHE_DIR: string | null = null;
+let fs: any = null;
+let path: any = null;
 
-// Ensure cache directory exists
-if (typeof window === 'undefined') {
+// Initialize file system cache only on server
+if (isServer) {
   try {
+    fs = require('fs');
+    path = require('path');
+    CACHE_DIR = path.join(process.cwd(), '.cache');
+    
     if (!fs.existsSync(CACHE_DIR)) {
       fs.mkdirSync(CACHE_DIR, { recursive: true });
       console.log(`[cache] Created cache directory at ${CACHE_DIR}`);
     }
+    console.log(`[cache] File cache initialized at ${new Date().toISOString()}`);
+    console.log(`[cache] Cache directory: ${CACHE_DIR}`);
   } catch (error) {
-    console.warn('[cache] Failed to create cache directory:', error);
+    console.warn('[cache] Failed to initialize file cache:', error);
+    CACHE_DIR = null;
   }
-}
-
-// Log cache state for debugging
-if (typeof window === 'undefined') {
-  console.log(`[cache] File cache initialized at ${new Date().toISOString()}`);
-  console.log(`[cache] Cache directory: ${CACHE_DIR}`);
 }
 
 // Cache TTL in seconds
@@ -55,26 +57,28 @@ export async function get(key: string): Promise<any> {
       console.log(`Redis cache miss for ${key}`);
       return null;
     } else {
-      // Try file-based cache first
-      try {
-        const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const filePath = path.join(CACHE_DIR, `${safeKey}.json`);
-        
-        if (fs.existsSync(filePath)) {
-          const fileContent = fs.readFileSync(filePath, 'utf-8');
-          const cached = JSON.parse(fileContent);
+      // Try file-based cache first (server-side only)
+      if (isServer && fs && path && CACHE_DIR) {
+        try {
+          const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+          const filePath = path.join(CACHE_DIR, `${safeKey}.json`);
           
-          if (cached.expires > Date.now()) {
-            console.log(`File cache hit for ${key}`);
-            return cached.data;
-          } else {
-            console.log(`File cache expired for ${key}`);
-            fs.unlinkSync(filePath);
-            return null;
+          if (fs.existsSync(filePath)) {
+            const fileContent = fs.readFileSync(filePath, 'utf-8');
+            const cached = JSON.parse(fileContent);
+            
+            if (cached.expires > Date.now()) {
+              console.log(`File cache hit for ${key}`);
+              return cached.data;
+            } else {
+              console.log(`File cache expired for ${key}`);
+              fs.unlinkSync(filePath);
+              return null;
+            }
           }
+        } catch (fileError) {
+          console.warn(`File cache read error for ${key}:`, fileError);
         }
-      } catch (fileError) {
-        console.warn(`File cache read error for ${key}:`, fileError);
       }
       
       // Fall back to memory cache
@@ -104,19 +108,21 @@ export async function set(key: string, value: any, ttl: number = DEFAULT_TTL): P
       console.log(`[cache.set] Storing in Redis: ${key} (TTL: ${ttl}s)`);
       await redis.setex(key, ttl, JSON.stringify(value));
     } else {
-      // File-based cache
-      try {
-        const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const filePath = path.join(CACHE_DIR, `${safeKey}.json`);
-        const cacheData = {
-          data: value,
-          expires: Date.now() + (ttl * 1000)
-        };
-        
-        fs.writeFileSync(filePath, JSON.stringify(cacheData), 'utf-8');
-        console.log(`[cache.set] Stored in file: ${key} (TTL: ${ttl}s) at ${filePath}`);
-      } catch (fileError) {
-        console.warn(`File cache write error for ${key}:`, fileError);
+      // File-based cache (server-side only)
+      if (isServer && fs && path && CACHE_DIR) {
+        try {
+          const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+          const filePath = path.join(CACHE_DIR, `${safeKey}.json`);
+          const cacheData = {
+            data: value,
+            expires: Date.now() + (ttl * 1000)
+          };
+          
+          fs.writeFileSync(filePath, JSON.stringify(cacheData), 'utf-8');
+          console.log(`[cache.set] Stored in file: ${key} (TTL: ${ttl}s) at ${filePath}`);
+        } catch (fileError) {
+          console.warn(`File cache write error for ${key}:`, fileError);
+        }
       }
       
       // Also store in memory for faster access

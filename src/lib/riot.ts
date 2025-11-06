@@ -10,16 +10,36 @@ async function riotRequest(path: string, region: string = RIOT_REGION): Promise<
   }
 
   const url = `https://${region}.api.riotgames.com${path}`;
-  const response = await fetch(url, {
-    headers: {
-      'X-Riot-Token': RIOT_API_KEY
-    }
-  });
+  
+  try {
+    console.log(`[riotRequest] Fetching: ${url}`);
+    const response = await fetch(url, {
+      headers: {
+        'X-Riot-Token': RIOT_API_KEY
+      }
+    });
 
-  if (!response.ok) {
-    throw new Error(`Riot API error: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`[riotRequest] API error:`, {
+        url,
+        status: response.status,
+        statusText: response.statusText,
+        body: errorBody
+      });
+      throw new Error(`Riot API error: ${response.status} ${response.statusText} - ${errorBody}`);
+    }
+    
+    const data = await response.json();
+    console.log(`[riotRequest] Success: ${url}`);
+    return data;
+  } catch (error) {
+    console.error(`[riotRequest] Request failed:`, {
+      url,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    throw error;
   }
-  return response.json();
 }
 
 // Map routing regions to platform regions
@@ -118,54 +138,64 @@ export async function fetchMatchIds(
 }
 
 export async function fetchMatchDetail(matchId: string, targetPuuid?: string): Promise<MatchData | null> {
-  // Check cache first
-  const cacheKey = `match-detail-${matchId}`;
-  const cached = await cache.get<MatchData>(cacheKey);
-  if (cached) {
-    return cached;
-  }
+  try {
+    // Check cache first
+    const cacheKey = `match-detail-${matchId}`;
+    const cached = await cache.get<MatchData>(cacheKey);
+    if (cached) {
+      console.log(`[fetchMatchDetail] Cache hit for ${matchId}`);
+      return cached;
+    }
 
-  const data = await riotRequest(`/lol/match/v5/matches/${matchId}`) as {
-    metadata: { 
-      matchId: string;
-      participants: string[]; // Array of PUUIDs
+    console.log(`[fetchMatchDetail] Fetching ${matchId} from Riot API`);
+    const data = await riotRequest(`/lol/match/v5/matches/${matchId}`) as {
+      metadata: { 
+        matchId: string;
+        participants: string[]; // Array of PUUIDs
+      };
+      info: {
+        gameCreation: number;
+        gameDuration: number;
+        gameMode: string;
+        gameType: string;
+        participants: Array<{
+          puuid: string;
+          riotIdGameName: string;
+          riotIdTagline?: string;
+          individualPosition?: string;
+          championId?: number;
+          championName?: string;
+          kills?: number;
+          deaths?: number;
+          assists?: number;
+          totalDamageDealtToChampions?: number;
+          goldEarned?: number;
+          win?: boolean;
+          teamPosition?: string;
+          role?: string;
+          lane?: string;
+          item0?: number;
+          item1?: number;
+          item2?: number;
+          item3?: number;
+          item4?: number;
+          item5?: number;
+          item6?: number;
+          champLevel?: number;
+          summoner1Id?: number;
+          summoner2Id?: number;
+        }>;
+      };
     };
-    info: {
-      gameCreation: number;
-      gameDuration: number;
-      gameMode: string;
-      gameType: string;
-      participants: Array<{
-        puuid: string;
-        riotIdGameName: string;
-        riotIdTagline?: string;
-        individualPosition?: string;
-        championId?: number;
-        championName?: string;
-        kills?: number;
-        deaths?: number;
-        assists?: number;
-        totalDamageDealtToChampions?: number;
-        goldEarned?: number;
-        win?: boolean;
-        teamPosition?: string;
-        role?: string;
-        lane?: string;
-        item0?: number;
-        item1?: number;
-        item2?: number;
-        item3?: number;
-        item4?: number;
-        item5?: number;
-        item6?: number;
-        champLevel?: number;
-        summoner1Id?: number;
-        summoner2Id?: number;
-      }>;
-    };
-  };
 
-  // Transform Riot API response to our MatchData format
+    if (!data || !data.metadata || !data.info) {
+      console.error(`[fetchMatchDetail] Invalid response for ${matchId}:`, data);
+      return null;
+    }
+
+    console.log(`[fetchMatchDetail] Successfully fetched ${matchId}`);
+    
+    // Transform Riot API response to our MatchData format
   // If targetPuuid is provided, only include full data for that player
   const matchData: MatchData = {
     gameId: data.metadata.matchId,
@@ -213,6 +243,39 @@ export async function fetchMatchDetail(matchId: string, targetPuuid?: string): P
 
   // Cache the match data for 1 hour (matches don't change)
   await cache.set(cacheKey, matchData, 3600);
+  console.log(`[fetchMatchDetail] Cached match ${matchId}`);
   
   return matchData;
+  } catch (error) {
+    console.error(`[fetchMatchDetail] Error fetching match ${matchId}:`, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    return null;
+  }
+}
+
+// Alias for backward compatibility with compute functions
+export const fetchMatchDetailFromCache = fetchMatchDetail;
+
+// Stub function for computeAggregates - to be implemented
+export async function computeAggregates(puuid: string): Promise<any> {
+  console.warn('[computeAggregates] This function needs to be implemented');
+  // Return dummy data for now to prevent errors
+  return {
+    peak: {
+      kills: 0,
+      deaths: 0,
+      assists: 0,
+      gpm: 0,
+      championName: 'Unknown'
+    },
+    totals: {
+      games: 0,
+      wins: 0,
+      kills: 0,
+      deaths: 0,
+      assists: 0
+    }
+  };
 }
