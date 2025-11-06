@@ -7,6 +7,7 @@ import { computeDamageShare } from './compute/computeDamageShare';
 import { computeDamageTaken } from './compute/computeDamageTaken';
 import { computeHealed } from './compute/computeHealed';
 import { computeGoldShare } from './compute/computeGoldShare';
+import { computeSignaturePosition } from './compute/computeSignaturePosition';
 // import { computeWeaknesses } from './compute/computeWeaknesses';
 // import { computeAllies } from './compute/computeAllies';
 // import { computeAram } from './compute/computeAram';
@@ -51,18 +52,25 @@ export const sceneRegistry: Record<SceneId, SceneDefinition> = {
     compute: computeGoldShare,
     vizKind: "line"
   },
+  signature_position: {
+    label: "Signature Position",
+    compute: computeSignaturePosition,
+    vizKind: "bar"
+  },
 
   growth_over_time: {
     label: "Growth Over Time",
     compute: computeGrowth,
     vizKind: "line"
   },
-  peak_performance: {
+
+    /*
+    peak_performance: {
     label: "Peak Performance",
     compute: computePeak,
     vizKind: "highlight"
   },
-    /*
+
   weaknesses: {
     label: "Areas for Growth",
     compute: async () => ({ sceneId: "weaknesses", vizKind: "bar", insight: { summary: "Coming soon", details: [], action: "", metrics: [], vizData: {} } }),
@@ -102,7 +110,9 @@ export const SCENE_ORDER: SceneId[] = [
   "damage_taken",
   "total_healed",
   "gold_share",
-  // "growth_over_time",
+  "signature_position",
+  "growth_over_time",
+  "vision_score"
   // "peak_performance"
   // Uncomment as these are implemented:
   // "weaknesses",

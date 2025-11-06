@@ -1,8 +1,21 @@
-import { ScenePayload, MatchData } from '../types';
+import { ScenePayload, MatchParticipant } from '../types';
 import { fetchMatchDetailFromCache } from '../riot';
 
+interface MonthlyStats {
+  month: number;
+  damageToChampions: number[];
+  goldPerMinute: number[];
+  wins: number;
+  games: number;
+}
+
+// Type guard to check if participant is a MatchParticipant
+function isMatchParticipant(participant: MatchParticipant | { puuid: string; riotIdGameName: string }): participant is MatchParticipant {
+  return 'goldEarned' in participant && 'win' in participant;
+}
+
 export async function computeGrowth(ctx: { puuid: string; matchIds: string[] }): Promise<ScenePayload> {
-  console.log(`[computeGrowth] Starting for ${ctx.puuid} - ANALYZING COMPREHENSIVE MATCH STATISTICS`);
+  console.log(`[computeGrowth] Starting for ${ctx.puuid} - TRACKING GROWTH OVER TIME`);
   
   try {
     const matchIds = ctx.matchIds || [];
@@ -12,27 +25,27 @@ export async function computeGrowth(ctx: { puuid: string; matchIds: string[] }):
       throw new Error('No matches found');
     }
     
-    // Step 2: Analyze comprehensive match statistics
-    let totalAllyJungleMinionsKilled = 0;
-    let totalDamageDealtToChampions = 0;
-    let totalDamageShieldedOnTeammates = 0;
-    let totalDamageTaken = 0;
-    let totalEnemyJungleMinionsKilled = 0;
-    let totalHeal = 0;
-    let totalHealsOnTeammates = 0;
-    let totalMinionsKilled = 0;
-    let totalTimeSpentDead = 0;
-    let totalTimeCCDealt = 0;
+    // Track monthly statistics
+    const monthlyData = new Map<number, MonthlyStats>();
+    
+    // Initialize all 12 months
+    for (let m = 1; m <= 12; m++) {
+      monthlyData.set(m, {
+        month: m,
+        damageToChampions: [],
+        goldPerMinute: [],
+        wins: 0,
+        games: 0
+      });
+    }
+    
+    let totalDamageToChampions = 0;
+    let totalGoldEarned = 0;
+    let totalGameDuration = 0;
+    let totalWins = 0;
     let processedMatches = 0;
     
-    // Track record games
-    let maxDamageGame = { damage: 0, matchId: '', date: '' };
-    let maxTankingGame = { damageTaken: 0, matchId: '', date: '' };
-    let maxHealingGame = { healing: 0, matchId: '', date: '' };
-    let maxCSGame = { cs: 0, matchId: '', date: '' };
-    let maxCCGame = { cc: 0, matchId: '', date: '' };
-    
-    // Process matches in batches to avoid overwhelming the API
+    // Process matches in batches
     const batchSize = 10;
     
     for (let i = 0; i < matchIds.length; i += batchSize) {
@@ -40,7 +53,6 @@ export async function computeGrowth(ctx: { puuid: string; matchIds: string[] }):
       
       const matchPromises = batch.map(async (matchId) => {
         try {
-          // Use cached data ONLY - no HTTP requests
           return await fetchMatchDetailFromCache(matchId);
         } catch (error) {
           console.warn(`Failed to fetch match ${matchId}:`, error);
@@ -55,55 +67,37 @@ export async function computeGrowth(ctx: { puuid: string; matchIds: string[] }):
         
         // Find player's participant data
         const playerParticipant = match.participants.find(p => p.puuid === ctx.puuid);
-        if (!playerParticipant) continue;
+        if (!playerParticipant || !isMatchParticipant(playerParticipant)) continue;
         
         processedMatches++;
-        const matchDate = new Date(match.gameCreation || Date.now()).toLocaleDateString();
         
-        // Extract all the specific statistics
-        const allyJungleMinions = playerParticipant.totalAllyJungleMinionsKilled || 0;
+        // Get match month (1-12)
+        const matchDate = new Date(match.gameCreation || Date.now());
+        const month = matchDate.getMonth() + 1; // 0-indexed, so add 1
+        
+        // Extract statistics
         const damageToChampions = playerParticipant.totalDamageDealtToChampions || 0;
-        const damageShielded = playerParticipant.totalDamageShieldedOnTeammates || 0;
-        const damageTaken = playerParticipant.totalDamageTaken || 0;
-        const enemyJungleMinions = playerParticipant.totalEnemyJungleMinionsKilled || 0;
-        const heal = playerParticipant.totalHeal || 0;
-        const healsOnTeammates = playerParticipant.totalHealsOnTeammates || 0;
-        const minionsKilled = playerParticipant.totalMinionsKilled || 0;
-        const timeSpentDead = playerParticipant.totalTimeSpentDead || 0;
-        const timeCCDealt = playerParticipant.totalTimeCCDealt || 0;
+        const goldEarned = playerParticipant.goldEarned || 0;
+        const gameDuration = match.gameDuration || 1;
+        const won = playerParticipant.win || false;
         
-        // Accumulate totals
-        totalAllyJungleMinionsKilled += allyJungleMinions;
-        totalDamageDealtToChampions += damageToChampions;
-        totalDamageShieldedOnTeammates += damageShielded;
-        totalDamageTaken += damageTaken;
-        totalEnemyJungleMinionsKilled += enemyJungleMinions;
-        totalHeal += heal;
-        totalHealsOnTeammates += healsOnTeammates;
-        totalMinionsKilled += minionsKilled;
-        totalTimeSpentDead += timeSpentDead;
-        totalTimeCCDealt += timeCCDealt;
+        // Calculate GPM for this match
+        const goldPerMinute = Math.round((goldEarned / gameDuration) * 60);
         
-        // Track record games
-        if (damageToChampions > maxDamageGame.damage) {
-          maxDamageGame = { damage: damageToChampions, matchId: match.gameId, date: matchDate };
+        // Update monthly stats
+        const monthStats = monthlyData.get(month);
+        if (monthStats) {
+          monthStats.damageToChampions.push(damageToChampions);
+          monthStats.goldPerMinute.push(goldPerMinute);
+          monthStats.games++;
+          if (won) monthStats.wins++;
         }
         
-        if (damageTaken > maxTankingGame.damageTaken) {
-          maxTankingGame = { damageTaken, matchId: match.gameId, date: matchDate };
-        }
-        
-        if (heal > maxHealingGame.healing) {
-          maxHealingGame = { healing: heal, matchId: match.gameId, date: matchDate };
-        }
-        
-        if (minionsKilled > maxCSGame.cs) {
-          maxCSGame = { cs: minionsKilled, matchId: match.gameId, date: matchDate };
-        }
-        
-        if (timeCCDealt > maxCCGame.cc) {
-          maxCCGame = { cc: timeCCDealt, matchId: match.gameId, date: matchDate };
-        }
+        // Update totals
+        totalDamageToChampions += damageToChampions;
+        totalGoldEarned += goldEarned;
+        totalGameDuration += gameDuration;
+        if (won) totalWins++;
       }
       
       // Small delay between batches
@@ -116,146 +110,134 @@ export async function computeGrowth(ctx: { puuid: string; matchIds: string[] }):
       throw new Error('No match data processed');
     }
     
-    // Calculate averages
-    const avgDamageToChampions = Math.round(totalDamageDealtToChampions / processedMatches);
-    const avgDamageTaken = Math.round(totalDamageTaken / processedMatches);
-    const avgHeal = Math.round(totalHeal / processedMatches);
-    const avgMinionsKilled = Math.round(totalMinionsKilled / processedMatches);
-    const avgTimeSpentDead = Math.round(totalTimeSpentDead / processedMatches);
-    const avgTimeCCDealt = Math.round(totalTimeCCDealt / processedMatches);
-    
-    // Calculate efficiency metrics
-    const damageEfficiency = totalDamageTaken > 0 ? totalDamageDealtToChampions / totalDamageTaken : 0;
-    const totalJungleMinions = totalAllyJungleMinionsKilled + totalEnemyJungleMinionsKilled;
-    const totalCS = totalMinionsKilled + totalJungleMinions;
-    const deathTimePercentage = totalTimeSpentDead / (processedMatches * 1800) * 100; // Assuming 30min avg game
+    // Calculate overall averages
+    const avgDamageToChampions = Math.round(totalDamageToChampions / processedMatches);
+    const avgGoldPerMinute = Math.round((totalGoldEarned / totalGameDuration) * 60);
+    const overallWinRate = Math.round((totalWins / processedMatches) * 100);
     
     console.log(`[computeGrowth] Processed ${processedMatches} matches`);
-    console.log(`[computeGrowth] Total damage to champions: ${totalDamageDealtToChampions.toLocaleString()}`);
-    console.log(`[computeGrowth] Total CS: ${totalCS.toLocaleString()}`);
-    console.log(`[computeGrowth] Total time spent dead: ${Math.round(totalTimeSpentDead / 60)} minutes`);
+    console.log(`[computeGrowth] Overall win rate: ${overallWinRate}%`);
+    console.log(`[computeGrowth] Average damage to champions: ${avgDamageToChampions.toLocaleString()}`);
+    console.log(`[computeGrowth] Average GPM: ${avgGoldPerMinute}`);
     
-    // Determine playstyle based on comprehensive stats
-    let playstyle: string;
-    let styleDescription: string;
+    // Build time series data for the chart
+    const damageOverTime: { month: number; value: number }[] = [];
+    const gpmOverTime: { month: number; value: number }[] = [];
+    const winRateOverTime: { month: number; value: number }[] = [];
     
-    if (totalHealsOnTeammates > totalHeal * 0.3) {
-      playstyle = "Team Support";
-      styleDescription = "focused on keeping teammates alive and healthy";
-    } else if (totalDamageShieldedOnTeammates > avgDamageToChampions * 0.5) {
-      playstyle = "Protective Guardian";
-      styleDescription = "specializing in damage mitigation and team protection";
-    } else if (damageEfficiency > 2.0) {
-      playstyle = "Glass Cannon";
-      styleDescription = "high damage output with calculated positioning";
-    } else if (totalJungleMinions > totalMinionsKilled * 0.3) {
-      playstyle = "Jungle Control";
-      styleDescription = "dominating neutral objectives and jungle resources";
-    } else {
-      playstyle = "Balanced Fighter";
-      styleDescription = "well-rounded performance across all areas";
+    // Calculate monthly averages
+    for (let month = 1; month <= 12; month++) {
+      const stats = monthlyData.get(month);
+      if (!stats || stats.games === 0) {
+        // No data for this month - skip or use 0
+        continue;
+      }
+      
+      // Calculate average damage for the month
+      const avgMonthDamage = stats.damageToChampions.length > 0
+        ? Math.round(stats.damageToChampions.reduce((a, b) => a + b, 0) / stats.damageToChampions.length)
+        : 0;
+      
+      // Calculate average GPM for the month
+      const avgMonthGPM = stats.goldPerMinute.length > 0
+        ? Math.round(stats.goldPerMinute.reduce((a, b) => a + b, 0) / stats.goldPerMinute.length)
+        : 0;
+      
+      // Calculate win rate for the month
+      const monthWinRate = stats.games > 0
+        ? Math.round((stats.wins / stats.games) * 100)
+        : 0;
+      
+      damageOverTime.push({ month, value: avgMonthDamage });
+      gpmOverTime.push({ month, value: avgMonthGPM });
+      winRateOverTime.push({ month, value: monthWinRate });
+    }
+    
+    // Determine growth trend
+    let growthTrend = "Stable";
+    let growthDescription = "";
+    
+    if (damageOverTime.length >= 2) {
+      const firstHalfDamage = damageOverTime.slice(0, Math.floor(damageOverTime.length / 2));
+      const secondHalfDamage = damageOverTime.slice(Math.floor(damageOverTime.length / 2));
+      
+      const avgFirstHalf = firstHalfDamage.reduce((a, b) => a + b.value, 0) / firstHalfDamage.length;
+      const avgSecondHalf = secondHalfDamage.reduce((a, b) => a + b.value, 0) / secondHalfDamage.length;
+      
+      const improvement = ((avgSecondHalf - avgFirstHalf) / avgFirstHalf) * 100;
+      
+      if (improvement > 10) {
+        growthTrend = "Improving";
+        growthDescription = `Your damage output has increased by ${improvement.toFixed(1)}% over the year!`;
+      } else if (improvement < -10) {
+        growthTrend = "Declining";
+        growthDescription = `Your damage output has decreased by ${Math.abs(improvement).toFixed(1)}%. Consider reviewing your champion picks and playstyle.`;
+      } else {
+        growthTrend = "Consistent";
+        growthDescription = "You've maintained a stable performance throughout the year.";
+      }
     }
     
     return {
       sceneId: "growth_over_time",
       vizKind: "line",
       insight: {
-        summary: `${playstyle}: ${totalDamageDealtToChampions.toLocaleString()} damage dealt, ${totalCS.toLocaleString()} CS across ${processedMatches} games.`,
+        summary: `${growthTrend} Performance: ${overallWinRate}% win rate across ${processedMatches} games with ${avgDamageToChampions.toLocaleString()} avg damage.`,
         details: [
-          `Total damage to champions: ${totalDamageDealtToChampions.toLocaleString()} (avg: ${avgDamageToChampions.toLocaleString()}/game)`,
-          `Total damage taken: ${totalDamageTaken.toLocaleString()} (avg: ${avgDamageTaken.toLocaleString()}/game)`,
-          `Total minions killed: ${totalMinionsKilled.toLocaleString()} + ${totalJungleMinions.toLocaleString()} jungle (${avgMinionsKilled}/game avg)`,
-          `Total healing: ${totalHeal.toLocaleString()} self + ${totalHealsOnTeammates.toLocaleString()} teammates`,
-          `Total time spent dead: ${Math.round(totalTimeSpentDead / 60)} minutes (${deathTimePercentage.toFixed(1)}% of game time)`,
-          `Total CC dealt: ${Math.round(totalTimeCCDealt / 60)} minutes of crowd control`
+          `Overall win rate: ${overallWinRate}% (${totalWins} wins / ${processedMatches} games)`,
+          `Average damage to champions: ${avgDamageToChampions.toLocaleString()} per game`,
+          `Average gold per minute: ${avgGoldPerMinute} GPM`,
+          growthDescription,
+          `Played consistently across ${damageOverTime.length} months`
         ],
-        action: damageEfficiency > 1.5 
-          ? "Your damage efficiency is excellent - focus on maintaining this level"
-          : "Work on positioning to improve damage dealt vs damage taken ratio",
+        action: growthTrend === "Improving" 
+          ? "Keep up the great work! Your improvement is showing."
+          : growthTrend === "Declining"
+          ? "Consider practicing your core champions and reviewing your gameplay."
+          : "Challenge yourself to improve your damage output and efficiency.",
         metrics: [
           {
-            label: "Total Damage to Champions",
-            value: Math.round(totalDamageDealtToChampions / 1000),
-            unit: "K",
-            context: `${avgDamageToChampions.toLocaleString()} avg/game`
+            label: "Win Rate",
+            value: overallWinRate,
+            unit: "%",
+            context: `${totalWins}/${processedMatches} games`
           },
           {
-            label: "Total CS",
-            value: totalCS,
+            label: "Avg Damage",
+            value: Math.round(avgDamageToChampions / 1000),
+            unit: "K",
+            context: "per game"
+          },
+          {
+            label: "Avg Gold/Min",
+            value: avgGoldPerMinute,
             unit: "",
-            context: `${avgMinionsKilled} avg/game`
+            context: "farming efficiency"
           },
           {
-            label: "Total Healing",
-            value: Math.round(totalHeal / 1000),
-            unit: "K",
-            context: `${Math.round(totalHealsOnTeammates / 1000)}K to teammates`
-          },
-          {
-            label: "Time Spent Dead",
-            value: Math.round(totalTimeSpentDead / 60),
-            unit: " min",
-            context: `${deathTimePercentage.toFixed(1)}% of game time`
+            label: "Trend",
+            value: growthTrend,
+            unit: "",
+            context: "over the year"
           }
         ],
         vizData: {
-          type: "comprehensive_stats",
-          totalAllyJungleMinionsKilled,
-          totalDamageDealtToChampions,
-          totalDamageShieldedOnTeammates,
-          totalDamageTaken,
-          totalEnemyJungleMinionsKilled,
-          totalHeal,
-          totalHealsOnTeammates,
-          totalMinionsKilled,
-          totalTimeSpentDead,
-          totalTimeCCDealt,
-          averages: {
-            avgDamageToChampions,
-            avgDamageTaken,
-            avgHeal,
-            avgMinionsKilled,
-            avgTimeSpentDead,
-            avgTimeCCDealt
-          },
-          efficiency: {
-            damageEfficiency,
-            deathTimePercentage,
-            totalCS
-          },
-          playstyle,
-          recordGames: {
-            maxDamage: maxDamageGame,
-            maxTanking: maxTankingGame,
-            maxHealing: maxHealingGame,
-            maxCS: maxCSGame,
-            maxCC: maxCCGame
-          },
-          // Line chart showing key metrics over time
+          type: "growth_statistics",
           series: [
             {
               name: "Damage to Champions",
-              data: Array.from({ length: 12 }, (_, i) => ({
-                month: i + 1,
-                value: avgDamageToChampions + (Math.random() - 0.5) * avgDamageToChampions * 0.2
-              })),
+              data: damageOverTime,
               color: "#EF4444"
             },
             {
-              name: "CS per Game",
-              data: Array.from({ length: 12 }, (_, i) => ({
-                month: i + 1,
-                value: avgMinionsKilled + (Math.random() - 0.5) * avgMinionsKilled * 0.2
-              })),
-              color: "#10B981"
+              name: "Gold Per Minute",
+              data: gpmOverTime,
+              color: "#F59E0B"
             },
             {
-              name: "Healing per Game",
-              data: Array.from({ length: 12 }, (_, i) => ({
-                month: i + 1,
-                value: avgHeal + (Math.random() - 0.5) * avgHeal * 0.2
-              })),
-              color: "#3B82F6"
+              name: "Win Rate %",
+              data: winRateOverTime,
+              color: "#10B981"
             }
           ]
         }
@@ -270,7 +252,7 @@ export async function computeGrowth(ctx: { puuid: string; matchIds: string[] }):
       sceneId: "growth_over_time",
       vizKind: "line",
       insight: {
-        summary: "Unable to load comprehensive statistics. Using sample data for demonstration.",
+        summary: "Unable to load growth statistics. Using sample data for demonstration.",
         details: [
           "Could not fetch your detailed match statistics",
           "This might be due to API limitations or no recent matches",
@@ -278,13 +260,13 @@ export async function computeGrowth(ctx: { puuid: string; matchIds: string[] }):
         ],
         action: "Play some games and try again later",
         metrics: [
-          { label: "Total Damage to Champions", value: 0, unit: "K" },
-          { label: "Total CS", value: 0, unit: "" },
-          { label: "Total Healing", value: 0, unit: "K" },
-          { label: "Time Spent Dead", value: 0, unit: " min" }
+          { label: "Win Rate", value: 0, unit: "%" },
+          { label: "Avg Damage", value: 0, unit: "K" },
+          { label: "Avg Gold/Min", value: 0, unit: "" },
+          { label: "Trend", value: "N/A", unit: "" }
         ],
         vizData: {
-          type: "comprehensive_stats",
+          type: "growth_statistics",
           series: []
         }
       }

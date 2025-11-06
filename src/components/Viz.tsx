@@ -11,6 +11,17 @@ interface VizProps {
 export default function Viz({ kind, data }: VizProps) {
   switch (kind) {
     case 'line':
+      if (!data || (!data.series && !data.chartData)) {
+        return (
+          <div className="h-64 w-full flex items-center justify-center bg-gray-800 rounded-lg">
+            <div className="text-center text-gray-400">
+              <div className="text-lg font-semibold mb-2">No Data Available</div>
+              <div className="text-sm">Trend analysis requires multiple matches</div>
+            </div>
+          </div>
+        );
+      }
+
       if (!data.series || data.series.length === 0) {
         // Check for alternative data format (gold_share chartData)
         if (!data.chartData || data.chartData.length === 0) {
@@ -25,17 +36,41 @@ export default function Viz({ kind, data }: VizProps) {
         }
       }
       
-      // Use chartData if available (gold_share format), otherwise use series
-      const lineChartData = data.chartData || data.series?.[0]?.data || [];
-      const dataKey = data.chartData ? 'goldPerMinute' : 'value';
-      const xAxisKey = data.chartData ? 'month' : 'month';
+      // Handle multiple series by merging data points
+      let lineChartData;
+      
+      if (data.chartData) {
+        // Single series format (gold_share)
+        lineChartData = data.chartData;
+      } else if (data.series && data.series.length > 0) {
+        // Multiple series format - merge all series by month
+        const dataByMonth = new Map<number, any>();
+        
+        data.series.forEach((series: any) => {
+          series.data.forEach((point: any) => {
+            if (!dataByMonth.has(point.month)) {
+              dataByMonth.set(point.month, { month: point.month });
+            }
+            dataByMonth.get(point.month)[series.name] = point.value;
+          });
+        });
+        
+        lineChartData = Array.from(dataByMonth.values()).sort((a, b) => a.month - b.month);
+      } else {
+        lineChartData = [];
+      }
       
       return (
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={lineChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey={xAxisKey} stroke="#9CA3AF" tick={{ fontSize: 11 }} />
+              <XAxis 
+                dataKey="month" 
+                stroke="#9CA3AF" 
+                tick={{ fontSize: 11 }}
+                label={{ value: 'Month', position: 'insideBottom', offset: -5, fill: '#9CA3AF' }}
+              />
               <YAxis stroke="#9CA3AF" />
               <Tooltip 
                 contentStyle={{ 
@@ -43,31 +78,35 @@ export default function Viz({ kind, data }: VizProps) {
                   border: '1px solid #374151',
                   borderRadius: '8px'
                 }}
-                formatter={(value: number) => {
+                formatter={(value: number, name: string) => {
                   if (data.type === 'gold_statistics') {
                     return [`${value} GPM`, 'Gold Per Minute'];
                   }
-                  return value.toLocaleString();
+                  if (name === 'Win Rate %') {
+                    return [`${value}%`, name];
+                  }
+                  return [value.toLocaleString(), name];
                 }}
               />
-              {data.series ? (
-                data.series.map((series: any, index: number) => (
-                  <Line 
-                    key={series.name}
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke={series.color || '#3B82F6'}
-                    strokeWidth={2}
-                  />
-                ))
-              ) : (
+              {data.chartData ? (
                 <Line 
                   type="monotone" 
-                  dataKey={dataKey}
+                  dataKey="goldPerMinute"
                   stroke="#F59E0B"
                   strokeWidth={2}
                   dot={{ fill: '#F59E0B' }}
                 />
+              ) : (
+                data.series?.map((series: any) => (
+                  <Line 
+                    key={series.name}
+                    type="monotone" 
+                    dataKey={series.name}
+                    stroke={series.color || '#3B82F6'}
+                    strokeWidth={2}
+                    dot={{ fill: series.color || '#3B82F6', r: 3 }}
+                  />
+                ))
               )}
             </LineChart>
           </ResponsiveContainer>
@@ -78,8 +117,8 @@ export default function Viz({ kind, data }: VizProps) {
       // Handle different bar chart data formats
       let barChartData;
       
-      if (data.type === 'damage_statistics' || data.type === 'damage_taken_statistics' || data.type === 'healing_statistics') {
-        // New damage/healing stats format with categories and values arrays
+      if (data.type === 'damage_statistics' || data.type === 'damage_taken_statistics' || data.type === 'healing_statistics' || data.type === 'vision_statistics') {
+        // New damage/healing/vision stats format with categories and values arrays
         barChartData = data.categories?.map((cat: string, i: number) => ({
           category: cat,
           value: data.values?.[i] || 0
@@ -133,7 +172,7 @@ export default function Viz({ kind, data }: VizProps) {
       );
 
     case 'radar':
-      if (!data.values || data.values.length === 0) {
+      if (!data || !data.values || data.values.length === 0) {
         return (
           <div className="h-64 w-full flex items-center justify-center bg-gray-800 rounded-lg">
             <div className="text-center text-gray-400">
@@ -194,7 +233,7 @@ export default function Viz({ kind, data }: VizProps) {
       );
 
     case 'highlight':
-      if (!data.peakGame) {
+      if (!data || !data.peakGame) {
         return (
           <div className="bg-gray-800 border border-gray-600 rounded-lg p-6">
             <div className="text-center text-gray-400">
@@ -224,7 +263,7 @@ export default function Viz({ kind, data }: VizProps) {
       );
 
     case 'badge':
-      if (!data.allies || data.allies.length === 0) {
+      if (!data || !data.allies || data.allies.length === 0) {
         return (
           <div className="text-center text-gray-400 py-8">
             <div className="text-lg font-semibold mb-2">No Ally Data</div>
@@ -246,7 +285,7 @@ export default function Viz({ kind, data }: VizProps) {
       );
 
     case 'infographic':
-      if (!data.stats || Object.keys(data.stats).length === 0) {
+      if (!data || !data.stats || Object.keys(data.stats).length === 0) {
         return (
           <div className="text-center text-gray-400 py-8">
             <div className="text-lg font-semibold mb-2">No ARAM Data</div>
@@ -268,7 +307,7 @@ export default function Viz({ kind, data }: VizProps) {
       );
 
     case 'goal':
-      if (!data.keyAreas || data.keyAreas.length === 0 || data.currentRank === "N/A") {
+      if (!data || !data.keyAreas || data.keyAreas.length === 0 || data.currentRank === "N/A") {
         return (
           <div className="text-center text-gray-400 py-8">
             <div className="text-lg font-semibold mb-2">No Improvement Path</div>

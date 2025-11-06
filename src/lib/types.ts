@@ -2,11 +2,13 @@
 export type SceneId = 
   | "year_in_motion" 
   | "signature_champion"
+  | "signature_position"
   | "damage_share"
   | "damage_taken"
   | "total_healed"
-  | "gold_share";
-  // | "growth_over_time" 
+  | "gold_share"
+  | "growth_over_time"
+  | "vision_score";
   // | "peak_performance" 
   // | "weaknesses" 
   // | "allies" 
@@ -99,6 +101,10 @@ export interface MatchParticipant {
   champLevel: number;
   summoner1Id: number;
   summoner2Id: number;
+  visionScore?: number;
+  wardsPlaced?: number;
+  wardsKilled?: number;
+  visionWardsBoughtInGame?: number;
 }
 
 // Minimal participant data - only name

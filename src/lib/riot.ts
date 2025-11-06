@@ -189,6 +189,10 @@ export async function fetchMatchDetail(matchId: string, targetPuuid?: string): P
           champLevel?: number;
           summoner1Id?: number;
           summoner2Id?: number;
+          visionScore?: number;
+          wardsPlaced?: number;
+          wardsKilled?: number;
+          visionWardsBoughtInGame?: number;
         }>;
       };
     };
@@ -237,7 +241,11 @@ export async function fetchMatchDetail(matchId: string, targetPuuid?: string): P
           items: [p.item0 || 0, p.item1 || 0, p.item2 || 0, p.item3 || 0, p.item4 || 0, p.item5 || 0, p.item6 || 0],
           champLevel: p.champLevel!,
           summoner1Id: p.summoner1Id!,
-          summoner2Id: p.summoner2Id!
+          summoner2Id: p.summoner2Id!,
+          visionScore: p.visionScore,
+          wardsPlaced: p.wardsPlaced,
+          wardsKilled: p.wardsKilled,
+          visionWardsBoughtInGame: p.visionWardsBoughtInGame
         };
       } else {
         // For other players, only include puuid and riotIdGameName

@@ -43,8 +43,8 @@ async function clearCacheForPuuid(puuid: string) {
   
   // Clear scene caches explicitly
   const sceneIds = [
-    "year_in_motion", "signature_champion", "damage_share", "damage_taken",
-    "total_healed", "gold_share", "growth_over_time", "peak_performance",
+    "year_in_motion", "signature_champion", "signature_position", "damage_share", "damage_taken",
+    "total_healed", "gold_share", "vision_score", "growth_over_time", "peak_performance",
     "weaknesses", "allies", "aram", "social_comparison", "legacy", "path_forward"
   ];
   
