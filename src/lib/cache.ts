@@ -1,4 +1,6 @@
 import { Redis } from '@upstash/redis';
+import fs from 'fs';
+import path from 'path';
 
 // Optional Redis client - falls back to in-memory if not configured
 let redis: Redis | null = null;
@@ -14,26 +16,79 @@ try {
   console.warn('Redis not configured, using in-memory cache');
 }
 
-// In-memory fallback cache
+// In-memory cache for development (fallback)
 const memoryCache = new Map<string, { data: any; expires: number }>();
+
+// File-based cache directory
+const CACHE_DIR = path.join(process.cwd(), '.cache');
+
+// Ensure cache directory exists
+if (typeof window === 'undefined') {
+  try {
+    if (!fs.existsSync(CACHE_DIR)) {
+      fs.mkdirSync(CACHE_DIR, { recursive: true });
+      console.log(`[cache] Created cache directory at ${CACHE_DIR}`);
+    }
+  } catch (error) {
+    console.warn('[cache] Failed to create cache directory:', error);
+  }
+}
+
+// Log cache state for debugging
+if (typeof window === 'undefined') {
+  console.log(`[cache] File cache initialized at ${new Date().toISOString()}`);
+  console.log(`[cache] Cache directory: ${CACHE_DIR}`);
+}
 
 // Cache TTL in seconds
 const DEFAULT_TTL = 300; // 5 minutes
 const LONG_TTL = 3600; // 1 hour
 
-export async function get<T>(key: string): Promise<T | null> {
+export async function get(key: string): Promise<any> {
   try {
     if (redis) {
-      const result = await redis.get(key);
-      return result as T;
+      const value = await redis.get(key);
+      if (value) {
+        console.log(`Redis cache hit for ${key}`);
+        return typeof value === 'string' ? JSON.parse(value) : value;
+      }
+      console.log(`Redis cache miss for ${key}`);
+      return null;
     } else {
-      // In-memory fallback
+      // Try file-based cache first
+      try {
+        const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const filePath = path.join(CACHE_DIR, `${safeKey}.json`);
+        
+        if (fs.existsSync(filePath)) {
+          const fileContent = fs.readFileSync(filePath, 'utf-8');
+          const cached = JSON.parse(fileContent);
+          
+          if (cached.expires > Date.now()) {
+            console.log(`File cache hit for ${key}`);
+            return cached.data;
+          } else {
+            console.log(`File cache expired for ${key}`);
+            fs.unlinkSync(filePath);
+            return null;
+          }
+        }
+      } catch (fileError) {
+        console.warn(`File cache read error for ${key}:`, fileError);
+      }
+      
+      // Fall back to memory cache
+      console.log(`[cache.get] Looking for key: ${key}. Memory cache has ${memoryCache.size} entries`);
       const cached = memoryCache.get(key);
       if (cached && cached.expires > Date.now()) {
-        return cached.data as T;
+        console.log(`Memory cache hit for ${key}`);
+        return cached.data;
       }
-      if (cached) {
+      if (cached && cached.expires <= Date.now()) {
+        console.log(`Memory cache expired for ${key}`);
         memoryCache.delete(key);
+      } else {
+        console.log(`Cache miss for ${key}`);
       }
       return null;
     }
@@ -46,9 +101,25 @@ export async function get<T>(key: string): Promise<T | null> {
 export async function set(key: string, value: any, ttl: number = DEFAULT_TTL): Promise<void> {
   try {
     if (redis) {
+      console.log(`[cache.set] Storing in Redis: ${key} (TTL: ${ttl}s)`);
       await redis.setex(key, ttl, JSON.stringify(value));
     } else {
-      // In-memory fallback
+      // File-based cache
+      try {
+        const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const filePath = path.join(CACHE_DIR, `${safeKey}.json`);
+        const cacheData = {
+          data: value,
+          expires: Date.now() + (ttl * 1000)
+        };
+        
+        fs.writeFileSync(filePath, JSON.stringify(cacheData), 'utf-8');
+        console.log(`[cache.set] Stored in file: ${key} (TTL: ${ttl}s) at ${filePath}`);
+      } catch (fileError) {
+        console.warn(`File cache write error for ${key}:`, fileError);
+      }
+      
+      // Also store in memory for faster access
       memoryCache.set(key, {
         data: value,
         expires: Date.now() + (ttl * 1000)
@@ -73,7 +144,8 @@ export async function del(key: string): Promise<void> {
 
 // Cache key builders
 export const cacheKeys = {
-  summoner: (gameName: string, tagLine: string) => `summoner:${gameName}:${tagLine}`,
+  summoner: (gameName: string, tagLine: string) => `summoner:${gameName.toLowerCase()}:${tagLine.toLowerCase()}`,
+  summonerByPuuid: (puuid: string) => `summoner:puuid:${puuid}`,
   matches: (puuid: string) => `matches:${puuid}:2025`,
   aggregates: (puuid: string) => `aggregates:${puuid}:2025`,
   scene: (puuid: string, sceneId: string) => `scene:${puuid}:${sceneId}:2025`,

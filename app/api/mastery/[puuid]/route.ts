@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAccountByPuuid } from '@/src/lib/riot';
 
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { puuid: string } }
+  { params }: { params: Promise<{ puuid: string }> }
 ) {
   try {
-    const { puuid } = params;
-    const { searchParams } = new URL(request.url);
-    const region = searchParams.get('region') || 'americas';
+    const { puuid } = await params;
 
     if (!RIOT_API_KEY) {
       return NextResponse.json(
@@ -18,9 +17,25 @@ export async function GET(
       );
     }
 
+    console.log(`[Mastery API] Looking up cached account for ${puuid}`);
+    
+    // Get platform from cached account
+    const cachedAccount = await getAccountByPuuid(puuid);
+    
+    if (!cachedAccount || !cachedAccount.platform) {
+      console.log(`[Mastery API] No cached account found for ${puuid}`);
+      return NextResponse.json(
+        { error: 'Account not found. Please search for the summoner first.' },
+        { status: 404 }
+      );
+    }
+
+    console.log(`[Mastery API] Using platform ${cachedAccount.platform}`);
+
     // Fetch champion mastery by PUUID
     // Get top mastery champions (by default, returns top champions)
-    const url = `https://${region}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=5`;
+    const url = `https://${cachedAccount.platform}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=5`;
+    console.log(`[Mastery API] Fetching from: ${url}`);
     const response = await fetch(url, {
       headers: {
         'X-Riot-Token': RIOT_API_KEY

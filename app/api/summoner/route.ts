@@ -12,11 +12,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { gameName, tagLine } = SummonerRequestSchema.parse(body);
 
+    console.log(`[/api/summoner] Resolving summoner: ${gameName}#${tagLine}`);
     const account = await resolveSummoner(gameName, tagLine);
+    console.log(`[/api/summoner] Resolved account:`, account);
     
     return NextResponse.json({
       puuid: account.puuid,
-      region: account.region
+      region: account.region,
+      platform: account.platform,
+      gameName: account.gameName,
+      tagLine: account.tagLine,
+      profileIconId: account.profileIconId,
+      summonerLevel: account.summonerLevel
     });
   } catch (error) {
     console.error('Summoner API error:', error);

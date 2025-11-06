@@ -66,7 +66,11 @@ export interface RiotAccount {
   puuid: string;
   gameName: string;
   tagLine: string;
-  region: string;
+  region: string; // Routing region (americas, europe, asia, sea)
+  platform?: string; // Platform region (na1, euw1, kr, etc.)
+  summonerId?: string;
+  profileIconId?: number;
+  summonerLevel?: number;
 }
 
 export interface MatchParticipant {

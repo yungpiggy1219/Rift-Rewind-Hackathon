@@ -80,7 +80,7 @@ export interface RiotMatch {
 
 export interface RiotParticipant {
   puuid: string;
-  summonerName: string;
+  riotIdGameName: string;
   championId: number;
   championName: string;
   kills: number;
@@ -325,7 +325,7 @@ class RiotAPI {
               gameMode: match.info.gameMode,
               gameType: match.info.gameType,
               participants: match.info.participants.map((p) => ({
-                summonerName: p.summonerName || (p as RiotParticipant & { riotIdGameName?: string }).riotIdGameName || 'Unknown',
+                riotIdGameName: p.riotIdGameName || (p as RiotParticipant & { riotIdGameName?: string }).riotIdGameName || 'Unknown',
                 championId: p.championId,
                 championName: p.championName,
                 kills: p.kills,
@@ -493,7 +493,7 @@ class RiotAPI {
               gameMode: match.info.gameMode,
               gameType: match.info.gameType,
               participants: match.info.participants.map((p) => ({
-                summonerName: p.summonerName || (p as RiotParticipant & { riotIdGameName?: string }).riotIdGameName || 'Unknown',
+                riotIdGameName: p.riotIdGameName || (p as RiotParticipant & { riotIdGameName?: string }).riotIdGameName || 'Unknown',
                 championId: p.championId,
                 championName: p.championName,
                 kills: p.kills,

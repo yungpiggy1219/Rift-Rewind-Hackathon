@@ -1,46 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const RIOT_API_KEY = process.env.RIOT_API_KEY;
+import { getAccountByPuuid } from '@/src/lib/riot';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { puuid: string } }
+  { params }: { params: Promise<{ puuid: string }> }
 ) {
   try {
-    const { puuid } = params;
-    const { searchParams } = new URL(request.url);
-    const region = searchParams.get('region') || 'americas';
+    const { puuid } = await params;
 
-    if (!RIOT_API_KEY) {
-      return NextResponse.json(
-        { error: 'RIOT_API_KEY not configured' },
-        { status: 500 }
-      );
-    }
-
-    // Fetch summoner profile by PUUID
-    const url = `https://${region}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`;
-    const response = await fetch(url, {
-      headers: {
-        'X-Riot-Token': RIOT_API_KEY
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Riot API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    console.log(`[Profile API] Looking up cached account for ${puuid}`);
     
-    return NextResponse.json({
-      id: data.id,
-      accountId: data.accountId,
-      puuid: data.puuid,
-      name: data.name,
-      profileIconId: data.profileIconId,
-      revisionDate: data.revisionDate,
-      summonerLevel: data.summonerLevel
-    });
+    // Try to get from cache first
+    const cachedAccount = await getAccountByPuuid(puuid);
+    
+    if (cachedAccount) {
+      console.log(`[Profile API] Found cached account:`, {
+        name: cachedAccount.gameName,
+        tagLine: cachedAccount.tagLine,
+        level: cachedAccount.summonerLevel,
+        iconId: cachedAccount.profileIconId
+      });
+      
+      return NextResponse.json({
+        id: cachedAccount.summonerId || '',
+        accountId: cachedAccount.puuid,
+        puuid: cachedAccount.puuid,
+        name: cachedAccount.gameName,
+        tagLine: cachedAccount.tagLine,
+        profileIconId: cachedAccount.profileIconId || 0,
+        revisionDate: Date.now(),
+        summonerLevel: cachedAccount.summonerLevel || 0
+      });
+    }
+
+    // If not cached, return error - user should search first
+    console.log(`[Profile API] No cached account found for ${puuid}`);
+    return NextResponse.json(
+      { error: 'Account not found. Please search for the summoner first.' },
+      { status: 404 }
+    );
   } catch (error) {
     console.error('Profile API error:', error);
     return NextResponse.json(

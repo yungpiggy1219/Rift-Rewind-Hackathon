@@ -22,25 +22,80 @@ async function riotRequest(path: string, region: string = RIOT_REGION): Promise<
   return response.json();
 }
 
+// Map routing regions to platform regions
+function getPlatformRegion(routingRegion: string): string {
+  const mapping: Record<string, string> = {
+    'americas': 'na1',
+    'europe': 'euw1',
+    'asia': 'kr',
+    'sea': 'sg2'
+  };
+  return mapping[routingRegion.toLowerCase()] || 'na1';
+}
+
+export async function getAccountByPuuid(puuid: string): Promise<RiotAccount | null> {
+  const cacheKey = cache.cacheKeys.summonerByPuuid(puuid);
+  console.log(`[getAccountByPuuid] Looking for cache key: ${cacheKey}`);
+  const cached = await cache.get<RiotAccount>(cacheKey);
+  if (cached) {
+    console.log(`[getAccountByPuuid] Cache hit for ${puuid}:`, cached);
+    return cached;
+  }
+  console.log(`[getAccountByPuuid] Cache miss for ${puuid} - no data found`);
+  return null;
+}
+
 export async function resolveSummoner(gameName: string, tagLine: string): Promise<RiotAccount> {
   const cacheKey = cache.cacheKeys.summoner(gameName, tagLine);
   const cached = await cache.get<RiotAccount>(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    console.log(`[resolveSummoner] Cache hit for ${gameName}#${tagLine}`);
+    return cached;
+  }
 
-  const data = await riotRequest(`/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`) as {
+  console.log(`[resolveSummoner] Fetching account for ${gameName}#${tagLine}`);
+  
+  // Step 1: Get account info (PUUID, gameName, tagLine)
+  const accountData = await riotRequest(`/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`) as {
     puuid: string;
     gameName: string;
     tagLine: string;
   };
 
-  const account: RiotAccount = {
-    puuid: data.puuid,
-    gameName: data.gameName,
-    tagLine: data.tagLine,
-    region: RIOT_REGION
+  const platform = getPlatformRegion(RIOT_REGION);
+
+  // Step 2: Get summoner info (summonerId, profileIconId, summonerLevel)
+  console.log(`[resolveSummoner] Fetching summoner info from ${platform} for ${accountData.puuid}`);
+  const summonerData = await riotRequest(`/lol/summoner/v4/summoners/by-puuid/${accountData.puuid}`, platform) as {
+    id: string;
+    profileIconId: number;
+    summonerLevel: number;
   };
 
+  const account: RiotAccount = {
+    puuid: accountData.puuid,
+    gameName: accountData.gameName,
+    tagLine: accountData.tagLine,
+    region: RIOT_REGION,
+    platform: platform,
+    summonerId: summonerData.id,
+    profileIconId: summonerData.profileIconId,
+    summonerLevel: summonerData.summonerLevel
+  };
+
+  console.log(`[resolveSummoner] Caching account for ${gameName}#${tagLine}:`, account);
+  
+  // Cache by gameName#tagLine
+  console.log(`[resolveSummoner] Cache key 1: ${cacheKey}`);
   await cache.setLong(cacheKey, account);
+  
+  // Also cache by PUUID for quick lookups
+  const puuidCacheKey = cache.cacheKeys.summonerByPuuid(account.puuid);
+  console.log(`[resolveSummoner] Cache key 2: ${puuidCacheKey}`);
+  await cache.setLong(puuidCacheKey, account);
+  
+  console.log(`[resolveSummoner] Successfully cached account in both keys`);
+  
   return account;
 }
 
