@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as cache from '@/src/lib/cache';
+import { getAccountByPuuid } from '@/src/lib/riot';
 
 const RIOT_API_KEY = process.env.RIOT_API_KEY!;
 const RIOT_REGION = process.env.RIOT_REGION || 'americas';
 
-async function riotRequest(path: string) {
-  const url = `https://${RIOT_REGION}.api.riotgames.com${path}`;
-  console.log(`[test-matches] Fetching: ${url}`);
+async function riotRequest(path: string, region: string = RIOT_REGION) {
+  const url = `https://${region}.api.riotgames.com${path}`;
+  console.log(`[match-ids] Fetching: ${url}`);
 
   const res = await fetch(url, { headers: { 'X-Riot-Token': RIOT_API_KEY } });
   if (!res.ok) throw new Error(`Riot API error: ${res.status} ${res.statusText}`);
@@ -24,12 +25,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'PUUID is required' }, { status: 400 });
     }
 
+    // Try to get region from cached account
+    const cachedAccount = await getAccountByPuuid(puuid);
+    const region = cachedAccount?.region || RIOT_REGION;
+    
+    console.log(`[match-ids] Using region: ${region} for ${puuid}`);
+
     // Check shared cache first
-    const cacheKey = `match-ids-${puuid}-${queue || 'all'}-${type || 'all'}`;
+    const cacheKey = `match-ids-${puuid}-${region}-${queue || 'all'}-${type || 'all'}`;
     const cached = await cache.get(cacheKey);
     
     if (cached) {
-      console.log(`[test-matches] Returning cached match IDs for ${puuid}: ${(cached as any).matchIds.length} matches`);
+      console.log(`[match-ids] Returning cached match IDs for ${puuid}: ${(cached as { matchIds: string[] }).matchIds.length} matches`);
       return NextResponse.json(cached);
     }
 
@@ -62,7 +69,7 @@ export async function GET(request: NextRequest) {
       const path = `/lol/match/v5/matches/by-puuid/${puuid}/ids?${params.toString()}`;
       console.log(`[test-matches] Fetching batch ${batchCount} (start=${start})`);
 
-      const ids = (await riotRequest(path)) as string[];
+      const ids = (await riotRequest(path, region)) as string[];
       console.log(`[test-matches] Batch ${batchCount}: got ${ids.length} IDs`);
 
       if (ids.length === 0) break;

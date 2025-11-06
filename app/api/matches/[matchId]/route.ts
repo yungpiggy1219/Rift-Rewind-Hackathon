@@ -8,6 +8,8 @@ export async function GET(
   try {
     const resolvedParams = await params;
     const matchId = resolvedParams.matchId;
+    const { searchParams } = new URL(request.url);
+    const region = searchParams.get('region') || 'americas';
 
     if (!matchId) {
       return NextResponse.json(
@@ -16,9 +18,9 @@ export async function GET(
       );
     }
 
-    console.log(`[matches API] Fetching match ${matchId}`);
+    console.log(`[matches API] Fetching match ${matchId} from region ${region}`);
 
-    const matchData = await fetchMatchDetail(matchId);
+    const matchData = await fetchMatchDetail(matchId, undefined, region);
 
     if (!matchData) {
       return NextResponse.json(

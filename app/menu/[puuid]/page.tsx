@@ -14,6 +14,7 @@ interface SummonerProfile {
   accountId: string;
   puuid: string;
   name: string;
+  tagLine?: string;
   profileIconId: number;
   revisionDate: number;
   summonerLevel: number;
@@ -82,19 +83,25 @@ export default function HomePage() {
     };
   }, []);
 
-  // Fetch summoner profile
+  // Fetch summoner profile (from cache)
   const { data: profile, error: profileError } = useSWR<SummonerProfile>(
-    `/api/profile/${puuid}`,
+    puuid ? `/api/profile/${puuid}` : null,
     fetcher,
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
       dedupingInterval: 60000, // Cache for 60 seconds
       shouldRetryOnError: false, // Don't retry on error
+      onSuccess: (data) => {
+        console.log('[Menu] Profile fetched successfully:', data);
+      },
+      onError: (err) => {
+        console.error('[Menu] Profile fetch error:', err);
+      }
     }
   );
 
-  // Fetch ranked info (using PUUID, not summonerId)
+  // Fetch ranked info (uses cached account for platform)
   const { data: rankedInfo, error: rankedError } = useSWR<RankedInfo[]>(
     puuid ? `/api/ranked/${puuid}` : null,
     fetcher,
@@ -106,7 +113,7 @@ export default function HomePage() {
     }
   );
 
-  // Fetch champion mastery
+  // Fetch champion mastery (uses cached account for platform)
   const { data: masteryData, error: masteryError } = useSWR<ChampionMastery[]>(
     puuid ? `/api/mastery/${puuid}` : null,
     fetcher,
@@ -118,7 +125,7 @@ export default function HomePage() {
     }
   );
 
-  // Fetch match IDs
+  // Fetch match IDs (uses cached account for region)
   const { data: matchIdsData } = useSWR<{ totalMatches: number; matchIds: string[] }>(
     puuid ? `/api/match-ids?puuid=${puuid}` : null,
     fetcher,
@@ -174,7 +181,7 @@ export default function HomePage() {
           if (response.ok) {
             alreadyCachedCount++;
           }
-        } catch (error) {
+        } catch {
           // Not cached
         }
       }
