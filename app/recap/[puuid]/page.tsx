@@ -64,9 +64,12 @@ export default function RecapPage() {
 
   // Update URL when agent changes
   useEffect(() => {
-    const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.set('agent', agentId);
-    router.replace(`/recap/${puuid}?${newSearchParams.toString()}`, { scroll: false });
+    const currentAgent = searchParams.get('agent');
+    if (currentAgent !== agentId) {
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.set('agent', agentId);
+      router.replace(`/recap/${puuid}?${newSearchParams.toString()}`, { scroll: false });
+    }
   }, [agentId, puuid, router, searchParams]);
 
   const handleAgentChange = (newAgentId: AgentId) => {

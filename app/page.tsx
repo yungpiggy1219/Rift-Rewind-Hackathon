@@ -11,8 +11,6 @@ export default function LoginPage() {
   const [summonerLevel, setSummonerLevel] = useState<number | null>(null);
   const [summonerIcon, setSummonerIcon] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [debugLoading, setDebugLoading] = useState(false);
-  const [debugResult, setDebugResult] = useState<{ matches: number; hours: number; puuid?: string } | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -79,58 +77,6 @@ export default function LoginPage() {
       );
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchAllMatchIds = async () => {
-    if (!gameName || !tagLine) {
-      setError("Please enter game name and tag line first");
-      return;
-    }
-
-    setDebugLoading(true);
-    setError(null);
-    setDebugResult(null);
-
-    try {
-      // First, get the PUUID
-      const summonerResponse = await fetch('/api/summoner', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gameName, tagLine })
-      });
-
-      const summonerData = await summonerResponse.json();
-      if (!summonerResponse.ok) {
-        throw new Error(summonerData.error || "Failed to resolve summoner");
-      }
-
-      const puuid = summonerData.puuid;
-
-      // Fetch and cache all match IDs for 2025
-      const matchResponse = await fetch(`/api/match-ids?puuid=${puuid}`);
-      const matchData = await matchResponse.json();
-
-      if (!matchResponse.ok) {
-        throw new Error(matchData.error || "Failed to fetch match IDs");
-      }
-
-      setDebugResult({
-        puuid,
-        matches: matchData.totalMatches || 0,
-        hours: 0
-      });
-
-      console.log('Match IDs fetched and cached:', matchData);
-    } catch (error: unknown) {
-      console.error("Error fetching match IDs:", error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : "An error occurred while fetching match IDs"
-      );
-    } finally {
-      setDebugLoading(false);
     }
   };
 
@@ -241,35 +187,6 @@ export default function LoginPage() {
                 </>
               )}
             </button>
-
-            {/* Fetch Match IDs Button */}
-            <button
-              type="button"
-              onClick={fetchAllMatchIds}
-              disabled={debugLoading || !gameName || !tagLine}
-              className="w-full px-6 py-3 bg-yellow-600/90 hover:bg-yellow-700/90 disabled:bg-gray-600/50 text-white rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-xl border border-white/20 backdrop-blur-sm"
-            >
-              {debugLoading ? (
-                <>
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                  Fetching Match IDs...
-                </>
-              ) : (
-                "🔍 Fetch & Cache 2025 Match IDs"
-              )}
-            </button>
-
-            {/* Debug Result Display */}
-            {debugResult && (
-              <div className="p-4 bg-green-900/30 border border-green-500/50 rounded-xl backdrop-blur-sm">
-                <h3 className="text-green-300 font-bold mb-2">Match History Result:</h3>
-                <div className="text-white text-sm space-y-1">
-                  <p>PUUID: <span className="font-mono text-xs">{debugResult.puuid?.substring(0, 20)}...</span></p>
-                  <p>Total Match IDs: <span className="font-bold text-green-400">{debugResult.matches}</span></p>
-                  <p className="text-xs text-gray-400 italic">Match IDs fetched and cached for 2025 season</p>
-                </div>
-              </div>
-            )}
           </form>
         </div>
 
@@ -295,21 +212,6 @@ export default function LoginPage() {
             }}
           />
         ))}
-      </div>
-
-      {/* Bottom-left Summoner Info Card */}
-      <div className="fixed bottom-4 left-4 z-30">
-        <div className="bg-black/60 text-white rounded-xl p-3 flex items-center gap-3 backdrop-blur-sm border border-white/20 shadow-lg max-w-xs">
-          <img
-            src={summonerIcon ?? '/file.svg'}
-            alt="summoner icon"
-            className="w-12 h-12 rounded-full object-cover border-2 border-white/20"
-          />
-          <div className="text-sm truncate">
-            <div className="font-semibold truncate">{gameName ? `${gameName}#${tagLine}` : 'No Summoner'}</div>
-            <div className="text-xs text-white/70">Level: {summonerLevel ?? '—'}</div>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { Play, RotateCcw } from 'lucide-react';
 import useSWR from 'swr';
@@ -49,6 +49,10 @@ export default function HomePage() {
   const puuid = params.puuid as string;
   const playerName = searchParams.get('name') || 'Summoner';
   const tagLine = searchParams.get('tag') || '';
+
+  // Preloading state
+  const [isPreloading, setIsPreloading] = useState(false);
+  const [preloadStatus, setPreloadStatus] = useState('');
 
   // Force landscape orientation on mobile
   useEffect(() => {
@@ -121,7 +125,7 @@ export default function HomePage() {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 600000000, // Cache for 60 seconds
+      dedupingInterval: 6000000000000000, // Cache for 60 seconds
       shouldRetryOnError: false, // Don't retry on error
     }
   );
@@ -142,8 +146,102 @@ export default function HomePage() {
   const isLoading = !profile && !profileError;
   const hasError = profileError || rankedError;
 
-  const startRecap = () => {
-    router.push(`/recap/${puuid}?agent=velkoz&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
+  const startRecap = async () => {
+    setIsPreloading(true);
+    setPreloadStatus('Checking cached data...');
+    
+    try {
+      // Step 1: Get all match IDs
+      const matchIdsResponse = await fetch(`/api/match-ids?puuid=${puuid}`);
+      const matchIdsData = await matchIdsResponse.json();
+      const matchIds: string[] = matchIdsData.matchIds || [];
+      
+      console.log(`[Menu] Found ${matchIds.length} total matches to cache`);
+      
+      // Step 2: Check if we already have cached data by testing a few random matches
+      const sampleSize = Math.min(5, matchIds.length);
+      const sampleMatches = matchIds.slice(0, sampleSize);
+      
+      setPreloadStatus('Checking existing cache...');
+      let alreadyCachedCount = 0;
+      
+      for (const matchId of sampleMatches) {
+        try {
+          const response = await fetch(`/api/matches/${matchId}`, { 
+            method: 'GET',
+            cache: 'force-cache' // Try to get from cache only
+          });
+          if (response.ok) {
+            alreadyCachedCount++;
+          }
+        } catch (error) {
+          // Not cached
+        }
+      }
+      
+      const cacheRatio = alreadyCachedCount / sampleSize;
+      
+      if (cacheRatio >= 0.8) {
+        // Most data is already cached, skip caching
+        console.log(`[Menu] Data already cached (${Math.round(cacheRatio * 100)}% cache hit rate)`);
+        setPreloadStatus(`Data already cached. Loading recap...`);
+        
+        setTimeout(() => {
+          router.push(`/recap/${puuid}?agent=velkoz&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
+        }, 500);
+        return;
+      }
+      
+      // Step 3: Cache missing data
+      setPreloadStatus(`Found ${matchIds.length} matches. Caching match details...`);
+      
+      const batchSize = 10;
+      let cachedCount = 0;
+      
+      for (let i = 0; i < matchIds.length; i += batchSize) {
+        const batch = matchIds.slice(i, i + batchSize);
+        setPreloadStatus(`Caching matches ${cachedCount + 1}-${Math.min(cachedCount + batchSize, matchIds.length)} of ${matchIds.length}...`);
+        
+        const batchPromises = batch.map(async (matchId) => {
+          try {
+            const response = await fetch(`/api/matches/${matchId}`);
+            if (response.ok) {
+              await response.json(); // This will cache the match data
+              return true;
+            }
+            return false;
+          } catch (error) {
+            console.warn(`Failed to cache match ${matchId}:`, error);
+            return false;
+          }
+        });
+        
+        const results = await Promise.all(batchPromises);
+        cachedCount += results.filter(Boolean).length;
+        
+        // Small delay between batches to avoid overwhelming the API
+        if (i + batchSize < matchIds.length) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+      
+      console.log(`[Menu] Successfully cached ${cachedCount} out of ${matchIds.length} matches`);
+      setPreloadStatus(`Cached ${cachedCount} matches. Loading recap...`);
+      
+      // Step 4: Navigate to recap after caching is complete
+      setTimeout(() => {
+        router.push(`/recap/${puuid}?agent=velkoz&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error preloading match data:', error);
+      setPreloadStatus('Error loading matches. Continuing anyway...');
+      
+      // Navigate anyway after a short delay
+      setTimeout(() => {
+        router.push(`/recap/${puuid}?agent=velkoz&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
+      }, 1000);
+    }
   };
 
   if (isLoading) {
@@ -205,10 +303,20 @@ export default function HomePage() {
           </button>
           <button
             onClick={startRecap}
-            className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-700/80 hover:to-pink-700/80 backdrop-blur-sm text-white rounded-lg transition-all duration-200 font-semibold text-lg"
+            disabled={isPreloading}
+            className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-700/80 hover:to-pink-700/80 disabled:from-gray-600/80 disabled:to-gray-700/80 backdrop-blur-sm text-white rounded-lg transition-all duration-200 font-semibold text-lg"
           >
-            <Play className="w-6 h-6" />
-            Continue Anyway
+            {isPreloading ? (
+              <>
+                <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
+                Continue Anyway
+              </>
+            ) : (
+              <>
+                <Play className="w-6 h-6" />
+                Continue Anyway
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -238,13 +346,28 @@ export default function HomePage() {
       />
 
       {/* Bottom Right - Start Recap Button */}
-      <div className="absolute bottom-8 right-8 z-10">
+      <div className="absolute bottom-8 right-8 z-10 space-y-4">
+        {isPreloading && preloadStatus && (
+          <div className="bg-black/60 backdrop-blur-sm rounded-lg p-4 border border-white/20 max-w-xs">
+            <div className="text-sm text-white font-medium">{preloadStatus}</div>
+          </div>
+        )}
         <button
           onClick={startRecap}
-          className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600/90 to-pink-600/90 hover:from-purple-700/90 hover:to-pink-700/90 backdrop-blur-sm text-white rounded-lg transition-all duration-200 font-semibold text-lg shadow-2xl border border-white/20"
+          disabled={isPreloading}
+          className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600/90 to-pink-600/90 hover:from-purple-700/90 hover:to-pink-700/90 disabled:from-gray-600/90 disabled:to-gray-700/90 backdrop-blur-sm text-white rounded-lg transition-all duration-200 font-semibold text-lg shadow-2xl border border-white/20"
         >
-          <Play className="w-6 h-6" />
-          Start Year-End Recap
+          {isPreloading ? (
+            <>
+              <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
+              Preparing Recap...
+            </>
+          ) : (
+            <>
+              <Play className="w-6 h-6" />
+              Start Year-End Recap
+            </>
+          )}
         </button>
       </div>
 

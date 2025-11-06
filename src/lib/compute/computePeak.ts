@@ -1,7 +1,7 @@
 import { ScenePayload } from '../types';
 import { computeAggregates } from '../riot';
 
-export async function computePeak(ctx: { puuid: string }): Promise<ScenePayload> {
+export async function computePeak(ctx: { puuid: string; matchIds: string[] }): Promise<ScenePayload> {
   try {
     const aggregates = await computeAggregates(ctx.puuid);
     const peak = aggregates.peak;

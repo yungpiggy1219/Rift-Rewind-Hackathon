@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import { ChevronLeft, ChevronRight, Loader2, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { AgentId } from '@/src/lib/types';
+import { AgentId, ScenePayload, NarrationResponse } from '@/src/lib/types';
 import { SCENE_ORDER } from '@/src/lib/sceneRegistry';
 import AgentNarrator from './AgentNarrator';
 import Viz from './Viz';
@@ -16,8 +16,10 @@ interface RecapFlowProps {
   playerName?: string;
 }
 
-const fetcher = (url: string, options?: RequestInit): Promise<unknown> => 
-  fetch(url, options).then(res => res.json());
+const fetcher = async (url: string, options?: RequestInit) => {
+  const response = await fetch(url, options);
+  return response.json();
+};
 
 export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
@@ -63,51 +65,54 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
     };
   }, []);
 
-  // Fetch scene data - include POST body in cache key to prevent refetching
-  const sceneKey = currentSceneId ? [
-    `/api/insights/${currentSceneId}`,
-    puuid
-  ] : null;
+  // Fetch scene data - use stable cache key to prevent refetching
+  const sceneKey = currentSceneId ? `scene-${currentSceneId}-${puuid}` : null;
 
-  const { data: sceneData, error: sceneError, isLoading: sceneLoading } = useSWR(
+  const { data: sceneData, error: sceneError, isLoading: sceneLoading } = useSWR<ScenePayload>(
     sceneKey,
-    ([url, _puuid]: [string, string]) => fetcher(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ puuid: _puuid })
-    }),
+    async () => {
+      console.log(`[RecapFlow] Fetching scene data: ${currentSceneId} - using cached data only`);
+      return fetcher(`/api/insights/${currentSceneId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ puuid })
+      }) as Promise<ScenePayload>;
+    },
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 60000, // Don't refetch for 60 seconds
+      dedupingInterval: 300000, // Cache for 5 minutes
+      shouldRetryOnError: false,
+      revalidateIfStale: false,
     }
   );
 
-  // Fetch narration - include all dependencies in cache key
-  const narrationKey = sceneData ? [
-    `/api/narrate`,
-    agentId,
-    currentSceneId,
-    (sceneData as any)?.insight,
-    playerName
-  ] : null;
+  // Fetch narration - use stable cache key based on scene completion
+  // Only fetch narration when we have scene data
+  const narrationKey = sceneData && currentSceneId ? 
+    `narration-${agentId}-${currentSceneId}-${puuid}-${playerName || 'unknown'}` : null;
 
-  const { data: narration, error: narrationError, isLoading: narrationLoading } = useSWR(
+  const { data: narration, error: narrationError, isLoading: narrationLoading } = useSWR<NarrationResponse>(
     narrationKey,
-    ([url, _agentId, _sceneId, _insight, _playerName]: [string, string, string, any, string | undefined]) => fetcher(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        agentId: _agentId,
-        sceneId: _sceneId,
-        insight: _insight,
-        playerName: _playerName
-      })
-    }),
+    async () => {
+      console.log('[RecapFlow] Fetching narration:', agentId, currentSceneId);
+      return fetcher('/api/narrate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentId,
+          sceneId: currentSceneId,
+          insight: sceneData?.insight,
+          playerName: playerName || 'unknown'
+        })
+      }) as Promise<NarrationResponse>;
+    },
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 60000, // Don't refetch for 60 seconds
+      dedupingInterval: 300000, // Cache for 5 minutes
+      shouldRetryOnError: false,
+      revalidateIfStale: false,
     }
   );
 
@@ -250,19 +255,19 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                 {/* Visualization Panel */}
                 <div className="bg-black/40 backdrop-blur-lg rounded-2xl p-6 border border-white/20 flex flex-col overflow-hidden">
                   <h2 className="text-2xl font-bold text-white mb-4 flex-shrink-0">
-                    {(sceneData as any)?.insight?.summary}
+                    {sceneData?.insight?.summary}
                   </h2>
                   
                   <div className="flex-1 mb-4 overflow-hidden">
                     <Viz 
-                      kind={(sceneData as any)?.vizKind || 'highlight'} 
-                      data={(sceneData as any)?.insight?.vizData} 
+                      kind={sceneData?.vizKind || 'highlight'} 
+                      data={sceneData?.insight?.vizData} 
                     />
                   </div>
                   
                   {/* Metrics Grid */}
                   <div className="grid grid-cols-2 gap-3 flex-shrink-0">
-                    {((sceneData as unknown)?.insight?.metrics || []).slice(0, 4).map((metric: { label: string; value: string | number; unit?: string; context?: string }, index: number) => (
+                    {(sceneData?.insight?.metrics || []).slice(0, 4).map((metric: { label: string; value: string | number; unit?: string; context?: string }, index: number) => (
                       <div key={index} className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
                         <div className="text-xs text-gray-300">{metric.label}</div>
                         <div className="text-lg font-bold text-white">
@@ -279,7 +284,7 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                 {/* Narration Panel */}
                 <div className="flex flex-col overflow-hidden">
                   <div className="h-full overflow-hidden">
-                    <AgentNarrator narration={narration as unknown} agentId={agentId} />
+                    <AgentNarrator narration={narration} agentId={agentId} />
                   </div>
                 </div>
               </div>

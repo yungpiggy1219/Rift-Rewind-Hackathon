@@ -24,12 +24,13 @@ export interface SceneInsight {
   details: string[];
   action: string;
   metrics: SceneMetric[];
-  vizData: any;
+  vizData: Record<string, unknown>;
 }
 
 export interface ScenePayload {
   sceneId: SceneId;
   insight: SceneInsight;
+  vizKind?: VizKind;
 }
 
 // Agent Types
@@ -70,7 +71,7 @@ export interface RiotAccount {
 
 export interface MatchParticipant {
   puuid: string;
-  summonerName: string;
+  riotIdGameName: string;
   championId: number;
   championName: string;
   kills: number;
@@ -87,13 +88,19 @@ export interface MatchParticipant {
   summoner2Id: number;
 }
 
+// Minimal participant data - only name
+export interface OtherParticipant {
+  puuid: string;
+  riotIdGameName: string;
+}
+
 export interface MatchData {
   gameId: string;
   gameCreation: number;
   gameDuration: number;
   gameMode: string;
   gameType: string;
-  participants: MatchParticipant[];
+  participants: (MatchParticipant | OtherParticipant)[];
 }
 
 // Aggregated Data Types

@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import * as cache from '@/src/lib/cache';
 
 const RIOT_API_KEY = process.env.RIOT_API_KEY!;
 const RIOT_REGION = process.env.RIOT_REGION || 'americas';
-
-// In-memory cache for match IDs
-const matchIdCache = new Map<string, { matchIds: string[]; timestamp: number }>();
-const CACHE_TTL = 1000 * 60 * 60; // 1 hour
 
 async function riotRequest(path: string) {
   const url = `https://${RIOT_REGION}.api.riotgames.com${path}`;
@@ -27,27 +24,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'PUUID is required' }, { status: 400 });
     }
 
-    // Check cache first
-    const cacheKey = `${puuid}-${queue || 'all'}-${type || 'all'}`;
-    const cached = matchIdCache.get(cacheKey);
+    // Check shared cache first
+    const cacheKey = `match-ids-${puuid}-${queue || 'all'}-${type || 'all'}`;
+    const cached = await cache.get(cacheKey);
     
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      console.log(`[test-matches] Returning cached match IDs for ${puuid}: ${cached.matchIds.length} matches`);
-      return NextResponse.json({
-        success: true,
-        puuid,
-        totalMatches: cached.matchIds.length,
-        matches: cached.matchIds,
-        matchIds: cached.matchIds, // Also include as matchIds for compatibility
-        duplicatesRemoved: 0,
-        cached: true,
-        note: 'Match IDs retrieved from cache'
-      });
+    if (cached) {
+      console.log(`[test-matches] Returning cached match IDs for ${puuid}: ${(cached as any).matchIds.length} matches`);
+      return NextResponse.json(cached);
     }
 
-    // Time range: Jan 1, 2025 → now (in seconds)
-    const startTimestamp = Math.floor(Date.UTC(2025, 0, 1) / 1000);
-    const endTimestamp = Math.floor(Date.now() / 1000);
+    // Time range: Jan 1, 2025 → Nov 5, 2025 (in seconds)
+    const startTimestamp = 1735689600; // January 1st, 2025 00:00:00 UTC
+    const endTimestamp = 1762387199;   // November 5th, 2025 23:59:59 UTC
 
     console.log(
       `[test-matches] Season range: ${new Date(startTimestamp * 1000).toISOString()} → ${new Date(endTimestamp * 1000).toISOString()}`
@@ -87,16 +75,7 @@ export async function GET(request: NextRequest) {
 
     const uniqueMatchIds = [...new Set(allMatchIds)];
 
-    // Cache the results
-    matchIdCache.set(cacheKey, {
-      matchIds: uniqueMatchIds,
-      timestamp: Date.now()
-    });
-
-    console.log(`[test-matches] Final: ${uniqueMatchIds.length} unique match IDs cached`);
-    console.log(`[test-matches] All match IDs:`, uniqueMatchIds);
-
-    return NextResponse.json({
+    const result = {
       success: true,
       puuid,
       totalMatches: uniqueMatchIds.length,
@@ -105,7 +84,15 @@ export async function GET(request: NextRequest) {
       duplicatesRemoved: allMatchIds.length - uniqueMatchIds.length,
       cached: false,
       note: `Filtered by time range (2025-01-01 → now${queue ? `, queue=${queue}` : ''}${type ? `, type=${type}` : ''})`,
-    });
+    };
+
+    // Cache the results in shared cache
+    await cache.set(cacheKey, result);
+
+    console.log(`[test-matches] Final: ${uniqueMatchIds.length} unique match IDs cached`);
+    console.log(`[test-matches] All match IDs:`, uniqueMatchIds);
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('[test-matches] Error:', error);
     return NextResponse.json(

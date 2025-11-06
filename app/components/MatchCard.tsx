@@ -59,12 +59,6 @@ export default function MatchCard({ match, playerPuuid }: MatchCardProps) {
   const team2 = match.participants.slice(5, 10);
   const playerTeam = team1.some(p => p.puuid === playerPuuid) ? team1 : team2;
 
-  // Debug summoner spells
-  console.log('[MatchCard] Summoner Spell 1 ID:', player.summoner1Id);
-  console.log('[MatchCard] Summoner Spell 1 Map:', summonerSpellMap[player.summoner1Id]);
-  console.log('[MatchCard] Summoner Spell 2 ID:', player.summoner2Id);
-  console.log('[MatchCard] Summoner Spell 2 Map:', summonerSpellMap[player.summoner2Id]);
-
   return (
     <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 rounded-xl p-4 border border-white/20 backdrop-blur-sm">
       <div className="flex items-center justify-between">
