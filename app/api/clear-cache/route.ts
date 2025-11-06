@@ -2,12 +2,34 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as cache from '@/src/lib/cache';
 
 async function clearCacheForPuuid(puuid: string) {
-  // Clear match-ids cache for all regions and queue types
-  const regions = ['americas', 'europe', 'asia'];
-  const queues = ['all', '420', '450']; // ranked, aram, etc.
-  const types = ['all', 'ranked'];
-  
   const keysCleared: string[] = [];
+  let totalCleared = 0;
+  
+  console.log(`[clear-cache] Starting cache clear for PUUID: ${puuid}`);
+  
+  // Use pattern matching to clear all cache entries for this PUUID
+  const patterns = [
+    `*${puuid}*`, // Main pattern - catches everything with the puuid
+    `scene:${puuid}:*`, // Scene-specific pattern
+    `match-ids-${puuid}*`, // Match IDs pattern
+    `narration:*:*:${puuid}`, // Narration pattern
+  ];
+  
+  for (const pattern of patterns) {
+    try {
+      const count = await cache.clearPattern(pattern);
+      totalCleared += count;
+      keysCleared.push(`Pattern: ${pattern} (${count} keys)`);
+      console.log(`[clear-cache] Cleared ${count} keys matching pattern: ${pattern}`);
+    } catch (error) {
+      console.error(`[clear-cache] Error clearing pattern ${pattern}:`, error);
+    }
+  }
+  
+  // Also explicitly clear known keys for extra safety
+  const regions = ['americas', 'europe', 'asia'];
+  const queues = ['all', '420', '450'];
+  const types = ['all', 'ranked'];
   
   for (const region of regions) {
     for (const queue of queues) {
@@ -19,7 +41,7 @@ async function clearCacheForPuuid(puuid: string) {
     }
   }
   
-  // Also clear scene caches that depend on match data
+  // Clear scene caches explicitly
   const sceneIds = [
     "year_in_motion", "signature_champion", "damage_share", "damage_taken",
     "total_healed", "gold_share", "growth_over_time", "peak_performance",
@@ -32,11 +54,12 @@ async function clearCacheForPuuid(puuid: string) {
     keysCleared.push(sceneKey);
   }
   
-  console.log(`[clear-cache] Cleared ${keysCleared.length} cache keys for ${puuid}`);
+  console.log(`[clear-cache] Total cleared: ${totalCleared} keys (including ${keysCleared.length} explicit keys)`);
   
   return NextResponse.json({
     success: true,
-    message: `Cleared ${keysCleared.length} cache keys`,
+    message: `Cleared cache for ${puuid}`,
+    totalCleared: totalCleared + keysCleared.length,
     keysCleared
   });
 }

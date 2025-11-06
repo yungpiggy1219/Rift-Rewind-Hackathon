@@ -60,17 +60,33 @@ export default function HomePage() {
   const clearCache = async () => {
     setIsClearingCache(true);
     try {
+      console.log('[Menu] Clearing cache for PUUID:', puuid);
       const response = await fetch(`/api/clear-cache?puuid=${puuid}`);
       if (response.ok) {
         const data = await response.json();
         console.log('[Menu] Cache cleared:', data);
-        alert(`Successfully cleared ${data.keysCleared?.length || 0} cache entries. The data will be refreshed on next load.`);
+        
+        // Show detailed success message
+        const message = `✓ Successfully cleared ${data.totalCleared || 0} cache entries!\n\n` +
+                       `This includes:\n` +
+                       `• All scene computations (damage stats, healing, gold, etc.)\n` +
+                       `• Match data caches\n` +
+                       `• Narration caches\n\n` +
+                       `Your data will be fresh on the next recap!`;
+        
+        alert(message);
+        
+        // Optionally reload the page to clear client-side SWR cache
+        if (confirm('Would you like to reload the page to clear client-side cache too?')) {
+          window.location.reload();
+        }
       } else {
-        throw new Error('Failed to clear cache');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to clear cache');
       }
     } catch (error) {
       console.error('[Menu] Error clearing cache:', error);
-      alert('Failed to clear cache. Please try again.');
+      alert(`Failed to clear cache: ${error instanceof Error ? error.message : 'Unknown error'}\n\nPlease check the console for details.`);
     } finally {
       setIsClearingCache(false);
     }
