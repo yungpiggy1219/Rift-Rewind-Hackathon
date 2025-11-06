@@ -1,6 +1,6 @@
 import { ScenePayload } from '../types';
 
-export async function computeAram(ctx: { puuid: string; season: string }): Promise<ScenePayload> {
+export async function computeAram(ctx: { puuid: string }): Promise<ScenePayload> {
   // TODO: Implement ARAM analysis
   // This should analyze ARAM-specific performance and fun metrics
   

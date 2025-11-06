@@ -74,9 +74,9 @@ export async function del(key: string): Promise<void> {
 // Cache key builders
 export const cacheKeys = {
   summoner: (gameName: string, tagLine: string) => `summoner:${gameName}:${tagLine}`,
-  matches: (puuid: string, season: string) => `matches:${puuid}:${season}`,
-  aggregates: (puuid: string, season: string) => `aggregates:${puuid}:${season}`,
-  scene: (puuid: string, sceneId: string, season: string) => `scene:${puuid}:${sceneId}:${season}`,
+  matches: (puuid: string) => `matches:${puuid}:2025`,
+  aggregates: (puuid: string) => `aggregates:${puuid}:2025`,
+  scene: (puuid: string, sceneId: string) => `scene:${puuid}:${sceneId}:2025`,
   narration: (agentId: string, sceneId: string, puuid: string) => `narration:${agentId}:${sceneId}:${puuid}`,
 };
 

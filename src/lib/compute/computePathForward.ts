@@ -1,6 +1,6 @@
 import { ScenePayload } from '../types';
 
-export async function computePathForward(ctx: { puuid: string; season: string }): Promise<ScenePayload> {
+export async function computePathForward(ctx: { puuid: string }): Promise<ScenePayload> {
   // TODO: Implement path forward analysis
   // This should provide personalized recommendations for improvement
   

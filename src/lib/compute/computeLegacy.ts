@@ -1,6 +1,6 @@
 import { ScenePayload } from '../types';
 
-export async function computeLegacy(ctx: { puuid: string; season: string }): Promise<ScenePayload> {
+export async function computeLegacy(ctx: { puuid: string }): Promise<ScenePayload> {
   // TODO: Implement legacy analysis
   // This should highlight memorable moments and achievements
   

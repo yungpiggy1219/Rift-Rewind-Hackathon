@@ -1,9 +1,9 @@
 import { ScenePayload } from '../types';
 import { computeAggregates } from '../riot';
 
-export async function computePeak(ctx: { puuid: string; season: string }): Promise<ScenePayload> {
+export async function computePeak(ctx: { puuid: string }): Promise<ScenePayload> {
   try {
-    const aggregates = await computeAggregates(ctx.puuid, ctx.season);
+    const aggregates = await computeAggregates(ctx.puuid);
     const peak = aggregates.peak;
     
     // Calculate peak performance score

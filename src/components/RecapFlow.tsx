@@ -12,7 +12,6 @@ import ShareCardButton from './ShareCardButton';
 
 interface RecapFlowProps {
   puuid: string;
-  season: string;
   agentId: AgentId;
   playerName?: string;
 }
@@ -20,7 +19,7 @@ interface RecapFlowProps {
 const fetcher = (url: string, options?: RequestInit): Promise<unknown> => 
   fetch(url, options).then(res => res.json());
 
-export default function RecapFlow({ puuid, season, agentId, playerName }: RecapFlowProps) {
+export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [particles] = useState(() => 
@@ -67,16 +66,15 @@ export default function RecapFlow({ puuid, season, agentId, playerName }: RecapF
   // Fetch scene data - include POST body in cache key to prevent refetching
   const sceneKey = currentSceneId ? [
     `/api/insights/${currentSceneId}`,
-    puuid,
-    season
+    puuid
   ] : null;
 
   const { data: sceneData, error: sceneError, isLoading: sceneLoading } = useSWR(
     sceneKey,
-    ([url, _puuid, _season]: [string, string, string]) => fetcher(url, {
+    ([url, _puuid]: [string, string]) => fetcher(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ puuid: _puuid, season: _season })
+      body: JSON.stringify({ puuid: _puuid })
     }),
     {
       revalidateOnFocus: false,
@@ -129,7 +127,7 @@ export default function RecapFlow({ puuid, season, agentId, playerName }: RecapF
   };
 
   const goBack = () => {
-    router.push(`/menu/${puuid}?name=${encodeURIComponent(playerName || 'Summoner')}&tag=&season=${season}`);
+    router.push(`/menu/${puuid}?name=${encodeURIComponent(playerName || 'Summoner')}&tag=`);
   };
 
   // Calculate tilt values based on mouse position

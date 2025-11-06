@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 const RIOT_API_KEY = process.env.RIOT_API_KEY!;
 const RIOT_REGION = process.env.RIOT_REGION || 'americas';
 
+// In-memory cache for match IDs
+const matchIdCache = new Map<string, { matchIds: string[]; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour
+
 async function riotRequest(path: string) {
   const url = `https://${RIOT_REGION}.api.riotgames.com${path}`;
   console.log(`[test-matches] Fetching: ${url}`);
@@ -21,6 +25,24 @@ export async function GET(request: NextRequest) {
 
     if (!puuid) {
       return NextResponse.json({ error: 'PUUID is required' }, { status: 400 });
+    }
+
+    // Check cache first
+    const cacheKey = `${puuid}-${queue || 'all'}-${type || 'all'}`;
+    const cached = matchIdCache.get(cacheKey);
+    
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log(`[test-matches] Returning cached match IDs for ${puuid}: ${cached.matchIds.length} matches`);
+      return NextResponse.json({
+        success: true,
+        puuid,
+        totalMatches: cached.matchIds.length,
+        matches: cached.matchIds,
+        matchIds: cached.matchIds, // Also include as matchIds for compatibility
+        duplicatesRemoved: 0,
+        cached: true,
+        note: 'Match IDs retrieved from cache'
+      });
     }
 
     // Time range: Jan 1, 2025 → now (in seconds)
@@ -65,14 +87,23 @@ export async function GET(request: NextRequest) {
 
     const uniqueMatchIds = [...new Set(allMatchIds)];
 
-    console.log(`[test-matches] Final: ${uniqueMatchIds.length} unique match IDs`);
+    // Cache the results
+    matchIdCache.set(cacheKey, {
+      matchIds: uniqueMatchIds,
+      timestamp: Date.now()
+    });
+
+    console.log(`[test-matches] Final: ${uniqueMatchIds.length} unique match IDs cached`);
+    console.log(`[test-matches] All match IDs:`, uniqueMatchIds);
 
     return NextResponse.json({
       success: true,
       puuid,
       totalMatches: uniqueMatchIds.length,
       matches: uniqueMatchIds,
+      matchIds: uniqueMatchIds, // Also include as matchIds for compatibility
       duplicatesRemoved: allMatchIds.length - uniqueMatchIds.length,
+      cached: false,
       note: `Filtered by time range (2025-01-01 → now${queue ? `, queue=${queue}` : ''}${type ? `, type=${type}` : ''})`,
     });
   } catch (error) {

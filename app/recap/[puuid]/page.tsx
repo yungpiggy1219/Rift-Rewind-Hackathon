@@ -37,7 +37,6 @@ export default function RecapPage() {
   
   const puuid = params.puuid as string;
   const [agentId, setAgentId] = useState<AgentId>((searchParams.get('agent') as AgentId) || 'velkoz');
-  const [season, setSeason] = useState(searchParams.get('season') || '2025');
   const playerName = searchParams.get('name') || 'Summoner';
   const tagLine = searchParams.get('tag') || '';
 
@@ -67,16 +66,11 @@ export default function RecapPage() {
   useEffect(() => {
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.set('agent', agentId);
-    newSearchParams.set('season', season);
     router.replace(`/recap/${puuid}?${newSearchParams.toString()}`, { scroll: false });
-  }, [agentId, season, puuid, router, searchParams]);
+  }, [agentId, puuid, router, searchParams]);
 
   const handleAgentChange = (newAgentId: AgentId) => {
     setAgentId(newAgentId);
-  };
-
-  const handleSeasonChange = (newSeason: string) => {
-    setSeason(newSeason);
   };
 
   return (
@@ -85,7 +79,6 @@ export default function RecapPage() {
       {/* Recap Flow */}
       <RecapFlow 
         puuid={puuid}
-        season={season}
         agentId={agentId}
         playerName={`${playerName}${tagLine ? `#${tagLine}` : ''}`}
       />

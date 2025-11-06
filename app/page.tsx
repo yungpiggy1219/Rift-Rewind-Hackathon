@@ -69,7 +69,7 @@ export default function LoginPage() {
       }
 
       // Redirect to menu page
-      router.push(`/menu/${data.puuid}?name=${encodeURIComponent(inputGameName)}&tag=${encodeURIComponent(inputTagLine)}&season=2025`);
+      router.push(`/menu/${data.puuid}?name=${encodeURIComponent(inputGameName)}&tag=${encodeURIComponent(inputTagLine)}`);
     } catch (error: unknown) {
       console.error("Error resolving summoner:", error);
       setError(

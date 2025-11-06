@@ -61,6 +61,13 @@ export async function fetchMatchIds(
 }
 
 export async function fetchMatchDetail(matchId: string): Promise<MatchData | null> {
+  // Check cache first
+  const cacheKey = `match-detail-${matchId}`;
+  const cached = await cache.get<MatchData>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const data = await riotRequest(`/lol/match/v5/matches/${matchId}`) as {
     metadata: { 
       matchId: string;
@@ -86,12 +93,22 @@ export async function fetchMatchDetail(matchId: string): Promise<MatchData | nul
         teamPosition?: string;
         role?: string;
         lane: string;
+        item0: number;
+        item1: number;
+        item2: number;
+        item3: number;
+        item4: number;
+        item5: number;
+        item6: number;
+        champLevel: number;
+        summoner1Id: number;
+        summoner2Id: number;
       }>;
     };
   };
 
   // Transform Riot API response to our MatchData format
-  return {
+  const matchData: MatchData = {
     gameId: data.metadata.matchId,
     gameCreation: data.info.gameCreation,
     gameDuration: data.info.gameDuration,
@@ -109,13 +126,22 @@ export async function fetchMatchDetail(matchId: string): Promise<MatchData | nul
       goldEarned: p.goldEarned,
       win: p.win,
       role: p.teamPosition || p.role || 'Unknown',
-      lane: p.lane
+      lane: p.lane,
+      items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6],
+      champLevel: p.champLevel,
+      summoner1Id: p.summoner1Id,
+      summoner2Id: p.summoner2Id
     }))
   };
+
+  // Cache the match data for 1 hour (matches don't change)
+  await cache.set(cacheKey, matchData, 3600);
+  
+  return matchData;
 }
 
-export async function computeAggregates(puuid: string, season: string): Promise<PlayerAggregates> {
-  const cacheKey = cache.cacheKeys.aggregates(puuid, season);
+export async function computeAggregates(puuid: string): Promise<PlayerAggregates> {
+  const cacheKey = cache.cacheKeys.aggregates(puuid);
   const cached = await cache.get<PlayerAggregates>(cacheKey);
   if (cached) return cached;
 
@@ -123,7 +149,7 @@ export async function computeAggregates(puuid: string, season: string): Promise<
     const startTimestamp = 1735689600; // January 1st, 2025 00:00:00 UTC in seconds
     const endTimestamp = 1762387199; // November 5th, 2025 23:59:59 UTC in seconds
 
-  console.log(`[computeAggregates] Fetching match IDs for ${season}`);
+  console.log('[computeAggregates] Fetching match IDs for 2025');
   
   // Step 1: Fetch all match IDs using dedicated endpoint (which caches them)
   let allMatchIds: string[] = [];
@@ -178,9 +204,21 @@ export async function computeAggregates(puuid: string, season: string): Promise<
   let peakMatchId = '';
   
   // Step 3: Fetch match details and filter by season timestamp
-  console.log(`[computeAggregates] Processing match details for season ${season}...`);
+  console.log('[computeAggregates] Processing match details for 2025...');
   
-  for (const matchId of allMatchIds) {
+  // Rate limiting: Process in batches with delays
+  const BATCH_SIZE = 50; // Process 50 matches at a time
+  const BATCH_DELAY_MS = 500; // Wait 500ms between batches
+  
+  for (let i = 0; i < allMatchIds.length; i++) {
+    const matchId = allMatchIds[i];
+    
+    // Add delay every BATCH_SIZE requests to avoid rate limiting
+    if (i > 0 && i % BATCH_SIZE === 0) {
+      console.log(`[computeAggregates] Processed ${i}/${allMatchIds.length} matches, waiting ${BATCH_DELAY_MS}ms...`);
+      await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
+    }
+    
     try {
       const match = await fetchMatchDetail(matchId);
       if (!match) {

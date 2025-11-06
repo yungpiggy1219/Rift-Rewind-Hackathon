@@ -1,6 +1,6 @@
 import { ScenePayload } from '../types';
 
-export async function computeSignatureStyle(ctx: { puuid: string; season: string }): Promise<ScenePayload> {
+export async function computeSignatureStyle(ctx: { puuid: string }): Promise<ScenePayload> {
   // TODO: Implement signature style analysis
   // This should analyze champion preferences, role distribution, playstyle patterns
   

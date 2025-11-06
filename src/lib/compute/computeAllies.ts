@@ -1,6 +1,6 @@
 import { ScenePayload } from '../types';
 
-export async function computeAllies(ctx: { puuid: string; season: string }): Promise<ScenePayload> {
+export async function computeAllies(ctx: { puuid: string }): Promise<ScenePayload> {
   // TODO: Implement ally analysis
   // This should analyze frequent duo partners and synergy statistics
   

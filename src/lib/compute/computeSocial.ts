@@ -1,6 +1,6 @@
 import { ScenePayload } from '../types';
 
-export async function computeSocial(ctx: { puuid: string; season: string }): Promise<ScenePayload> {
+export async function computeSocial(ctx: { puuid: string }): Promise<ScenePayload> {
   // TODO: Implement social comparison analysis
   // This should compare performance against players of similar rank/region
   

@@ -1,9 +1,9 @@
 import { ScenePayload } from '../types';
 import { computeAggregates } from '../riot';
 
-export async function computeGrowth(ctx: { puuid: string; season: string }): Promise<ScenePayload> {
+export async function computeGrowth(ctx: { puuid: string }): Promise<ScenePayload> {
   try {
-    const aggregates = await computeAggregates(ctx.puuid, ctx.season);
+    const aggregates = await computeAggregates(ctx.puuid);
     
     // Analyze growth trends across multiple metrics
     const kdaGrowth = ((aggregates.kda.end - aggregates.kda.start) / aggregates.kda.start) * 100;

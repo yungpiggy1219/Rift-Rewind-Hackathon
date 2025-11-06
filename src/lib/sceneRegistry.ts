@@ -12,7 +12,7 @@ import { computePathForward } from './compute/computePathForward';
 
 export interface SceneDefinition {
   label: string;
-  compute: (ctx: { puuid: string; season: string }) => Promise<ScenePayload>;
+  compute: (ctx: { puuid: string }) => Promise<ScenePayload>;
   vizKind: VizKind;
 }
 

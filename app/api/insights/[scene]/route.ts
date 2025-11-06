@@ -5,8 +5,7 @@ import { getSceneDefinition } from '@/src/lib/sceneRegistry';
 import * as cache from '@/src/lib/cache';
 
 const InsightRequestSchema = z.object({
-  puuid: z.string(),
-  season: z.string().default('2025')
+  puuid: z.string()
 });
 
 export async function POST(
@@ -18,7 +17,7 @@ export async function POST(
     console.log('Received params:', resolvedParams);
     const sceneId = resolvedParams.scene as SceneId;
     const body = await request.json();
-    const { puuid, season } = InsightRequestSchema.parse(body);
+    const { puuid } = InsightRequestSchema.parse(body);
 
     // Validate scene ID
     const validScenes: SceneId[] = [
@@ -34,7 +33,7 @@ export async function POST(
     }
 
     // Check cache first
-    const cacheKey = cache.cacheKeys.scene(puuid, sceneId, season);
+    const cacheKey = cache.cacheKeys.scene(puuid, sceneId);
     const cached = await cache.get(cacheKey);
     if (cached) {
       return NextResponse.json(cached);
@@ -50,7 +49,7 @@ export async function POST(
     }
 
     // Compute scene payload
-    const payload = await sceneDefinition.compute({ puuid, season });
+    const payload = await sceneDefinition.compute({ puuid });
     
     // Cache the result
     await cache.set(cacheKey, payload);

@@ -81,6 +81,10 @@ export interface MatchParticipant {
   win: boolean;
   role: string;
   lane: string;
+  items: number[];
+  champLevel: number;
+  summoner1Id: number;
+  summoner2Id: number;
 }
 
 export interface MatchData {

@@ -5,7 +5,9 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { Play, RotateCcw } from 'lucide-react';
 import useSWR from 'swr';
 import SummonerCard from '../../components/SummonerCard';
+import MatchCard from '../../components/MatchCard';
 import { getChampionName } from '../../../src/lib/champions';
+import { MatchData } from '@/src/lib/types';
 
 interface SummonerProfile {
   id: string;
@@ -47,7 +49,6 @@ export default function HomePage() {
   const puuid = params.puuid as string;
   const playerName = searchParams.get('name') || 'Summoner';
   const tagLine = searchParams.get('tag') || '';
-  const season = searchParams.get('season') || '2025';
 
   // Force landscape orientation on mobile
   useEffect(() => {
@@ -113,11 +114,36 @@ export default function HomePage() {
     }
   );
 
+  // Fetch match IDs
+  const { data: matchIdsData } = useSWR<{ totalMatches: number; matchIds: string[] }>(
+    puuid ? `/api/match-ids?puuid=${puuid}` : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 600000000, // Cache for 60 seconds
+      shouldRetryOnError: false, // Don't retry on error
+    }
+  );
+
+  // Fetch most recent match details
+  const mostRecentMatchId = matchIdsData?.matchIds?.[0];
+  const { data: recentMatch } = useSWR<MatchData>(
+    mostRecentMatchId ? `/api/matches/${mostRecentMatchId}` : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 3600000, // Cache for 1 hour
+      shouldRetryOnError: false,
+    }
+  );
+
   const isLoading = !profile && !profileError;
   const hasError = profileError || rankedError;
 
   const startRecap = () => {
-    router.push(`/recap/${puuid}?agent=velkoz&season=${season}&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
+    router.push(`/recap/${puuid}?agent=velkoz&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
   };
 
   if (isLoading) {
@@ -247,7 +273,7 @@ export default function HomePage() {
         <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-8 border border-white/10 max-w-2xl mx-4">
           <div className="text-center">
             <h2 className="text-4xl font-bold text-white mb-4">
-              Welcome to Rift Rewind {season}
+              Welcome to Rift Rewind 2025
             </h2>
             <p className="text-xl text-gray-200 mb-6">
               Your personalized League of Legends year-end recap awaits
@@ -292,6 +318,30 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {matchIdsData && (
+              <div className="mt-8">
+                <h3 className="text-xl font-bold text-white mb-4 text-center">Most Recent Match</h3>
+                {recentMatch && puuid ? (
+                  <MatchCard match={recentMatch} playerPuuid={puuid} />
+                ) : (
+                  <div className="bg-black/20 rounded-xl p-4 border border-white/10">
+                    <div className="text-center mb-3">
+                      <div className="text-3xl font-bold text-cyan-400">
+                        {matchIdsData.totalMatches}
+                      </div>
+                      <div className="text-sm text-gray-300">Total Matches in 2025</div>
+                    </div>
+                    {matchIdsData.matchIds && matchIdsData.matchIds.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-white/10">
+                        <div className="text-xs text-gray-400 mb-2">Loading match details...</div>
+                        <div className="animate-pulse bg-gray-700/50 h-20 rounded"></div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -1,6 +1,6 @@
 import { ScenePayload } from '../types';
 
-export async function computeWeaknesses(ctx: { puuid: string; season: string }): Promise<ScenePayload> {
+export async function computeWeaknesses(ctx: { puuid: string }): Promise<ScenePayload> {
   // TODO: Implement weakness analysis
   // This should identify areas for improvement based on performance data
   
