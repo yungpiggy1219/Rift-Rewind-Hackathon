@@ -1,9 +1,10 @@
-import { ScenePayload, MatchParticipant } from '../types';
-import { fetchMatchDetail } from '../riot';
+import { ScenePayload, MatchParticipant, MatchData } from '../types';
+import * as cache from '../cache';
 
 // Type guard to check if participant has full match data
-function isFullParticipant(participant: MatchParticipant): participant is MatchParticipant {
-  return participant && 'kills' in participant && 'deaths' in participant && 'assists' in participant;
+function isFullParticipant(participant: unknown): participant is MatchParticipant {
+  const p = participant as Partial<MatchParticipant>;
+  return !!participant && typeof participant === 'object' && typeof p.kills === 'number' && typeof p.deaths === 'number' && typeof p.assists === 'number';
 }
 
 export async function computeYearInMotion(ctx: { puuid: string; matchIds: string[] }): Promise<ScenePayload> {
@@ -36,11 +37,13 @@ export async function computeYearInMotion(ctx: { puuid: string; matchIds: string
       
       const matchPromises = batch.map(async (matchId) => {
         try {
-          // fetchMatchDetail automatically reads from cache first
-          const match = await fetchMatchDetail(matchId, ctx.puuid);
-          if (match) {
+          // Read match detail directly from cache file
+          const cacheKey = `match-detail-${matchId}`;
+          const cached = await cache.get(cacheKey);
+          
+          if (cached) {
             cacheHits++;
-            return match;
+            return { matchId, data: cached as MatchData };
           } else {
             cacheMisses++;
             console.warn(`[computeYearInMotion] No cached data for match ${matchId}`);
@@ -53,10 +56,12 @@ export async function computeYearInMotion(ctx: { puuid: string; matchIds: string
         }
       });
       
-      const matches = await Promise.all(matchPromises);
+      const results = await Promise.all(matchPromises);
       
-      for (const match of matches) {
-        if (!match) continue;
+      for (const result of results) {
+        if (!result) continue;
+        
+        const match = result.data;
         
         // Find player's participant data
         const playerParticipant = match.participants.find(p => p.puuid === ctx.puuid);
@@ -172,15 +177,17 @@ export async function computeYearInMotion(ctx: { puuid: string; matchIds: string
             assists: bestKDA.assists,
             date: bestKDA.date
           },
-          // Format data for heatmap visualization
-          months: Object.entries(monthlyHours).map(([month, hours]) => {
-            const monthlyMatches = Math.round(hours * 2); // Estimate matches from hours
-            const maxHours = Math.max(...Object.values(monthlyHours));
+          // Format data for heatmap visualization - always show all 12 months
+          months: monthNames.map(month => {
+            const hours = monthlyHours[month];
+            const hasData = hours !== undefined;
+            const maxHours = Math.max(...Object.values(monthlyHours), 1); // Avoid division by zero
+            
             return {
               month,
-              hours: Math.round(hours),
-              matches: monthlyMatches,
-              intensity: hours / maxHours // Normalized intensity for color
+              hours: hasData ? Math.round(hours) : null, // null if no data for this month
+              matches: hasData ? Math.round(hours * 2) : null, // Estimate matches from hours, null if no data
+              intensity: hasData ? hours / maxHours : 0 // 0 intensity if no data
             };
           })
         }

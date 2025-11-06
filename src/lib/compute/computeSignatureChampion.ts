@@ -1,12 +1,12 @@
 import { ScenePayload, MatchData } from '../types';
 import { fetchMatchDetail } from '../riot';
 
-export async function computeSignatureStyle(ctx: { puuid: string; matchIds: string[] }): Promise<ScenePayload> {
-  console.log(`[computeSignatureStyle] Starting for ${ctx.puuid} - ANALYZING MOST USED CHAMPION`);
+export async function computeSignatureChampion(ctx: { puuid: string; matchIds: string[] }): Promise<ScenePayload> {
+  console.log(`[computeSignatureChampion] Starting for ${ctx.puuid} - ANALYZING MOST USED CHAMPION`);
   
   try {
     const matchIds = ctx.matchIds || [];
-    console.log(`[computeSignatureStyle] Using ${matchIds.length} cached match IDs`);
+    console.log(`[computeSignatureChampion] Using ${matchIds.length} cached match IDs`);
     
     if (matchIds.length === 0) {
       throw new Error('No matches found');
@@ -100,7 +100,7 @@ export async function computeSignatureStyle(ctx: { puuid: string; matchIds: stri
       : (mostPlayedChampion.totalKills + mostPlayedChampion.totalAssists) / mostPlayedChampion.totalDeaths;
     const avgGold = Math.round(mostPlayedChampion.totalGold / mostPlayedChampion.games);
     
-    console.log(`[computeSignatureStyle] Most played: ${mostPlayedChampion.championName} (${mostPlayedChampion.games} games, ${winRate.toFixed(1)}% WR)`);
+    console.log(`[computeSignatureChampion] Most played: ${mostPlayedChampion.championName} (${mostPlayedChampion.games} games, ${winRate.toFixed(1)}% WR)`);
     
     // Get top 3 champions for comparison
     const top3Champions = championList.slice(0, 3);
@@ -177,7 +177,7 @@ export async function computeSignatureStyle(ctx: { puuid: string; matchIds: stri
     };
     
   } catch (error) {
-    console.error('Error in computeSignatureStyle:', error);
+    console.error('Error in computeSignatureChampion:', error);
     
     // Fallback to mock data if real data fails
     return {

@@ -168,7 +168,11 @@ export async function fetchMatchDetail(matchId: string, targetPuuid?: string): P
           kills?: number;
           deaths?: number;
           assists?: number;
+          totalDamageDealt?: number;
           totalDamageDealtToChampions?: number;
+          totalDamageTaken?: number;
+          totalHeal?: number;
+          totalHealsOnTeammates?: number;
           goldEarned?: number;
           win?: boolean;
           teamPosition?: string;
@@ -220,6 +224,10 @@ export async function fetchMatchDetail(matchId: string, targetPuuid?: string): P
           deaths: p.deaths!,
           assists: p.assists!,
           totalDamageDealt: p.totalDamageDealtToChampions!,
+          totalDamageDealtToChampions: p.totalDamageDealtToChampions,
+          totalDamageTaken: p.totalDamageTaken,
+          totalHeal: p.totalHeal,
+          totalHealsOnTeammates: p.totalHealsOnTeammates,
           goldEarned: p.goldEarned!,
           win: p.win!,
           role: p.individualPosition || p.role || '',

@@ -1,7 +1,11 @@
 // Core Scene Types
 export type SceneId = 
   | "year_in_motion" 
-  | "signature_style" 
+  | "signature_champion"
+  | "damage_share"
+  | "damage_taken"
+  | "total_healed"
+  | "gold_share"
   | "growth_over_time" 
   | "peak_performance" 
   | "weaknesses" 

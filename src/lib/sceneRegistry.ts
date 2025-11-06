@@ -1,6 +1,6 @@
 import { SceneId, ScenePayload, VizKind } from './types';
 import { computeYearInMotion } from './compute/computeYearInMotion';
-import { computeSignatureStyle } from './compute/computeSignatureStyle';
+import { computeSignatureChampion } from './compute/computeSignatureChampion';
 import { computeGrowth } from './compute/computeGrowth';
 import { computePeak } from './compute/computePeak';
 // import { computeWeaknesses } from './compute/computeWeaknesses';
@@ -22,9 +22,29 @@ export const sceneRegistry: Record<SceneId, SceneDefinition> = {
     compute: computeYearInMotion,
     vizKind: "heatmap"
   },
-  signature_style: {
+  signature_champion: {
     label: "Signature Style",
-    compute: computeSignatureStyle,
+    compute: computeSignatureChampion,
+    vizKind: "radar"
+  },
+  damage_share: {
+    label: "Damage Share",
+    compute: computeSignatureChampion,
+    vizKind: "radar"
+  },
+  damage_taken: {
+    label: "Damage Taken",
+    compute: computeSignatureChampion,
+    vizKind: "radar"
+  },
+  total_healed: {
+    label: "Total Healed",
+    compute: computeSignatureChampion,
+    vizKind: "radar"
+  },
+  gold_share: {
+    label: "Gold Share",
+    compute: computeSignatureChampion,
     vizKind: "radar"
   },
   growth_over_time: {
@@ -71,7 +91,11 @@ export const sceneRegistry: Record<SceneId, SceneDefinition> = {
 
 export const SCENE_ORDER: SceneId[] = [
   "year_in_motion",
-  "signature_style", 
+  "signature_champion", 
+  "damage_share",
+  "damage_taken",
+  "total_healed",
+  "gold_share",
   "growth_over_time",
   "peak_performance",
   "weaknesses",

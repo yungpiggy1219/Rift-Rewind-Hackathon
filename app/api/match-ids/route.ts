@@ -40,12 +40,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(cached);
     }
 
-    // Time range: Jan 1, 2025 → Nov 5, 2025 (in seconds)
+    // Time range: Jan 1, 2025 → Current time (in seconds)
     const startTimestamp = 1735689600; // January 1st, 2025 00:00:00 UTC
-    const endTimestamp = 1762387199;   // November 5th, 2025 23:59:59 UTC
+    const endTimestamp = Math.floor(Date.now() / 1000); // Current time
 
     console.log(
-      `[test-matches] Season range: ${new Date(startTimestamp * 1000).toISOString()} → ${new Date(endTimestamp * 1000).toISOString()}`
+      `[match-ids] Season range: ${new Date(startTimestamp * 1000).toISOString()} → ${new Date(endTimestamp * 1000).toISOString()}`
     );
 
     const allMatchIds: string[] = [];
@@ -67,10 +67,10 @@ export async function GET(request: NextRequest) {
       if (type) params.set('type', type);
 
       const path = `/lol/match/v5/matches/by-puuid/${puuid}/ids?${params.toString()}`;
-      console.log(`[test-matches] Fetching batch ${batchCount} (start=${start})`);
+      console.log(`[match-ids] Fetching batch ${batchCount} (start=${start})`);
 
       const ids = (await riotRequest(path, region)) as string[];
-      console.log(`[test-matches] Batch ${batchCount}: got ${ids.length} IDs`);
+      console.log(`[match-ids] Batch ${batchCount}: got ${ids.length} IDs`);
 
       if (ids.length === 0) break;
 
@@ -96,12 +96,12 @@ export async function GET(request: NextRequest) {
     // Cache the results in shared cache
     await cache.set(cacheKey, result);
 
-    console.log(`[test-matches] Final: ${uniqueMatchIds.length} unique match IDs cached`);
-    console.log(`[test-matches] All match IDs:`, uniqueMatchIds);
+    console.log(`[match-ids] Final: ${uniqueMatchIds.length} unique match IDs cached`);
+    console.log(`[match-ids] All match IDs:`, uniqueMatchIds);
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('[test-matches] Error:', error);
+    console.error('[match-ids] Error:', error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Failed to fetch match history',

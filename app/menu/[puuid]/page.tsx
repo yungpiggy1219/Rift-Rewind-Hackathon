@@ -180,7 +180,7 @@ export default function HomePage() {
       // Step 2: Fetch all match details in batches
       setPreloadStatus(`Found ${matchIds.length} matches. Loading match details...`);
       
-      const batchSize = 5; // Reduced batch size to avoid rate limiting
+      const batchSize = 50; // Reduced batch size to avoid rate limiting
       let processedCount = 0;
       let successCount = 0;
       let failCount = 0;
