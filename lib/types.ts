@@ -9,7 +9,7 @@ export interface MatchData {
 }
 
 export interface Participant {
-  summonerName: string;
+  riotIdGameName: string;
   championId: number;
   championName: string;
   kills: number;

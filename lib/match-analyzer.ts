@@ -14,8 +14,8 @@ export class MatchAnalyzer {
     // Find player data in each match
     const playerMatches: PlayerMatchData[] = matches.map(match => {
       const player = match.participants.find(p => 
-        p.summonerName.toLowerCase() === playerName.toLowerCase() ||
-        p.summonerName.toLowerCase().includes(playerName.split('#')[0].toLowerCase())
+        p.riotIdGameName.toLowerCase() === playerName.toLowerCase() ||
+        p.riotIdGameName.toLowerCase().includes(playerName.split('#')[0].toLowerCase())
       );
       return { match, player: player! };
     }).filter(({ player }) => player !== undefined);

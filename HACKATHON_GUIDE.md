@@ -87,7 +87,7 @@ npm run dev
 3. Replace mock data calls with real API calls
 
 ### Key Endpoints
-- `/lol/summoner/v4/summoners/by-name/{summonerName}`
+- `/lol/summoner/v4/summoners/by-puuid/{encryptedPUUID}`
 - `/lol/match/v5/matches/by-puuid/{puuid}/ids`
 - `/lol/match/v5/matches/{matchId}`
 

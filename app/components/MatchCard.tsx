@@ -33,14 +33,16 @@ export default function MatchCard({ match, playerPuuid }: MatchCardProps) {
   // Find the player's data
   const player = match.participants.find(p => p.puuid === playerPuuid);
   
-  if (!player) {
+  if (!player || !('kills' in player)) {
     return <div className="text-red-400">Player not found in match</div>;
   }
+  
+  const playerData = player as typeof player & { kills: number; deaths: number; assists: number; champLevel: number; summoner1Id: number; summoner2Id: number; championName: string; win: boolean; items: number[] };
 
   // Calculate KDA
-  const kda = player.deaths === 0 
-    ? (player.kills + player.assists).toFixed(2)
-    : ((player.kills + player.assists) / player.deaths).toFixed(2);
+  const kda = playerData.deaths === 0 
+    ? (playerData.kills + playerData.assists).toFixed(2)
+    : ((playerData.kills + playerData.assists) / playerData.deaths).toFixed(2);
 
   // Calculate CS per minute
   const durationMinutes = match.gameDuration / 60;
@@ -69,18 +71,18 @@ export default function MatchCard({ match, playerPuuid }: MatchCardProps) {
             <div className="relative">
               <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/30">
                 <img 
-                  src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/champion/${player.championName}.png`}
-                  alt={player.championName}
+                  src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/champion/${playerData.championName}.png`}
+                  alt={playerData.championName}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     // Fallback to gradient if image fails to load
                     e.currentTarget.style.display = 'none';
-                    e.currentTarget.parentElement!.innerHTML = `<div class="w-full h-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center"><span class="text-white font-bold text-xl">${player.championName.substring(0, 2).toUpperCase()}</span></div>`;
+                    e.currentTarget.parentElement!.innerHTML = `<div class="w-full h-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center"><span class="text-white font-bold text-xl">${playerData.championName.substring(0, 2).toUpperCase()}</span></div>`;
                   }}
                 />
               </div>
               <div className="absolute -bottom-1 -right-1 bg-gray-900 border-2 border-white/30 rounded-full w-6 h-6 flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{player.champLevel}</span>
+                <span className="text-white text-xs font-bold">{playerData.champLevel}</span>
               </div>
             </div>
             
@@ -88,14 +90,14 @@ export default function MatchCard({ match, playerPuuid }: MatchCardProps) {
             <div className="flex flex-col gap-1">
               <div className="w-7 h-7 rounded overflow-hidden border border-gray-600">
                 <img 
-                  src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/${summonerSpellMap[player.summoner1Id]}.png`}
+                  src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/${summonerSpellMap[playerData.summoner1Id]}.png`}
                   alt="Spell 1"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="w-7 h-7 rounded overflow-hidden border border-gray-600">
                 <img 
-                  src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/${summonerSpellMap[player.summoner2Id]}.png`}
+                  src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/${summonerSpellMap[playerData.summoner2Id]}.png`}
                   alt="Spell 2"
                   className="w-full h-full object-cover"
                 />
@@ -112,7 +114,7 @@ export default function MatchCard({ match, playerPuuid }: MatchCardProps) {
           {/* KDA */}
           <div className="text-center ml-4">
             <div className="text-white font-bold text-lg">
-              {player.kills} / <span className="text-red-400">{player.deaths}</span> / {player.assists}
+              {playerData.kills} / <span className="text-red-400">{playerData.deaths}</span> / {playerData.assists}
             </div>
             <div className="text-gray-400 text-sm">{kda}:1 KDA</div>
           </div>
@@ -122,9 +124,9 @@ export default function MatchCard({ match, playerPuuid }: MatchCardProps) {
         <div className="flex items-center gap-6">
           {/* Lane/Role & Rank */}
           <div className="text-center">
-            <div className="text-yellow-400 font-semibold">{player.championName}</div>
+            <div className="text-yellow-400 font-semibold">{playerData.championName}</div>
             <div className="text-gray-400 text-xs">
-              🔥 P/Kill {Math.round((player.kills / (team1.reduce((sum, p) => sum + p.kills, 0) || 1)) * 100)}%
+              🔥 P/Kill {Math.round((playerData.kills / (team1.reduce((sum, p) => sum + ('kills' in p ? p.kills : 0), 0) || 1)) * 100)}%
             </div>
             <div className="text-gray-400 text-xs">CS {csPerMin} ({durationMinutes.toFixed(0)})</div>
             <div className="text-gray-400 text-xs flex items-center gap-1 justify-center">
@@ -134,7 +136,7 @@ export default function MatchCard({ match, playerPuuid }: MatchCardProps) {
 
           {/* Items */}
           <div className="flex gap-1">
-            {player.items.map((itemId, index) => (
+            {playerData.items.map((itemId, index) => (
               <div
                 key={index}
                 className="w-8 h-8 bg-gray-800 rounded border border-gray-600 overflow-hidden"
@@ -173,14 +175,18 @@ export default function MatchCard({ match, playerPuuid }: MatchCardProps) {
             {playerTeam.map((p, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full overflow-hidden border border-white/30">
-                  <img 
-                    src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/champion/${p.championName}.png`}
-                    alt={p.championName}
-                    className="w-full h-full object-cover"
-                  />
+                  {'championName' in p ? (
+                    <img 
+                      src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/champion/${p.championName}.png`}
+                      alt={p.championName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-700"></div>
+                  )}
                 </div>
                 <span className={`text-xs ${p.puuid === playerPuuid ? 'text-white font-bold' : 'text-gray-400'}`}>
-                  {p.summonerName.length > 10 ? p.summonerName.substring(0, 10) + '...' : p.summonerName}
+                  {p.riotIdGameName.length > 10 ? p.riotIdGameName.substring(0, 10) + '...' : p.riotIdGameName}
                 </span>
               </div>
             ))}
@@ -191,14 +197,18 @@ export default function MatchCard({ match, playerPuuid }: MatchCardProps) {
             {(playerTeam === team1 ? team2 : team1).map((p, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full overflow-hidden border border-white/30">
-                  <img 
-                    src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/champion/${p.championName}.png`}
-                    alt={p.championName}
-                    className="w-full h-full object-cover"
-                  />
+                  {'championName' in p ? (
+                    <img 
+                      src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/champion/${p.championName}.png`}
+                      alt={p.championName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-700"></div>
+                  )}
                 </div>
                 <span className="text-xs text-gray-400">
-                  {p.summonerName.length > 10 ? p.summonerName.substring(0, 10) + '...' : p.summonerName}
+                  {p.riotIdGameName.length > 10 ? p.riotIdGameName.substring(0, 10) + '...' : p.riotIdGameName}
                 </span>
               </div>
             ))}
@@ -208,8 +218,8 @@ export default function MatchCard({ match, playerPuuid }: MatchCardProps) {
 
       {/* Bottom - Win/Loss & Duration */}
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
-        <div className={`font-bold text-lg ${player.win ? 'text-green-400' : 'text-red-400'}`}>
-          {player.win ? 'Victory' : 'Defeat'}
+        <div className={`font-bold text-lg ${playerData.win ? 'text-green-400' : 'text-red-400'}`}>
+          {playerData.win ? 'Victory' : 'Defeat'}
         </div>
         <div className="text-gray-400 text-sm">{durationStr}</div>
       </div>
