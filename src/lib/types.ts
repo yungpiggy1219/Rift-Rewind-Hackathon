@@ -8,14 +8,19 @@ export type SceneId =
   | "total_healed"
   | "gold_share"
   | "growth_over_time"
-  | "vision_score";
+  | "vision_score"
   // | "peak_performance" 
-  // | "weaknesses" 
-  // | "allies" 
-  // | "aram" 
+  | "weaknesses" 
+  | "best_friend"
+  | "aram"
+  | "ranked_stats"
+  | "killing_spree"
+  | "dragon_slayer"
+  | "sniper"
+  | "fancy_feet"
+  | "path_forward"; 
   // | "social_comparison" 
-  // | "legacy" 
-  // | "path_forward";
+  // | "legacy"
 
 export interface SceneMetric {
   label: string;
@@ -105,6 +110,31 @@ export interface MatchParticipant {
   wardsPlaced?: number;
   wardsKilled?: number;
   visionWardsBoughtInGame?: number;
+  // Timeline data
+  timeSpentDead?: number;
+  longestTimeSpentLiving?: number;
+  timePlayed?: number;
+  // Team data
+  teamId?: number;
+  // Multikill data
+  pentaKills?: number;
+  quadraKills?: number;
+  tripleKills?: number;
+  doubleKills?: number;
+  largestKillingSpree?: number;
+  largestMultiKill?: number;
+  // Objective data
+  baronKills?: number;
+  dragonKills?: number;
+  elderDragonKills?: number;
+  elderDragonMultikills?: number;
+  objectivesStolen?: number;
+  objectivesStolenAssists?: number;
+  // Skillshot data
+  skillshotsHit?: number;
+  skillshotsDodged?: number;
+  // Solo performance
+  soloKills?: number;
 }
 
 // Minimal participant data - only name

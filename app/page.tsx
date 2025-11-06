@@ -93,7 +93,7 @@ export default function LoginPage() {
       <div 
         className="absolute inset-0 w-full h-full"
         style={{
-          backgroundImage: 'url(/images/background_2.jpg)',
+          backgroundImage: 'url(/images/backgrounds/background_2.jpg)',
           backgroundSize: '120%', // Larger to prevent white edges
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',

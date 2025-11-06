@@ -119,6 +119,76 @@ export async function resolveSummoner(gameName: string, tagLine: string): Promis
   return account;
 }
 
+// Fetch ranked stats for a summoner
+export async function fetchRankedStats(puuid: string, platform?: string): Promise<{
+  tier: string;
+  rank: string;
+  leaguePoints: number;
+  wins: number;
+  losses: number;
+  queueType: string;
+} | null> {
+  try {
+    // First, get the summoner ID from the PUUID
+    const account = await getAccountByPuuid(puuid);
+    if (!account || !account.summonerId) {
+      console.warn(`[fetchRankedStats] No summoner ID found for PUUID ${puuid}`);
+      return null;
+    }
+
+    const targetPlatform = platform || account.platform || getPlatformRegion(account.region);
+    
+    console.log(`[fetchRankedStats] Fetching ranked stats for ${account.summonerId} on ${targetPlatform}`);
+    
+    const cacheKey = `ranked-stats:${puuid}:2025`;
+    const cached = await cache.get<{
+      tier: string;
+      rank: string;
+      leaguePoints: number;
+      wins: number;
+      losses: number;
+      queueType: string;
+    }>(cacheKey);
+    
+    if (cached) {
+      console.log(`[fetchRankedStats] Cache hit for ${puuid}`);
+      return cached;
+    }
+    
+    // Fetch league entries for this summoner
+    const leagueData = await riotRequest(
+      `/lol/league/v4/entries/by-summoner/${account.summonerId}`,
+      targetPlatform
+    ) as Array<{
+      queueType: string;
+      tier: string;
+      rank: string;
+      leaguePoints: number;
+      wins: number;
+      losses: number;
+    }>;
+    
+    if (!leagueData || leagueData.length === 0) {
+      console.log(`[fetchRankedStats] No ranked data found for ${puuid}`);
+      return null;
+    }
+    
+    // Prioritize RANKED_SOLO_5x5 queue
+    const soloQueue = leagueData.find(entry => entry.queueType === 'RANKED_SOLO_5x5');
+    const rankedData = soloQueue || leagueData[0];
+    
+    // Cache for 1 hour (ranked stats change frequently)
+    await cache.set(cacheKey, rankedData, 3600);
+    
+    console.log(`[fetchRankedStats] Successfully fetched ranked stats:`, rankedData);
+    return rankedData;
+    
+  } catch (error) {
+    console.error(`[fetchRankedStats] Error fetching ranked stats:`, error);
+    return null;
+  }
+}
+
 export async function fetchMatchIds(
   puuid: string, 
   queueIds?: number[], 
@@ -193,6 +263,25 @@ export async function fetchMatchDetail(matchId: string, targetPuuid?: string): P
           wardsPlaced?: number;
           wardsKilled?: number;
           visionWardsBoughtInGame?: number;
+          timeSpentDead?: number;
+          longestTimeSpentLiving?: number;
+          timePlayed?: number;
+          teamId?: number;
+          pentaKills?: number;
+          quadraKills?: number;
+          tripleKills?: number;
+          doubleKills?: number;
+          largestKillingSpree?: number;
+          largestMultiKill?: number;
+          baronKills?: number;
+          dragonKills?: number;
+          elderDragonKills?: number;
+          elderDragonMultikills?: number;
+          objectivesStolen?: number;
+          objectivesStolenAssists?: number;
+          skillshotsHit?: number;
+          skillshotsDodged?: number;
+          soloKills?: number;
         }>;
       };
     };
@@ -245,7 +334,26 @@ export async function fetchMatchDetail(matchId: string, targetPuuid?: string): P
           visionScore: p.visionScore,
           wardsPlaced: p.wardsPlaced,
           wardsKilled: p.wardsKilled,
-          visionWardsBoughtInGame: p.visionWardsBoughtInGame
+          visionWardsBoughtInGame: p.visionWardsBoughtInGame,
+          timeSpentDead: p.timeSpentDead,
+          longestTimeSpentLiving: p.longestTimeSpentLiving,
+          timePlayed: p.timePlayed,
+          teamId: p.teamId,
+          pentaKills: p.pentaKills,
+          quadraKills: p.quadraKills,
+          tripleKills: p.tripleKills,
+          doubleKills: p.doubleKills,
+          largestKillingSpree: p.largestKillingSpree,
+          largestMultiKill: p.largestMultiKill,
+          baronKills: p.baronKills,
+          dragonKills: p.dragonKills,
+          elderDragonKills: p.elderDragonKills,
+          elderDragonMultikills: p.elderDragonMultikills,
+          objectivesStolen: p.objectivesStolen,
+          objectivesStolenAssists: p.objectivesStolenAssists,
+          skillshotsHit: p.skillshotsHit,
+          skillshotsDodged: p.skillshotsDodged,
+          soloKills: p.soloKills
         };
       } else {
         // For other players, only include puuid and riotIdGameName

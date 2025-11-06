@@ -45,7 +45,9 @@ async function clearCacheForPuuid(puuid: string) {
   const sceneIds = [
     "year_in_motion", "signature_champion", "signature_position", "damage_share", "damage_taken",
     "total_healed", "gold_share", "vision_score", "growth_over_time", "peak_performance",
-    "weaknesses", "allies", "aram", "social_comparison", "legacy", "path_forward"
+    "weaknesses", "best_friend", "aram", "ranked_stats", "killing_spree", 
+    "dragon_slayer", "sniper", "fancy_feet", "path_forward",
+    "social_comparison", "legacy"
   ];
   
   for (const sceneId of sceneIds) {

@@ -122,6 +122,9 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
   const goToNext = () => {
     if (currentSceneIndex < SCENE_ORDER.length - 1) {
       setCurrentSceneIndex(currentSceneIndex + 1);
+    } else {
+      // On last scene, "Complete" button goes back to menu
+      goBack();
     }
   };
 
@@ -149,7 +152,7 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
         <div 
           className="absolute inset-0 w-full h-full"
           style={{
-            backgroundImage: 'url(/images/background_3.jpg)',
+            backgroundImage: 'url(/images/backgrounds/background_3.jpg)',
             backgroundSize: '120%',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
@@ -198,7 +201,7 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
       <div 
         className="absolute inset-0 w-full h-full"
         style={{
-          backgroundImage: 'url(/images/background_3.jpg)',
+          backgroundImage: 'url(/images/backgrounds/background_3.jpg)',
           backgroundSize: '120%',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -321,13 +324,12 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
             </div>
           </div>
 
-          {/* Next Button */}
+          {/* Next/Complete Button */}
           <button
             onClick={goToNext}
-            disabled={currentSceneIndex === SCENE_ORDER.length - 1}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-700/80 hover:to-pink-700/80 disabled:from-gray-600/40 disabled:to-gray-700/40 disabled:text-gray-500 backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-700/80 hover:to-pink-700/80 backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
           >
-            {currentSceneIndex === SCENE_ORDER.length - 1 ? 'Complete' : 'Next'}
+            {currentSceneIndex === SCENE_ORDER.length - 1 ? 'Back to Menu' : 'Next'}
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

@@ -117,7 +117,19 @@ export default function Viz({ kind, data }: VizProps) {
       // Handle different bar chart data formats
       let barChartData;
       
-      if (data.type === 'damage_statistics' || data.type === 'damage_taken_statistics' || data.type === 'healing_statistics' || data.type === 'vision_statistics') {
+      if (data.type === 'weakness_stats' && data.bars) {
+        // Weakness stats format with bars array containing label, value, color
+        barChartData = data.bars.map((bar: any) => ({
+          category: bar.label,
+          value: bar.value
+        }));
+      } else if (data.type === 'killing_spree_stats' && data.bars) {
+        // Killing spree stats format with bars array
+        barChartData = data.bars.map((bar: any) => ({
+          category: bar.label,
+          value: bar.value
+        }));
+      } else if (data.type === 'damage_statistics' || data.type === 'damage_taken_statistics' || data.type === 'healing_statistics' || data.type === 'vision_statistics') {
         // New damage/healing/vision stats format with categories and values arrays
         barChartData = data.categories?.map((cat: string, i: number) => ({
           category: cat,
@@ -153,12 +165,19 @@ export default function Viz({ kind, data }: VizProps) {
               />
               {barChartData[0]?.value !== undefined ? (
                 <Bar dataKey="value">
-                  {barChartData.map((entry: any, index: number) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={data.colors?.[index] || "#3B82F6"} 
-                    />
-                  ))}
+                  {barChartData.map((entry: any, index: number) => {
+                    // Get color from bars array if weakness_stats or killing_spree_stats type
+                    const barColor = (data.type === 'weakness_stats' || data.type === 'killing_spree_stats') && data.bars?.[index]?.color 
+                      ? data.bars[index].color 
+                      : data.colors?.[index] || "#3B82F6";
+                    
+                    return (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={barColor} 
+                      />
+                    );
+                  })}
                 </Bar>
               ) : (
                 <>
@@ -263,7 +282,62 @@ export default function Viz({ kind, data }: VizProps) {
       );
 
     case 'badge':
-      if (!data || !data.allies || data.allies.length === 0) {
+      // Handle both old allies format and new badge format
+      if (!data) {
+        return (
+          <div className="text-center text-gray-400 py-8">
+            <div className="text-lg font-semibold mb-2">No Data Available</div>
+            <div className="text-sm">Unable to load information</div>
+          </div>
+        );
+      }
+
+      // New badge format (for best_friend scene)
+      if (data.type === 'badge' && data.title) {
+        return (
+          <div className="flex flex-col items-center justify-center p-8">
+            <div className="bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-2xl p-8 border-2 border-purple-500/50 backdrop-blur-sm max-w-md w-full">
+              <div className="text-center">
+                <div className="text-6xl mb-4">{data.icon || '👥'}</div>
+                <div className="text-3xl font-bold text-white mb-2">{data.title}</div>
+                <div className="text-lg text-purple-300 mb-6">{data.subtitle}</div>
+                
+                {data.stats && data.stats.length > 0 && (
+                  <div className="grid grid-cols-2 gap-4 mt-6">
+                    {data.stats.map((stat: any, index: number) => (
+                      <div key={index} className="bg-black/30 rounded-lg p-3">
+                        <div className="text-2xl font-bold" style={{ color: stat.color || '#fff' }}>
+                          {stat.value}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {data.recentGames && data.recentGames.length > 0 && (
+                  <div className="mt-6 pt-6 border-t border-purple-500/30">
+                    <div className="text-sm text-gray-300 mb-3">Recent Games Together</div>
+                    <div className="space-y-2">
+                      {data.recentGames.slice(0, 3).map((game: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between text-xs bg-black/20 rounded px-3 py-2">
+                          <span className="text-gray-400">{game.championName}</span>
+                          <span className={game.won ? 'text-green-400' : 'text-red-400'}>
+                            {game.won ? 'Victory' : 'Defeat'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Old allies format (backward compatibility)
+      if (!data.allies || data.allies.length === 0) {
         return (
           <div className="text-center text-gray-400 py-8">
             <div className="text-lg font-semibold mb-2">No Ally Data</div>
