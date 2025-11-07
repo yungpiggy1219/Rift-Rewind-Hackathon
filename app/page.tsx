@@ -112,15 +112,21 @@ export default function LoginPage() {
           {/* Header */}
           <div className="mb-12">
             <div className="inline-block mb-6">
-              <Sparkles className="w-20 h-20 text-yellow-400 mx-auto mb-4 drop-shadow-2xl" />
+              <img 
+                src="/lol_mark.png" 
+                alt="League of Legends" 
+                className="w-30 mx-auto mb-4 drop-shadow-2xl"
+              />
             </div>
             
-            <h1 className="text-7xl font-bold text-white mb-6 drop-shadow-2xl">
-              Rift Rewind 2025
-            </h1>
+            <img 
+              src="/rift_rekkap_logo_w.png" 
+              alt="Rift Rewind 2025" 
+              className="mx-auto mb-6 drop-shadow-2xl max-w-2xl w-full"
+            />
             
             <p className="text-2xl text-blue-200 mb-8 drop-shadow-lg">
-              Your League of Legends year in review with AI-powered insights
+              Your League of Legends year-end recap
             </p>
           </div>
 
@@ -182,7 +188,6 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-6 h-6" />
                   Enter the Rift
                 </>
               )}
@@ -192,8 +197,8 @@ export default function LoginPage() {
 
           {/* Footer Info */}
           <div className="text-white/70 text-sm space-y-2">
-            <p className="drop-shadow-lg">✨ Powered by Riot Games API • 🔒 Your data stays private</p>
-            <p className="drop-shadow-lg">🎭 Choose from 5 AI narrators • 📊 10 unique insight scenes</p>
+            <p className="drop-shadow-lg">Made for Rift Rewind Hackathon</p>
+            <p className="drop-shadow-lg">By Yung-Chu Chuang</p>
           </div>
         </div>
       </div>
