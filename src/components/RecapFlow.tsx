@@ -143,8 +143,41 @@ export default function RecapFlow({
     }))
   );
   const containerRef = useRef<HTMLDivElement>(null);
+  const clickSfxRef = useRef<HTMLAudioElement | null>(null);
+  const smiteSfxRef = useRef<HTMLAudioElement | null>(null);
+  const baronRecallSfxRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
   const currentSceneId = SCENE_ORDER[currentSceneIndex];
+
+  // Initialize sound effects
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      clickSfxRef.current = new Audio("/sfx/pm.mp3");
+      smiteSfxRef.current = new Audio("/sfx/smite.mp3");
+      baronRecallSfxRef.current = new Audio("/sfx/baron_recall.mp3");
+    }
+    return () => {
+      if (clickSfxRef.current) {
+        clickSfxRef.current.pause();
+      }
+      if (smiteSfxRef.current) {
+        smiteSfxRef.current.pause();
+      }
+      if (baronRecallSfxRef.current) {
+        baronRecallSfxRef.current.pause();
+      }
+    };
+  }, []);
+
+  // Function to play dialogue click sound
+  const playDialogueClickSound = () => {
+    if (clickSfxRef.current) {
+      clickSfxRef.current.currentTime = 0; // Reset to start
+      clickSfxRef.current.play().catch((error) => {
+        console.log("Click sound failed:", error);
+      });
+    }
+  };
 
   // Mouse tracking for tilt effect
   useEffect(() => {
@@ -245,14 +278,32 @@ export default function RecapFlow({
 
   const goToNext = () => {
     if (currentSceneIndex < SCENE_ORDER.length - 1) {
+      // Play smite sound for "Next"
+      if (smiteSfxRef.current) {
+        smiteSfxRef.current.currentTime = 0;
+        smiteSfxRef.current.play().catch((error) => {
+          console.log("Smite sound failed:", error);
+        });
+      }
+
       setCurrentSceneIndex(currentSceneIndex + 1);
       // Reset state for next scene
       setContentComplete(false);
       setShowHeatmap(false);
       setDialogueComplete(false);
     } else {
-      // On last scene, "Complete" button goes back to menu
-      goBack();
+      // On last scene, "Back to Menu" button - play baron recall sound
+      if (baronRecallSfxRef.current) {
+        baronRecallSfxRef.current.currentTime = 0;
+        baronRecallSfxRef.current.play().catch((error) => {
+          console.log("Baron recall sound failed:", error);
+        });
+      }
+
+      // Go back after a short delay to let sound play
+      setTimeout(() => {
+        goBack();
+      }, 500);
     }
   };
 
@@ -414,6 +465,7 @@ export default function RecapFlow({
                           `Fascinating levels of consistency... for a human.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -455,6 +507,7 @@ export default function RecapFlow({
                           `The data suggests continued focus on this selection.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -576,6 +629,7 @@ export default function RecapFlow({
                           }.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -647,12 +701,17 @@ export default function RecapFlow({
                                       ?.kda || "0/0/0"}
                                   </span>
                                 </div>
-                                
+
                                 {/* Items Build */}
                                 <div className="bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-300 mb-3">Items</p>
+                                  <p className="text-sm text-gray-300 mb-3">
+                                    Items
+                                  </p>
                                   <div className="flex flex-wrap gap-2">
-                                    {(sceneData?.insight?.vizData?.maxDamageMatch?.items || [])
+                                    {(
+                                      sceneData?.insight?.vizData
+                                        ?.maxDamageMatch?.items || []
+                                    )
                                       .filter((item: number) => item !== 0)
                                       .map((itemId: number, idx: number) => (
                                         <img
@@ -661,8 +720,9 @@ export default function RecapFlow({
                                           alt={`Item ${itemId}`}
                                           className="w-10 h-10 rounded border border-gray-600"
                                           onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.style.display = 'none';
+                                            const target =
+                                              e.target as HTMLImageElement;
+                                            target.style.display = "none";
                                           }}
                                         />
                                       ))}
@@ -671,59 +731,147 @@ export default function RecapFlow({
 
                                 {/* Summoner Spells */}
                                 <div className="bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-300 mb-3">Summoner Spells</p>
+                                  <p className="text-sm text-gray-300 mb-3">
+                                    Summoner Spells
+                                  </p>
                                   <div className="flex gap-2">
-                                    {sceneData?.insight?.vizData?.maxDamageMatch?.summoner1Id && (
+                                    {sceneData?.insight?.vizData?.maxDamageMatch
+                                      ?.summoner1Id && (
                                       <img
                                         src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 21 ? 'Barrier' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 1 ? 'Boost' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 14 ? 'Dot' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 3 ? 'Exhaust' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 4 ? 'Flash' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 6 ? 'Haste' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 7 ? 'Heal' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 13 ? 'Mana' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 30 ? 'PoroRecall' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 31 ? 'PoroThrow' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 11 ? 'Smite' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 39 ? 'SnowURFSnowball_Mark' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 32 ? 'Snowball' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 12 ? 'Teleport' :
-                                          'Flash'
+                                          sceneData.insight.vizData
+                                            .maxDamageMatch.summoner1Id === 21
+                                            ? "Barrier"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              1
+                                            ? "Boost"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              14
+                                            ? "Dot"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              3
+                                            ? "Exhaust"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              4
+                                            ? "Flash"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              6
+                                            ? "Haste"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              7
+                                            ? "Heal"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              13
+                                            ? "Mana"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              30
+                                            ? "PoroRecall"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              31
+                                            ? "PoroThrow"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              11
+                                            ? "Smite"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              39
+                                            ? "SnowURFSnowball_Mark"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              32
+                                            ? "Snowball"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner1Id ===
+                                              12
+                                            ? "Teleport"
+                                            : "Flash"
                                         }.png`}
                                         alt="Summoner 1"
                                         className="w-10 h-10 rounded border border-gray-600"
                                         onError={(e) => {
-                                          const target = e.target as HTMLImageElement;
-                                          target.style.display = 'none';
+                                          const target =
+                                            e.target as HTMLImageElement;
+                                          target.style.display = "none";
                                         }}
                                       />
                                     )}
-                                    {sceneData?.insight?.vizData?.maxDamageMatch?.summoner2Id && (
+                                    {sceneData?.insight?.vizData?.maxDamageMatch
+                                      ?.summoner2Id && (
                                       <img
                                         src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 21 ? 'Barrier' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 1 ? 'Boost' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 14 ? 'Dot' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 3 ? 'Exhaust' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 4 ? 'Flash' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 6 ? 'Haste' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 7 ? 'Heal' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 13 ? 'Mana' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 30 ? 'PoroRecall' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 31 ? 'PoroThrow' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 11 ? 'Smite' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 39 ? 'SnowURFSnowball_Mark' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 32 ? 'Snowball' :
-                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 12 ? 'Teleport' :
-                                          'Flash'
+                                          sceneData.insight.vizData
+                                            .maxDamageMatch.summoner2Id === 21
+                                            ? "Barrier"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              1
+                                            ? "Boost"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              14
+                                            ? "Dot"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              3
+                                            ? "Exhaust"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              4
+                                            ? "Flash"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              6
+                                            ? "Haste"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              7
+                                            ? "Heal"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              13
+                                            ? "Mana"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              30
+                                            ? "PoroRecall"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              31
+                                            ? "PoroThrow"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              11
+                                            ? "Smite"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              39
+                                            ? "SnowURFSnowball_Mark"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              32
+                                            ? "Snowball"
+                                            : sceneData.insight.vizData
+                                                .maxDamageMatch.summoner2Id ===
+                                              12
+                                            ? "Teleport"
+                                            : "Flash"
                                         }.png`}
                                         alt="Summoner 2"
                                         className="w-10 h-10 rounded border border-gray-600"
                                         onError={(e) => {
-                                          const target = e.target as HTMLImageElement;
-                                          target.style.display = 'none';
+                                          const target =
+                                            e.target as HTMLImageElement;
+                                          target.style.display = "none";
                                         }}
                                       />
                                     )}
@@ -758,6 +906,7 @@ export default function RecapFlow({
                           }.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -832,6 +981,185 @@ export default function RecapFlow({
                                       ?.maxDamageTakenMatch?.kda || "0/0/0"}
                                   </span>
                                 </div>
+
+                                {/* Items Build */}
+                                <div className="bg-black/30 rounded-lg px-6 py-4">
+                                  <p className="text-sm text-gray-300 mb-3">
+                                    Items
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {(
+                                      sceneData?.insight?.vizData
+                                        ?.maxDamageTakenMatch?.items || []
+                                    )
+                                      .filter((item: number) => item !== 0)
+                                      .map((itemId: number, idx: number) => (
+                                        <img
+                                          key={idx}
+                                          src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/item/${itemId}.png`}
+                                          alt={`Item ${itemId}`}
+                                          className="w-10 h-10 rounded border border-gray-600"
+                                          onError={(e) => {
+                                            const target =
+                                              e.target as HTMLImageElement;
+                                            target.style.display = "none";
+                                          }}
+                                        />
+                                      ))}
+                                  </div>
+                                </div>
+
+                                {/* Summoner Spells */}
+                                <div className="bg-black/30 rounded-lg px-6 py-4">
+                                  <p className="text-sm text-gray-300 mb-3">
+                                    Summoner Spells
+                                  </p>
+                                  <div className="flex gap-2">
+                                    {sceneData?.insight?.vizData
+                                      ?.maxDamageTakenMatch?.summoner1Id && (
+                                      <img
+                                        src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
+                                          sceneData.insight.vizData
+                                            .maxDamageTakenMatch.summoner1Id ===
+                                          21
+                                            ? "Barrier"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 1
+                                            ? "Boost"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 14
+                                            ? "Dot"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 3
+                                            ? "Exhaust"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 4
+                                            ? "Flash"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 6
+                                            ? "Haste"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 7
+                                            ? "Heal"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 13
+                                            ? "Mana"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 30
+                                            ? "PoroRecall"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 31
+                                            ? "PoroThrow"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 11
+                                            ? "Smite"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 39
+                                            ? "SnowURFSnowball_Mark"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 32
+                                            ? "Snowball"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner1Id === 12
+                                            ? "Teleport"
+                                            : "Flash"
+                                        }.png`}
+                                        alt="Summoner 1"
+                                        className="w-10 h-10 rounded border border-gray-600"
+                                        onError={(e) => {
+                                          const target =
+                                            e.target as HTMLImageElement;
+                                          target.style.display = "none";
+                                        }}
+                                      />
+                                    )}
+                                    {sceneData?.insight?.vizData
+                                      ?.maxDamageTakenMatch?.summoner2Id && (
+                                      <img
+                                        src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
+                                          sceneData.insight.vizData
+                                            .maxDamageTakenMatch.summoner2Id ===
+                                          21
+                                            ? "Barrier"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 1
+                                            ? "Boost"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 14
+                                            ? "Dot"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 3
+                                            ? "Exhaust"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 4
+                                            ? "Flash"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 6
+                                            ? "Haste"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 7
+                                            ? "Heal"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 13
+                                            ? "Mana"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 30
+                                            ? "PoroRecall"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 31
+                                            ? "PoroThrow"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 11
+                                            ? "Smite"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 39
+                                            ? "SnowURFSnowball_Mark"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 32
+                                            ? "Snowball"
+                                            : sceneData.insight.vizData
+                                                .maxDamageTakenMatch
+                                                .summoner2Id === 12
+                                            ? "Teleport"
+                                            : "Flash"
+                                        }.png`}
+                                        alt="Summoner 2"
+                                        className="w-10 h-10 rounded border border-gray-600"
+                                        onError={(e) => {
+                                          const target =
+                                            e.target as HTMLImageElement;
+                                          target.style.display = "none";
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
                                   <span className="text-sm text-gray-300">
                                     Result
@@ -849,88 +1177,6 @@ export default function RecapFlow({
                                       ?.maxDamageTakenMatch?.result ||
                                       "Unknown"}
                                   </span>
-                                </div>
-                                
-                                {/* Items Build */}
-                                <div className="bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-300 mb-3">Items</p>
-                                  <div className="flex flex-wrap gap-2">
-                                    {(sceneData?.insight?.vizData?.maxDamageTakenMatch?.items || [])
-                                      .filter((item: number) => item !== 0)
-                                      .map((itemId: number, idx: number) => (
-                                        <img
-                                          key={idx}
-                                          src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/item/${itemId}.png`}
-                                          alt={`Item ${itemId}`}
-                                          className="w-10 h-10 rounded border border-gray-600"
-                                          onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.style.display = 'none';
-                                          }}
-                                        />
-                                      ))}
-                                  </div>
-                                </div>
-
-                                {/* Summoner Spells */}
-                                <div className="bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-300 mb-3">Summoner Spells</p>
-                                  <div className="flex gap-2">
-                                    {sceneData?.insight?.vizData?.maxDamageTakenMatch?.summoner1Id && (
-                                      <img
-                                        src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 21 ? 'Barrier' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 1 ? 'Boost' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 14 ? 'Dot' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 3 ? 'Exhaust' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 4 ? 'Flash' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 6 ? 'Haste' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 7 ? 'Heal' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 13 ? 'Mana' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 30 ? 'PoroRecall' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 31 ? 'PoroThrow' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 11 ? 'Smite' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 39 ? 'SnowURFSnowball_Mark' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 32 ? 'Snowball' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 12 ? 'Teleport' :
-                                          'Flash'
-                                        }.png`}
-                                        alt="Summoner 1"
-                                        className="w-10 h-10 rounded border border-gray-600"
-                                        onError={(e) => {
-                                          const target = e.target as HTMLImageElement;
-                                          target.style.display = 'none';
-                                        }}
-                                      />
-                                    )}
-                                    {sceneData?.insight?.vizData?.maxDamageTakenMatch?.summoner2Id && (
-                                      <img
-                                        src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 21 ? 'Barrier' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 1 ? 'Boost' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 14 ? 'Dot' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 3 ? 'Exhaust' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 4 ? 'Flash' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 6 ? 'Haste' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 7 ? 'Heal' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 13 ? 'Mana' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 30 ? 'PoroRecall' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 31 ? 'PoroThrow' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 11 ? 'Smite' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 39 ? 'SnowURFSnowball_Mark' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 32 ? 'Snowball' :
-                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 12 ? 'Teleport' :
-                                          'Flash'
-                                        }.png`}
-                                        alt="Summoner 2"
-                                        className="w-10 h-10 rounded border border-gray-600"
-                                        onError={(e) => {
-                                          const target = e.target as HTMLImageElement;
-                                          target.style.display = 'none';
-                                        }}
-                                      />
-                                    )}
-                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -960,6 +1206,7 @@ export default function RecapFlow({
                           }.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1012,6 +1259,16 @@ export default function RecapFlow({
 
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
                                   <span className="text-sm text-gray-300">
+                                    KDA
+                                  </span>
+                                  <span className="text-2xl font-bold text-yellow-400">
+                                    {sceneData?.insight?.vizData?.maxHealMatch
+                                      ?.kda || "0/0/0"}
+                                  </span>
+                                </div>
+
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">
                                     Damage Healed
                                   </span>
                                   <span className="text-2xl font-bold text-lime-400">
@@ -1022,42 +1279,17 @@ export default function RecapFlow({
                                     K
                                   </span>
                                 </div>
-                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
-                                  <span className="text-sm text-gray-300">
-                                    Ally Healed
-                                  </span>
-                                  <span className="text-2xl font-bold text-emerald-400">
-                                    {Math.round(
-                                      (sceneData?.insight?.vizData?.stats
-                                        ?.teammateHealing || 0) / 1000
-                                    )}
-                                    K
-                                  </span>
-                                </div>
-                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
-                                  <span className="text-sm text-gray-300">
-                                    Healing Role
-                                  </span>
-                                  <span className="text-2xl font-bold text-cyan-400">
-                                    {sceneData?.insight?.vizData?.stats
-                                      ?.healingRole || "N/A"}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
-                                  <span className="text-sm text-gray-300">
-                                    KDA
-                                  </span>
-                                  <span className="text-2xl font-bold text-yellow-400">
-                                    {sceneData?.insight?.vizData?.maxHealMatch
-                                      ?.kda || "0/0/0"}
-                                  </span>
-                                </div>
 
                                 {/* Items Build */}
                                 <div className="bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-300 mb-3">Items</p>
+                                  <p className="text-sm text-gray-300 mb-3">
+                                    Items
+                                  </p>
                                   <div className="flex flex-wrap gap-2">
-                                    {(sceneData?.insight?.vizData?.maxHealMatch?.items || [])
+                                    {(
+                                      sceneData?.insight?.vizData?.maxHealMatch
+                                        ?.items || []
+                                    )
                                       .filter((item: number) => item !== 0)
                                       .map((itemId: number, idx: number) => (
                                         <img
@@ -1066,8 +1298,9 @@ export default function RecapFlow({
                                           alt={`Item ${itemId}`}
                                           className="w-10 h-10 rounded border border-gray-600"
                                           onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.style.display = 'none';
+                                            const target =
+                                              e.target as HTMLImageElement;
+                                            target.style.display = "none";
                                           }}
                                         />
                                       ))}
@@ -1076,59 +1309,121 @@ export default function RecapFlow({
 
                                 {/* Summoner Spells */}
                                 <div className="bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-300 mb-3">Summoner Spells</p>
+                                  <p className="text-sm text-gray-300 mb-3">
+                                    Summoner Spells
+                                  </p>
                                   <div className="flex gap-2">
-                                    {sceneData?.insight?.vizData?.maxHealMatch?.summoner1Id && (
+                                    {sceneData?.insight?.vizData?.maxHealMatch
+                                      ?.summoner1Id && (
                                       <img
                                         src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 21 ? 'Barrier' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 1 ? 'Boost' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 14 ? 'Dot' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 3 ? 'Exhaust' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 4 ? 'Flash' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 6 ? 'Haste' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 7 ? 'Heal' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 13 ? 'Mana' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 30 ? 'PoroRecall' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 31 ? 'PoroThrow' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 11 ? 'Smite' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 39 ? 'SnowURFSnowball_Mark' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 32 ? 'Snowball' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 12 ? 'Teleport' :
-                                          'Flash'
+                                          sceneData.insight.vizData.maxHealMatch
+                                            .summoner1Id === 21
+                                            ? "Barrier"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 1
+                                            ? "Boost"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 14
+                                            ? "Dot"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 3
+                                            ? "Exhaust"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 4
+                                            ? "Flash"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 6
+                                            ? "Haste"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 7
+                                            ? "Heal"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 13
+                                            ? "Mana"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 30
+                                            ? "PoroRecall"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 31
+                                            ? "PoroThrow"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 11
+                                            ? "Smite"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 39
+                                            ? "SnowURFSnowball_Mark"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 32
+                                            ? "Snowball"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner1Id === 12
+                                            ? "Teleport"
+                                            : "Flash"
                                         }.png`}
                                         alt="Summoner 1"
                                         className="w-10 h-10 rounded border border-gray-600"
                                         onError={(e) => {
-                                          const target = e.target as HTMLImageElement;
-                                          target.style.display = 'none';
+                                          const target =
+                                            e.target as HTMLImageElement;
+                                          target.style.display = "none";
                                         }}
                                       />
                                     )}
-                                    {sceneData?.insight?.vizData?.maxHealMatch?.summoner2Id && (
+                                    {sceneData?.insight?.vizData?.maxHealMatch
+                                      ?.summoner2Id && (
                                       <img
                                         src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 21 ? 'Barrier' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 1 ? 'Boost' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 14 ? 'Dot' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 3 ? 'Exhaust' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 4 ? 'Flash' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 6 ? 'Haste' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 7 ? 'Heal' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 13 ? 'Mana' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 30 ? 'PoroRecall' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 31 ? 'PoroThrow' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 11 ? 'Smite' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 39 ? 'SnowURFSnowball_Mark' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 32 ? 'Snowball' :
-                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 12 ? 'Teleport' :
-                                          'Flash'
+                                          sceneData.insight.vizData.maxHealMatch
+                                            .summoner2Id === 21
+                                            ? "Barrier"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 1
+                                            ? "Boost"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 14
+                                            ? "Dot"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 3
+                                            ? "Exhaust"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 4
+                                            ? "Flash"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 6
+                                            ? "Haste"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 7
+                                            ? "Heal"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 13
+                                            ? "Mana"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 30
+                                            ? "PoroRecall"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 31
+                                            ? "PoroThrow"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 11
+                                            ? "Smite"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 39
+                                            ? "SnowURFSnowball_Mark"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 32
+                                            ? "Snowball"
+                                            : sceneData.insight.vizData
+                                                .maxHealMatch.summoner2Id === 12
+                                            ? "Teleport"
+                                            : "Flash"
                                         }.png`}
                                         alt="Summoner 2"
                                         className="w-10 h-10 rounded border border-gray-600"
                                         onError={(e) => {
-                                          const target = e.target as HTMLImageElement;
-                                          target.style.display = 'none';
+                                          const target =
+                                            e.target as HTMLImageElement;
+                                          target.style.display = "none";
                                         }}
                                       />
                                     )}
@@ -1158,6 +1453,7 @@ export default function RecapFlow({
                           `Your gold income throughout the year — economic efficiency tracked.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1197,6 +1493,7 @@ export default function RecapFlow({
                           `Every minion matters. Gold is power.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1236,6 +1533,7 @@ export default function RecapFlow({
                           `You have found your preferred battlefield.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1371,6 +1669,7 @@ export default function RecapFlow({
                           `Your evolution has been... documented.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1412,6 +1711,7 @@ export default function RecapFlow({
                           } control wards purchased.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1546,6 +1846,7 @@ export default function RecapFlow({
                           `Knowledge of weakness is the first step to power.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1710,6 +2011,7 @@ export default function RecapFlow({
                           `Cooperation yields interesting results.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1760,6 +2062,7 @@ export default function RecapFlow({
                           `Chaos incarnate... yet still measurable.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1792,6 +2095,7 @@ export default function RecapFlow({
                           `Ascend again — for science demands replication.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1829,6 +2133,7 @@ export default function RecapFlow({
                           `Efficiency in execution.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1862,6 +2167,7 @@ export default function RecapFlow({
                           `Objective control measured and documented.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1895,6 +2201,7 @@ export default function RecapFlow({
                           `Precision from distance... intriguing.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1931,6 +2238,7 @@ export default function RecapFlow({
                           `Movement patterns analyzed and categorized.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1965,6 +2273,7 @@ export default function RecapFlow({
                           `The future requires deliberate action.`,
                         ]}
                         typingSpeed={40}
+                        onAdvance={playDialogueClickSound}
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
@@ -1999,37 +2308,35 @@ export default function RecapFlow({
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3 flex-shrink-0">
-                      {(sceneData?.insight?.metrics || [])
-                        .slice(0, 4)
-                        .map(
-                          (
-                            metric: {
-                              label: string;
-                              value: string | number;
-                              unit?: string;
-                              context?: string;
-                            },
-                            index: number
-                          ) => (
-                            <div
-                              key={index}
-                              className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20"
-                            >
-                              <div className="text-xs text-gray-300">
-                                {metric.label}
-                              </div>
-                              <div className="text-lg font-bold text-white">
-                                {metric.value}
-                                {metric.unit || ""}
-                              </div>
-                              {metric.context && (
-                                <div className="text-xs text-gray-400 truncate">
-                                  {metric.context}
-                                </div>
-                              )}
+                      {(sceneData?.insight?.metrics || []).slice(0, 4).map(
+                        (
+                          metric: {
+                            label: string;
+                            value: string | number;
+                            unit?: string;
+                            context?: string;
+                          },
+                          index: number
+                        ) => (
+                          <div
+                            key={index}
+                            className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20"
+                          >
+                            <div className="text-xs text-gray-300">
+                              {metric.label}
                             </div>
-                          )
-                        )}
+                            <div className="text-lg font-bold text-white">
+                              {metric.value}
+                              {metric.unit || ""}
+                            </div>
+                            {metric.context && (
+                              <div className="text-xs text-gray-400 truncate">
+                                {metric.context}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      )}
                     </div>
                   </>
                 )}
@@ -2175,6 +2482,7 @@ export default function RecapFlow({
                 }
                 typingSpeed={35}
                 className="max-w-md"
+                onAdvance={playDialogueClickSound}
                 onComplete={() => setDialogueComplete(true)}
               />
             </div>

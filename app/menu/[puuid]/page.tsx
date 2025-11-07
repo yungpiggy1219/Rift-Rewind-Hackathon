@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { Play, RotateCcw } from 'lucide-react';
 import useSWR from 'swr';
@@ -57,6 +57,12 @@ export default function HomePage() {
   const [preloadStatus, setPreloadStatus] = useState('');
   const [isClearingCache, setIsClearingCache] = useState(false);
 
+  // Sound effect refs
+  const spawnSfxRef = useRef<HTMLAudioElement | null>(null);
+  const clickSfxRef = useRef<HTMLAudioElement | null>(null);
+  const smiteSfxRef = useRef<HTMLAudioElement | null>(null);
+  const teleportSfxRef = useRef<HTMLAudioElement | null>(null);
+
   // Vel'Koz narration state (can be string or array of strings)
   const [velkozNarration, setVelkozNarration] = useState<string | string[]>([
     'Greetings, summoner.',
@@ -71,6 +77,40 @@ export default function HomePage() {
   // Function to change Vel'Koz narration
   const updateVelkozNarration = (newText: string | string[]) => {
     setVelkozNarration(newText);
+  };
+
+  // Initialize sound effects and play spawn sound on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Create audio elements
+      spawnSfxRef.current = new Audio('/sfx/spawn.mp3');
+      clickSfxRef.current = new Audio('/sfx/pm.mp3');
+      smiteSfxRef.current = new Audio('/sfx/smite.mp3');
+      teleportSfxRef.current = new Audio('/sfx/teleport.mp3');
+
+      // Play spawn sound when menu loads
+      spawnSfxRef.current.play().catch((error) => {
+        console.log('Spawn sound autoplay prevented:', error);
+      });
+    }
+
+    return () => {
+      // Cleanup audio elements
+      if (spawnSfxRef.current) spawnSfxRef.current.pause();
+      if (clickSfxRef.current) clickSfxRef.current.pause();
+      if (smiteSfxRef.current) smiteSfxRef.current.pause();
+      if (teleportSfxRef.current) teleportSfxRef.current.pause();
+    };
+  }, []);
+
+  // Function to play dialogue click sound
+  const playDialogueClickSound = () => {
+    if (clickSfxRef.current) {
+      clickSfxRef.current.currentTime = 0; // Reset to start
+      clickSfxRef.current.play().catch((error) => {
+        console.log('Click sound failed:', error);
+      });
+    }
   };
 
   // Clear cache function
@@ -237,6 +277,22 @@ export default function HomePage() {
   const handleStartRecap = () => {
     // Hide the button when starting
     setShowStartButton(false);
+    
+    // Play smite sound immediately
+    if (smiteSfxRef.current) {
+      smiteSfxRef.current.play().catch((error) => {
+        console.log('Smite sound failed:', error);
+      });
+    }
+    
+    // Play teleport sound 2 seconds after smite
+    setTimeout(() => {
+      if (teleportSfxRef.current) {
+        teleportSfxRef.current.play().catch((error) => {
+          console.log('Teleport sound failed:', error);
+        });
+      }
+    }, 2000);
     
     updateVelkozNarration([
       'Initiating comprehensive analysis.',
@@ -511,6 +567,7 @@ export default function HomePage() {
             <DialogueBubble 
               text={velkozNarration}
               typingSpeed={40}
+              onAdvance={playDialogueClickSound}
               onComplete={() => {
                 // Show start button after opening intro completes
                 console.log('Vel\'Koz finished speaking');

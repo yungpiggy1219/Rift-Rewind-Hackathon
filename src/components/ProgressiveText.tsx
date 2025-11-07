@@ -7,13 +7,15 @@ interface ProgressiveTextProps {
   typingSpeed?: number;
   className?: string;
   onComplete?: () => void;
+  onAdvance?: () => void; // Called when user clicks to advance
 }
 
 export default function ProgressiveText({ 
   segments,
   typingSpeed = 40,
   className = '',
-  onComplete
+  onComplete,
+  onAdvance
 }: ProgressiveTextProps) {
   const [displayedSegments, setDisplayedSegments] = useState<string[]>([]);
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
@@ -57,6 +59,9 @@ export default function ProgressiveText({
 
   // Handle click to advance
   const handleClick = () => {
+    // Play sound on any click
+    onAdvance?.();
+    
     if (isTyping && currentSegment) {
       // Skip current typing animation
       indexRef.current = currentSegment.length;

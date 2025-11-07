@@ -14,6 +14,19 @@ export default function LoginPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
+  const clickSfxRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize sound effect
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      clickSfxRef.current = new Audio('/sfx/pm.mp3');
+    }
+    return () => {
+      if (clickSfxRef.current) {
+        clickSfxRef.current.pause();
+      }
+    };
+  }, []);
 
   // Mouse tracking for tilt effect
   useEffect(() => {
@@ -45,6 +58,14 @@ export default function LoginPage() {
   }, []);
 
   const handleSubmit = async (inputGameName: string, inputTagLine: string) => {
+    // Play click sound
+    if (clickSfxRef.current) {
+      clickSfxRef.current.currentTime = 0;
+      clickSfxRef.current.play().catch((error) => {
+        console.log('Click sound failed:', error);
+      });
+    }
+
     setGameName(inputGameName);
     setTagLine(inputTagLine);
     setLoading(true);
