@@ -617,7 +617,7 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${sceneData?.insight?.vizData?.mostPlayedPosition?.position || 'Unknown'} — ${sceneData?.insight?.vizData?.mostPlayedPosition?.games || 0} games played.`,
-                          `Win rate: ${sceneData?.insight?.vizData?.mostPlayedPosition?.winRate?.toFixed(1) || 0}% in this role.`,
+                          `Your win rate is ${sceneData?.insight?.vizData?.mostPlayedPosition?.winRate?.toFixed(1) || 0}% in this role.`,
                           `You have found your preferred battlefield.`
                         ]}
                         typingSpeed={40}
@@ -721,9 +721,9 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       <ProgressiveText
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
-                          `${sceneData?.insight?.vizData?.averages?.avgVisionScore || sceneData?.insight?.metrics?.[0]?.value || 0} average vision score per game.`,
-                          `${sceneData?.insight?.vizData?.totals?.totalVisionWardsBought || sceneData?.insight?.vizData?.totals?.totalWardsPurchased || 0} control wards purchased.`,
-                          `Vision control is data control.`
+                          `${sceneData?.insight?.vizData?.averages?.avgVisionScore || 0} average vision score per game.`,
+                          `${sceneData?.insight?.vizData?.totals?.totalWardsPlaced || 0} wards placed, ${sceneData?.insight?.vizData?.totals?.totalWardsKilled || 0} wards cleared.`,
+                          `${sceneData?.insight?.vizData?.totals?.totalVisionWardsBought || 0} control wards purchased.`
                         ]}
                         typingSpeed={40}
                         onComplete={() => {
@@ -733,8 +733,73 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       />
                     </div>
                     {showHeatmap && (
-                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
-                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      <div className="flex-1 overflow-auto flex items-center justify-center" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        {/* Vision Ward Display */}
+                        <div className="max-w-4xl w-full">
+                          <div className="bg-gradient-to-br from-yellow-900/30 to-amber-900/30 border border-yellow-700/50 rounded-xl p-8">
+                            <div className="flex flex-col items-center gap-6">
+                              {/* Ward Images Placeholder */}
+                              <div className="flex gap-8 items-center justify-center">
+                                {/* Stealth Ward */}
+                                <div className="flex flex-col items-center">
+                                  <div className="w-32 h-32 bg-gray-700/50 rounded-lg border-2 border-yellow-500/50 flex items-center justify-center mb-3 p-2">
+                                    <img 
+                                      src="https://ddragon.leagueoflegends.com/cdn/15.22.1/img/item/3340.png"
+                                      alt="Stealth Ward"
+                                      className="w-full h-full object-contain"
+                                    />
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-sm text-gray-400">Avg. Wards Placed</p>
+                                    <p className="text-2xl font-bold text-yellow-400">{sceneData?.insight?.vizData?.averages?.avgWardsPlaced || 0}</p>
+                                    <p className="text-xs text-gray-500 mt-1">per game</p>
+                                  </div>
+                                </div>
+
+                                {/* Control Ward */}
+                                <div className="flex flex-col items-center">
+                                  <div className="w-32 h-32 bg-gray-700/50 rounded-lg border-2 border-pink-500/50 flex items-center justify-center mb-3 p-2">
+                                    <img 
+                                      src="https://ddragon.leagueoflegends.com/cdn/15.22.1/img/item/2055.png"
+                                      alt="Control Ward"
+                                      className="w-full h-full object-contain"
+                                    />
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-sm text-gray-400">Avg. Control Wards</p>
+                                    <p className="text-2xl font-bold text-pink-400">{sceneData?.insight?.vizData?.averages?.avgVisionWardsBought || 0}</p>
+                                    <p className="text-xs text-gray-500 mt-1">per game</p>
+                                  </div>
+                                </div>
+
+                                {/* Sweeping Lens */}
+                                <div className="flex flex-col items-center">
+                                  <div className="w-32 h-32 bg-gray-700/50 rounded-lg border-2 border-red-500/50 flex items-center justify-center mb-3 p-2">
+                                    <img 
+                                      src="https://ddragon.leagueoflegends.com/cdn/15.22.1/img/item/3364.png"
+                                      alt="Sweeping Lens"
+                                      className="w-full h-full object-contain"
+                                    />
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-sm text-gray-400">Avg. Wards Cleared</p>
+                                    <p className="text-2xl font-bold text-red-400">{sceneData?.insight?.vizData?.averages?.avgWardsKilled || 0}</p>
+                                    <p className="text-xs text-gray-500 mt-1">per game</p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Vision Score Summary */}
+                              <div className="w-full bg-black/30 rounded-lg p-6 mt-4">
+                                <div className="text-center">
+                                  <p className="text-sm text-gray-400 mb-2">Avg. Vision Score</p>
+                                  <p className="text-4xl font-bold text-white">{sceneData?.insight?.vizData?.averages?.avgVisionScore || 0}</p>
+                                  <p className="text-sm text-gray-500 mt-2">{sceneData?.insight?.vizData?.averages?.avgVisionScorePerMinute || 0} per minute</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>
