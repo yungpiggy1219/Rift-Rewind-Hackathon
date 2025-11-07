@@ -521,7 +521,7 @@ export default function RecapFlow({
                                 </div>
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
                                   <span className="text-sm text-gray-300">
-                                    Dmg/Min
+                                    Damage/Minute
                                   </span>
                                   <span className="text-2xl font-bold text-orange-400">
                                     {sceneData?.insight?.vizData?.stats
@@ -530,7 +530,7 @@ export default function RecapFlow({
                                 </div>
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
                                   <span className="text-sm text-gray-300">
-                                    Vision
+                                    Vision Score
                                   </span>
                                   <span className="text-2xl font-bold text-yellow-400">
                                     {sceneData?.insight?.vizData?.stats
@@ -539,7 +539,7 @@ export default function RecapFlow({
                                 </div>
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
                                   <span className="text-sm text-gray-300">
-                                    CS/Min
+                                    CS/Minute
                                   </span>
                                   <span className="text-2xl font-bold text-green-400">
                                     {sceneData?.insight?.vizData?.stats
@@ -1066,7 +1066,7 @@ export default function RecapFlow({
                                 </div>
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
                                   <span className="text-sm text-gray-300">
-                                    Win Rate
+                                    Avg. Win Rate
                                   </span>
                                   <span className="text-2xl font-bold text-cyan-400">
                                     {sceneData?.insight?.vizData?.stats
@@ -1076,7 +1076,7 @@ export default function RecapFlow({
                                 </div>
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
                                   <span className="text-sm text-gray-300">
-                                    Avg Damage/Min
+                                    Avg Damage/Minute
                                   </span>
                                   <span className="text-2xl font-bold text-orange-400">
                                     {sceneData?.insight?.vizData?.stats
@@ -1085,7 +1085,7 @@ export default function RecapFlow({
                                 </div>
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
                                   <span className="text-sm text-gray-300">
-                                    Vision Score
+                                    Avg Vision Score
                                   </span>
                                   <span className="text-2xl font-bold text-yellow-400">
                                     {sceneData?.insight?.vizData?.stats
@@ -1094,7 +1094,7 @@ export default function RecapFlow({
                                 </div>
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
                                   <span className="text-sm text-gray-300">
-                                    CS/Min
+                                    Avg CS/Minute
                                   </span>
                                   <span className="text-2xl font-bold text-green-400">
                                     {sceneData?.insight?.vizData?.stats

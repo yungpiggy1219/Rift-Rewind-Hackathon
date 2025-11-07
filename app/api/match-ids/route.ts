@@ -93,8 +93,8 @@ export async function GET(request: NextRequest) {
       note: `Filtered by time range (2025-01-01 → now${queue ? `, queue=${queue}` : ''}${type ? `, type=${type}` : ''})`,
     };
 
-    // Cache the results in shared cache
-    await cache.set(cacheKey, result);
+    // Cache the results in shared cache with long TTL (1 hour) for recap session
+    await cache.setLong(cacheKey, result);
 
     console.log(`[match-ids] Final: ${uniqueMatchIds.length} unique match IDs cached`);
     console.log(`[match-ids] All match IDs:`, uniqueMatchIds);
