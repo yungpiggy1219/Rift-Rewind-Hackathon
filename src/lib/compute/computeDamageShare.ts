@@ -157,6 +157,13 @@ export async function computeDamageShare(ctx: { puuid: string; matchIds: string[
             date: maxDamageMatch.date,
             kda: `${maxDamageMatch.kills}/${maxDamageMatch.deaths}/${maxDamageMatch.assists}`
           },
+          // Stats for display
+          stats: {
+            totalDamage: totalDamageDealt,
+            totalDamageToChampions: totalDamageDealtToChampions,
+            avgDamageToChampions: avgDamageToChampions,
+            highestDamage: maxDamageMatch.damage
+          },
           // Bar chart data comparing damage dealt metrics
           categories: ["Your Average", "DPS Benchmark", "Carry Benchmark", "Support Benchmark"],
           values: [
@@ -198,6 +205,12 @@ export async function computeDamageShare(ctx: { puuid: string; matchIds: string[
           avgDamageDealt: 0,
           avgDamageToChampions: 0,
           championDamagePercent: 0,
+          stats: {
+            totalDamage: 0,
+            totalDamageToChampions: 0,
+            avgDamageToChampions: 0,
+            highestDamage: 0
+          },
           categories: [],
           values: [],
           colors: []

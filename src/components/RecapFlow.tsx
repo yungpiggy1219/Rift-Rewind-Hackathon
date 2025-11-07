@@ -368,8 +368,8 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${Math.round((sceneData?.insight?.vizData?.totalDamageDealtToChampions || 0) / 1000)}K total damage to champions.`,
-                          `Average: ${(sceneData?.insight?.vizData?.avgDamageToChampions || 0).toLocaleString()} per game.`,
-                          `Peak performance: ${Math.round((sceneData?.insight?.vizData?.maxDamageMatch?.damage || 0) / 1000)}K damage with ${sceneData?.insight?.vizData?.maxDamageMatch?.championName || 'Unknown'}.`
+                          `Average of ${(sceneData?.insight?.vizData?.avgDamageToChampions || 0).toLocaleString()} per game.`,
+                          `Your best match dealt ${Math.round((sceneData?.insight?.vizData?.maxDamageMatch?.damage || 0) / 1000)}K damage with ${sceneData?.insight?.vizData?.maxDamageMatch?.championName || 'Unknown'}.`
                         ]}
                         typingSpeed={40}
                         onComplete={() => {
@@ -379,8 +379,55 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       />
                     </div>
                     {showHeatmap && (
-                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
-                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      <div className="flex-1 overflow-auto flex items-center justify-center" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        {/* Champion Card - Highest Damage Game */}
+                        <div className="max-w-4xl w-full">
+                          <div className="bg-gradient-to-br from-red-900/30 to-orange-900/30 border border-red-700/50 rounded-xl p-6">
+                            <div className="flex gap-8 items-center">
+                              {/* Champion Loading Screen Image - Left */}
+                              <div className="flex-shrink-0">
+                                <img 
+                                  src={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${sceneData?.insight?.vizData?.maxDamageMatch?.championName || 'Aatrox'}_0.jpg`}
+                                  alt={sceneData?.insight?.vizData?.maxDamageMatch?.championName || 'Champion'}
+                                  className="w-64 h-auto rounded-lg border-2 border-red-500/50 shadow-2xl"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/images/champions/purepng.com-classic-ahri-splashartahrilolleague-of-legendsrender-331521944371xxthp.png';
+                                  }}
+                                />
+                              </div>
+                              
+                              {/* Stats Column - Right */}
+                              <div className="flex-1 flex flex-col gap-4">
+                                <div>
+                                  <h3 className="text-3xl font-bold text-white">{sceneData?.insight?.vizData?.maxDamageMatch?.championName || 'Unknown'}</h3>
+                                  <p className="text-sm text-gray-400 mt-1">Highest Damage Game</p>
+                                </div>
+                                
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Total Damage Dealt</span>
+                                  <span className="text-2xl font-bold text-white">{Math.round((sceneData?.insight?.vizData?.stats?.totalDamage || 0) / 1000)}K</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Total Damage to Champions</span>
+                                  <span className="text-2xl font-bold text-red-400">{Math.round((sceneData?.insight?.vizData?.stats?.totalDamageToChampions || 0) / 1000)}K</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Avg Damage to Champions</span>
+                                  <span className="text-2xl font-bold text-orange-400">{(sceneData?.insight?.vizData?.stats?.avgDamageToChampions || 0).toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Highest Damage Game</span>
+                                  <span className="text-2xl font-bold text-yellow-400">{Math.round((sceneData?.insight?.vizData?.stats?.highestDamage || 0) / 1000)}K</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">KDA in Best Game</span>
+                                  <span className="text-2xl font-bold text-cyan-400">{sceneData?.insight?.vizData?.maxDamageMatch?.kda || '0/0/0'}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>
@@ -414,7 +461,7 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${Math.round((sceneData?.insight?.vizData?.totalHealing || 0) / 1000)}K total healing provided.`,
-                          `Average: ${(sceneData?.insight?.vizData?.avgHealing || 0).toLocaleString()} healing per game.`,
+                          `Average of ${(sceneData?.insight?.vizData?.avgHealing || 0).toLocaleString()} healing per game.`,
                           `Life saved, data recorded.`
                         ]}
                         typingSpeed={40}
@@ -437,7 +484,7 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${Math.round((sceneData?.insight?.vizData?.totalGold || 0) / 1000)}K total gold earned.`,
-                          `Average: ${sceneData?.insight?.vizData?.avgGoldPerMinute || 0} gold per minute.`,
+                          `Average of ${sceneData?.insight?.vizData?.avgGoldPerMinute || 0} gold per minute.`,
                           `Economic efficiency: ${sceneData?.insight?.vizData?.goldShare || 0}% team gold share.`
                         ]}
                         typingSpeed={40}
