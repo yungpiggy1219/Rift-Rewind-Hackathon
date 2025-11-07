@@ -313,42 +313,47 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                     </div>
                     {showHeatmap && (
                       <div className="flex-1 overflow-auto flex items-center justify-center" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
-                        {/* Champion Loading Screen and Stats - Centered */}
+                        {/* Champion Loading Screen and Stats - Side by Side */}
                         <div className="max-w-4xl w-full">
-                          <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 border border-blue-700/50 rounded-xl p-6 flex flex-col items-center">
-                            {/* Champion Loading Screen Image */}
-                            <img 
-                              src={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${sceneData?.insight?.vizData?.mostPlayed?.championName || 'Aatrox'}_0.jpg`}
-                              alt={sceneData?.insight?.vizData?.mostPlayed?.championName || 'Champion'}
-                              className="w-64 h-auto rounded-lg mb-4 border-2 border-blue-500/50 shadow-2xl"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = '/images/champions/purepng.com-classic-ahri-splashartahrilolleague-of-legendsrender-331521944371xxthp.png';
-                              }}
-                            />
-                            <h3 className="text-2xl font-bold text-white mb-6">{sceneData?.insight?.vizData?.mostPlayed?.championName || 'Unknown'}</h3>
-                            
-                            {/* Stats Grid - Horizontal */}
-                            <div className="w-full grid grid-cols-5 gap-4">
-                              <div className="flex flex-col items-center bg-black/30 rounded-lg px-4 py-4">
-                                <span className="text-xs text-gray-400 mb-2">Win Rate</span>
-                                <span className="text-2xl font-bold text-cyan-400">{sceneData?.insight?.vizData?.stats?.winRate || 0}%</span>
+                          <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 border border-blue-700/50 rounded-xl p-6">
+                            <div className="flex gap-8 items-center">
+                              {/* Champion Loading Screen Image - Left */}
+                              <div className="flex-shrink-0">
+                                <img 
+                                  src={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${sceneData?.insight?.vizData?.mostPlayed?.championName || 'Aatrox'}_0.jpg`}
+                                  alt={sceneData?.insight?.vizData?.mostPlayed?.championName || 'Champion'}
+                                  className="w-64 h-auto rounded-lg border-2 border-blue-500/50 shadow-2xl"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/images/champions/purepng.com-classic-ahri-splashartahrilolleague-of-legendsrender-331521944371xxthp.png';
+                                  }}
+                                />
                               </div>
-                              <div className="flex flex-col items-center bg-black/30 rounded-lg px-4 py-4">
-                                <span className="text-xs text-gray-400 mb-2">KDA</span>
-                                <span className="text-2xl font-bold text-white">{sceneData?.insight?.vizData?.stats?.kda || '0.00'}</span>
-                              </div>
-                              <div className="flex flex-col items-center bg-black/30 rounded-lg px-4 py-4">
-                                <span className="text-xs text-gray-400 mb-2">Dmg/Min</span>
-                                <span className="text-2xl font-bold text-orange-400">{sceneData?.insight?.vizData?.stats?.damagePerMin || 0}</span>
-                              </div>
-                              <div className="flex flex-col items-center bg-black/30 rounded-lg px-4 py-4">
-                                <span className="text-xs text-gray-400 mb-2">Vision</span>
-                                <span className="text-2xl font-bold text-yellow-400">{sceneData?.insight?.vizData?.stats?.visionScore || 0}</span>
-                              </div>
-                              <div className="flex flex-col items-center bg-black/30 rounded-lg px-4 py-4">
-                                <span className="text-xs text-gray-400 mb-2">CS/Min</span>
-                                <span className="text-2xl font-bold text-green-400">{sceneData?.insight?.vizData?.stats?.csPerMin || '0.0'}</span>
+                              
+                              {/* Stats Column - Right */}
+                              <div className="flex-1 flex flex-col gap-4">
+                                <h3 className="text-3xl font-bold text-white mb-2">{sceneData?.insight?.vizData?.mostPlayed?.championName || 'Unknown'}</h3>
+                                
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Win Rate</span>
+                                  <span className="text-2xl font-bold text-cyan-400">{sceneData?.insight?.vizData?.stats?.winRate || 0}%</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">KDA</span>
+                                  <span className="text-2xl font-bold text-white">{sceneData?.insight?.vizData?.stats?.kda || '0.00'}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Dmg/Min</span>
+                                  <span className="text-2xl font-bold text-orange-400">{sceneData?.insight?.vizData?.stats?.damagePerMin || 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Vision</span>
+                                  <span className="text-2xl font-bold text-yellow-400">{sceneData?.insight?.vizData?.stats?.visionScore || 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">CS/Min</span>
+                                  <span className="text-2xl font-bold text-green-400">{sceneData?.insight?.vizData?.stats?.csPerMin || '0.0'}</span>
+                                </div>
                               </div>
                             </div>
                           </div>
