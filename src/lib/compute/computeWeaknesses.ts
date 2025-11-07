@@ -18,8 +18,8 @@ export async function computeWeaknesses(ctx: { puuid: string; matchIds: string[]
     }
     
     // Track weakness statistics
-    let totalTimeSpentDead = 0;
-    let totalGameTime = 0;
+    let totalTimeSpentDead = 0; // in seconds
+    let totalGameTime = 0; // in seconds
     let processedMatches = 0;
     
     // Track gank statistics
@@ -65,19 +65,20 @@ export async function computeWeaknesses(ctx: { puuid: string; matchIds: string[]
         
         processedMatches++;
         
-        // Track time spent dead (if available from API)
-        // Note: Riot API may not provide this directly, we'll use estimated values
-        const gameTimeMinutes = match.gameDuration / 60;
-        totalGameTime += gameTimeMinutes;
+        // Track time spent dead and total game time in seconds
+        const gameDurationSeconds = match.gameDuration;
+        totalGameTime += gameDurationSeconds;
         
-        if (playerParticipant.timeSpentDead) {
+        // Use timeSpentDead from API (in seconds)
+        if (playerParticipant.timeSpentDead !== undefined) {
           totalTimeSpentDead += playerParticipant.timeSpentDead;
         } else {
           // Estimate: average death timer increases with game time
           // Early game ~15s, mid game ~30s, late game ~60s
+          const gameTimeMinutes = gameDurationSeconds / 60;
           const avgDeathTimer = Math.min(15 + (gameTimeMinutes * 1.5), 60);
           const estimatedDeadTime = playerParticipant.deaths * avgDeathTimer;
-          totalTimeSpentDead += estimatedDeadTime / 60; // Convert to minutes
+          totalTimeSpentDead += estimatedDeadTime;
         }
         
         // Track deaths
@@ -100,16 +101,17 @@ export async function computeWeaknesses(ctx: { puuid: string; matchIds: string[]
         
         // Track worst game
         if (playerParticipant.deaths > worstGame.deaths) {
+          const gameTimeMinutes = gameDurationSeconds / 60;
           const deadTime = playerParticipant.timeSpentDead 
             ? playerParticipant.timeSpentDead 
-            : (playerParticipant.deaths * Math.min(15 + (gameTimeMinutes * 1.5), 60) / 60);
+            : (playerParticipant.deaths * Math.min(15 + (gameTimeMinutes * 1.5), 60));
             
           worstGame = {
             deaths: playerParticipant.deaths,
             matchId: match.gameId,
             date: new Date(match.gameCreation).toLocaleDateString(),
             championName: playerParticipant.championName,
-            timeSpentDead: deadTime
+            timeSpentDead: deadTime / 60 // Convert to minutes for display
           };
         }
       }
@@ -120,65 +122,75 @@ export async function computeWeaknesses(ctx: { puuid: string; matchIds: string[]
     }
     
     // Calculate averages and percentages
-    const avgTimeSpentDead = totalTimeSpentDead / processedMatches;
-    // const avgDeaths = totalDeaths / processedMatches; // Same as avgDeathsPerGame below
+    const avgTimeSpentDeadSeconds = totalTimeSpentDead / processedMatches;
+    const avgTimeSpentDeadMinutes = avgTimeSpentDeadSeconds / 60;
+    const avgGameDurationSeconds = totalGameTime / processedMatches;
+    
     const gankProneness = totalDeaths > 0 ? (deathsByJungle / totalDeaths) * 100 : 0;
     const avgDeathsPerGame = totalDeaths / processedMatches;
     
     // Calculate fountain time as percentage of total game time
-    const fountainTimePercentage = (totalTimeSpentDead / totalGameTime) * 100;
+    const totalDeadPercentage = (totalTimeSpentDead / totalGameTime) * 100;
+    const totalPlayingPercentage = 100 - totalDeadPercentage;
+    
+    // Calculate average percentages per game
+    const avgDeadPercentage = (avgTimeSpentDeadSeconds / avgGameDurationSeconds) * 100;
+    const avgPlayingPercentage = 100 - avgDeadPercentage;
     
     // Determine weakness level
     let weaknessLevel = 'Excellent';
-    // let weaknessColor = '#10B981'; // green (not used yet, reserved for future features)
     
-    if (avgDeathsPerGame > 6 || fountainTimePercentage > 15) {
+    if (avgDeathsPerGame > 6 || totalDeadPercentage > 15) {
       weaknessLevel = 'Needs Work';
-      // weaknessColor = '#EF4444'; // red
-    } else if (avgDeathsPerGame > 4 || fountainTimePercentage > 10) {
+    } else if (avgDeathsPerGame > 4 || totalDeadPercentage > 10) {
       weaknessLevel = 'Could Improve';
-      // weaknessColor = '#F59E0B'; // yellow
-    } else if (avgDeathsPerGame > 3 || fountainTimePercentage > 7) {
+    } else if (avgDeathsPerGame > 3 || totalDeadPercentage > 7) {
       weaknessLevel = 'Good';
-      // weaknessColor = '#3B82F6'; // blue
     }
     
     console.log(`[computeWeaknesses] Analysis complete:`, {
       avgDeathsPerGame: avgDeathsPerGame.toFixed(2),
-      avgTimeSpentDead: avgTimeSpentDead.toFixed(1),
-      fountainTimePercentage: fountainTimePercentage.toFixed(1),
+      avgTimeSpentDeadMinutes: avgTimeSpentDeadMinutes.toFixed(1),
+      totalDeadPercentage: totalDeadPercentage.toFixed(1),
+      avgDeadPercentage: avgDeadPercentage.toFixed(1),
       gankProneness: gankProneness.toFixed(1),
       weaknessLevel
     });
     
-    // Build visualization data
+    // Build visualization data - pie charts for dead vs playing time
     const vizData = {
-      bars: [
+      // Total across all matches
+      totalPieChart: [
         {
-          label: 'Avg Deaths/Game',
-          value: parseFloat(avgDeathsPerGame.toFixed(2)),
-          color: avgDeathsPerGame > 5 ? '#EF4444' : avgDeathsPerGame > 3 ? '#F59E0B' : '#10B981',
-          maxValue: 10
+          name: 'Playing',
+          value: parseFloat(totalPlayingPercentage.toFixed(2)),
+          color: '#10B981' // green
         },
         {
-          label: 'Fountain Time %',
-          value: parseFloat(fountainTimePercentage.toFixed(1)),
-          color: fountainTimePercentage > 12 ? '#EF4444' : fountainTimePercentage > 8 ? '#F59E0B' : '#10B981',
-          maxValue: 20
-        },
-        {
-          label: 'Gank Prone %',
-          value: parseFloat(gankProneness.toFixed(1)),
-          color: gankProneness > 40 ? '#EF4444' : gankProneness > 30 ? '#F59E0B' : '#10B981',
-          maxValue: 100
-        },
-        {
-          label: 'Avg Dead Time (min)',
-          value: parseFloat(avgTimeSpentDead.toFixed(1)),
-          color: avgTimeSpentDead > 5 ? '#EF4444' : avgTimeSpentDead > 3 ? '#F59E0B' : '#10B981',
-          maxValue: 10
+          name: 'Dead',
+          value: parseFloat(totalDeadPercentage.toFixed(2)),
+          color: '#EF4444' // red
         }
       ],
+      // Average per game
+      avgPieChart: [
+        {
+          name: 'Playing',
+          value: parseFloat(avgPlayingPercentage.toFixed(2)),
+          color: '#10B981' // green
+        },
+        {
+          name: 'Dead',
+          value: parseFloat(avgDeadPercentage.toFixed(2)),
+          color: '#EF4444' // red
+        }
+      ],
+      stats: {
+        avgDeathsPerGame: parseFloat(avgDeathsPerGame.toFixed(2)),
+        avgTimeSpentDeadMinutes: parseFloat(avgTimeSpentDeadMinutes.toFixed(2)),
+        totalDeadPercentage: parseFloat(totalDeadPercentage.toFixed(2)),
+        avgDeadPercentage: parseFloat(avgDeadPercentage.toFixed(2))
+      },
       type: 'weakness_stats'
     };
     
@@ -186,7 +198,7 @@ export async function computeWeaknesses(ctx: { puuid: string; matchIds: string[]
     const details: string[] = [
       `Analyzed ${processedMatches} matches for survivability patterns`,
       `Average deaths per game: ${avgDeathsPerGame.toFixed(2)}`,
-      `Time spent dead: ${avgTimeSpentDead.toFixed(1)} minutes per game (${fountainTimePercentage.toFixed(1)}% of game time)`,
+      `Time spent dead: ${avgTimeSpentDeadMinutes.toFixed(1)} minutes per game (${avgDeadPercentage.toFixed(1)}% of game time)`,
       `Gank proneness: ${gankProneness.toFixed(1)}% of deaths from enemy jungle pressure`,
       `Worst game: ${worstGame.deaths} deaths on ${worstGame.championName} (${worstGame.date})`
     ];
@@ -194,16 +206,16 @@ export async function computeWeaknesses(ctx: { puuid: string; matchIds: string[]
     let summary = '';
     let action = '';
     
-    if (avgDeathsPerGame <= 3 && fountainTimePercentage <= 7) {
-      summary = `Exceptional survivability! You average only ${avgDeathsPerGame.toFixed(1)} deaths per game, spending just ${fountainTimePercentage.toFixed(1)}% of your time in the fountain. Your map awareness and positioning are top-tier.`;
+    if (avgDeathsPerGame <= 3 && totalDeadPercentage <= 7) {
+      summary = `Exceptional survivability! You average only ${avgDeathsPerGame.toFixed(1)} deaths per game, spending just ${avgDeadPercentage.toFixed(1)}% of your time in the fountain. Your map awareness and positioning are top-tier.`;
       action = 'Keep up the excellent play! Focus on maintaining this discipline while being aggressive when opportunities arise.';
-    } else if (avgDeathsPerGame <= 4.5 && fountainTimePercentage <= 10) {
-      summary = `Solid survivability with room for improvement. You average ${avgDeathsPerGame.toFixed(1)} deaths per game, spending ${fountainTimePercentage.toFixed(1)}% of your time dead. ${gankProneness > 35 ? 'You appear vulnerable to ganks.' : 'Your laning phase is relatively safe.'}`;
+    } else if (avgDeathsPerGame <= 4.5 && totalDeadPercentage <= 10) {
+      summary = `Solid survivability with room for improvement. You average ${avgDeathsPerGame.toFixed(1)} deaths per game, spending ${avgDeadPercentage.toFixed(1)}% of your time dead. ${gankProneness > 35 ? 'You appear vulnerable to ganks.' : 'Your laning phase is relatively safe.'}`;
       action = gankProneness > 35 
         ? 'Focus on ward placement and tracking the enemy jungler to avoid ganks.'
         : 'Work on teamfight positioning to reduce unnecessary deaths.';
     } else {
-      summary = `Your survivability needs attention. With ${avgDeathsPerGame.toFixed(1)} deaths per game and ${fountainTimePercentage.toFixed(1)}% of game time spent dead, you're giving the enemy team too many advantages. ${gankProneness > 35 ? 'You\'re particularly vulnerable to ganks.' : ''}`;
+      summary = `Your survivability needs attention. With ${avgDeathsPerGame.toFixed(1)} deaths per game and ${avgDeadPercentage.toFixed(1)}% of game time spent dead, you're giving the enemy team too many advantages. ${gankProneness > 35 ? 'You\'re particularly vulnerable to ganks.' : ''}`;
       action = gankProneness > 35
         ? 'Priority: Ward your lane, track the enemy jungler, and play safer when you don\'t have vision.'
         : 'Priority: Focus on positioning in teamfights and knowing when to disengage.';
@@ -223,16 +235,16 @@ export async function computeWeaknesses(ctx: { puuid: string; matchIds: string[]
             context: weaknessLevel
           },
           {
-            label: 'Fountain Time',
-            value: fountainTimePercentage.toFixed(1),
+            label: 'Time Dead (Avg)',
+            value: avgDeadPercentage.toFixed(1),
             unit: '%',
-            context: 'of total game time'
+            context: 'per game'
           },
           {
-            label: 'Gank Prone',
-            value: gankProneness.toFixed(1),
+            label: 'Time Dead (Total)',
+            value: totalDeadPercentage.toFixed(1),
             unit: '%',
-            context: 'of deaths from ganks'
+            context: 'across all games'
           },
           {
             label: 'Total Deaths',

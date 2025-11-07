@@ -11,6 +11,7 @@ import SummonerCard from '../../app/components/SummonerCard';
 import Viz from './Viz';
 import ShareCardButton from './ShareCardButton';
 import ProgressiveText from './ProgressiveText';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface RecapFlowProps {
   puuid: string;
@@ -810,8 +811,8 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `Areas for improvement identified.`,
-                          `Deaths per game: ${sceneData?.insight?.vizData?.bars?.[0]?.value || sceneData?.insight?.metrics?.[0]?.value || 0} — optimization required.`,
-                          `Fountain time: ${sceneData?.insight?.vizData?.bars?.[1]?.value || sceneData?.insight?.metrics?.[1]?.value || 0}% of game time.`,
+                          `Average deaths per game: ${sceneData?.insight?.vizData?.stats?.avgDeathsPerGame || sceneData?.insight?.metrics?.[0]?.value || 0} — optimization required.`,
+                          `Time spent dead: ${sceneData?.insight?.vizData?.stats?.avgDeadPercentage?.toFixed(1) || 0}% of each game on average.`,
                           `Knowledge of weakness is the first step to power.`
                         ]}
                         typingSpeed={40}
@@ -822,8 +823,88 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       />
                     </div>
                     {showHeatmap && (
-                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
-                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      <div className="flex-1 overflow-auto pb-6" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                          {/* Total Across All Matches Pie Chart */}
+                          <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
+                            <h3 className="text-lg font-semibold text-white mb-4 text-center">Total Time Distribution</h3>
+                            <div className="h-64 w-full">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                  <Pie
+                                    data={sceneData?.insight?.vizData?.totalPieChart || []}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    label={({ name, value }) => `${name}: ${value.toFixed(1)}%`}
+                                    outerRadius={80}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                  >
+                                    {(sceneData?.insight?.vizData?.totalPieChart || []).map((entry: any, index: number) => (
+                                      <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                  </Pie>
+                                  <Tooltip 
+                                    formatter={(value: number) => `${value.toFixed(2)}%`}
+                                    contentStyle={{ 
+                                      backgroundColor: '#1F2937', 
+                                      border: '1px solid #374151',
+                                      borderRadius: '8px'
+                                    }}
+                                  />
+                                </PieChart>
+                              </ResponsiveContainer>
+                            </div>
+                            <p className="text-sm text-gray-400 text-center mt-2">Across all matches</p>
+                          </div>
+
+                          {/* Average Per Game Pie Chart */}
+                          <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
+                            <h3 className="text-lg font-semibold text-white mb-4 text-center">Average Per Game</h3>
+                            <div className="h-64 w-full">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                  <Pie
+                                    data={sceneData?.insight?.vizData?.avgPieChart || []}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    label={({ name, value }) => `${name}: ${value.toFixed(1)}%`}
+                                    outerRadius={80}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                  >
+                                    {(sceneData?.insight?.vizData?.avgPieChart || []).map((entry: any, index: number) => (
+                                      <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                  </Pie>
+                                  <Tooltip 
+                                    formatter={(value: number) => `${value.toFixed(2)}%`}
+                                    contentStyle={{ 
+                                      backgroundColor: '#1F2937', 
+                                      border: '1px solid #374151',
+                                      borderRadius: '8px'
+                                    }}
+                                  />
+                                </PieChart>
+                              </ResponsiveContainer>
+                            </div>
+                            <p className="text-sm text-gray-400 text-center mt-2">Per match average</p>
+                          </div>
+                        </div>
+
+                        {/* Stats Summary */}
+                        <div className="grid grid-cols-2 gap-4 bg-gray-800/30 rounded-lg p-4 border border-gray-700/50">
+                          <div className="text-center">
+                            <p className="text-sm text-gray-400">Avg Deaths/Game</p>
+                            <p className="text-3xl font-bold text-red-400">{sceneData?.insight?.vizData?.stats?.avgDeathsPerGame?.toFixed(2) || 0}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm text-gray-400">Avg Time Dead</p>
+                            <p className="text-3xl font-bold text-orange-400">{sceneData?.insight?.vizData?.stats?.avgTimeSpentDeadMinutes?.toFixed(1) || 0} min</p>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>

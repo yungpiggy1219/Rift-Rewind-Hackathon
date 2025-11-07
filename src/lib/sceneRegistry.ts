@@ -2,7 +2,6 @@ import { SceneId, ScenePayload, VizKind } from "./types";
 import { computeYearInMotion } from "./compute/computeYearInMotion";
 import { computeSignatureChampion } from "./compute/computeSignatureChampion";
 import { computeGrowth } from "./compute/computeGrowth";
-import { computePeak } from "./compute/computePeak";
 import { computeDamageShare } from "./compute/computeDamageShare";
 import { computeDamageTaken } from "./compute/computeDamageTaken";
 import { computeHealed } from "./compute/computeHealed";
