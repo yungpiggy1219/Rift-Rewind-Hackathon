@@ -19,6 +19,16 @@
   }
 }
 
+/* Subtle floating animation for dialogue bubble */
+@keyframes subtle-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

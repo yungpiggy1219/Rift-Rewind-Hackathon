@@ -6,6 +6,7 @@ import { Play, RotateCcw } from 'lucide-react';
 import useSWR from 'swr';
 import SummonerCard from '../../components/SummonerCard';
 import MatchCard from '../../components/MatchCard';
+import DialogueBubble from '../../components/DialogueBubble';
 import { getChampionName } from '../../../src/lib/champions';
 import { MatchData } from '@/src/lib/types';
 
@@ -56,15 +57,43 @@ export default function HomePage() {
   const [preloadStatus, setPreloadStatus] = useState('');
   const [isClearingCache, setIsClearingCache] = useState(false);
 
+  // Vel'Koz narration state (can be string or array of strings)
+  const [velkozNarration, setVelkozNarration] = useState<string | string[]>([
+    'Greetings, summoner.',
+    'I am Vel\'Koz, the Eye of the Void.',
+    'I shall analyze your performance this year.',
+    'Click to continue...'
+  ]);
+  
+  // State to show start button after intro completes
+  const [showStartButton, setShowStartButton] = useState(false);
+  
+  // Function to change Vel'Koz narration
+  const updateVelkozNarration = (newText: string | string[]) => {
+    setVelkozNarration(newText);
+  };
+
   // Clear cache function
   const clearCache = async () => {
     setIsClearingCache(true);
+    updateVelkozNarration([
+      'Initiating data purge.',
+      'All cached knowledge will be obliterated.',
+      'Stand by...'
+    ]);
+    
     try {
       console.log('[Menu] Clearing cache for PUUID:', puuid);
       const response = await fetch(`/api/clear-cache?puuid=${puuid}`);
       if (response.ok) {
         const data = await response.json();
         console.log('[Menu] Cache cleared:', data);
+        
+        updateVelkozNarration([
+          'Cache purge complete.',
+          `${data.totalCleared || 0} entries have been disintegrated.`,
+          'Your data will be fresh on the next analysis.'
+        ]);
         
         // Show detailed success message
         const message = `✓ Successfully cleared ${data.totalCleared || 0} cache entries!\n\n` +
@@ -189,6 +218,36 @@ export default function HomePage() {
 
   const isLoading = !profile && !profileError;
   const hasError = profileError || rankedError;
+
+  // Update Vel'Koz narration when profile loads
+  useEffect(() => {
+    if (profile && !isPreloading) {
+      updateVelkozNarration([
+        `Fascinating.`,
+        `Summoner ${profile.name}, Level ${profile.summonerLevel}.`,
+        `The data compilation is complete.`,
+        `Shall we proceed with the analysis?`
+      ]);
+      // Don't show button again after profile loads, only after initial intro
+      // Button state is preserved from initial intro completion
+    }
+  }, [profile, isPreloading]);
+
+  // Wrapper for startRecap that updates Vel'Koz narration
+  const handleStartRecap = () => {
+    // Hide the button when starting
+    setShowStartButton(false);
+    
+    updateVelkozNarration([
+      'Initiating comprehensive analysis.',
+      'Knowledge through disintegration...',
+      'Prepare yourself, summoner.'
+    ]);
+    // Wait a moment for the narration, then start preloading
+    setTimeout(() => {
+      startRecap();
+    }, 2000);
+  };
 
   const startRecap = async () => {
     setIsPreloading(true);
@@ -415,19 +474,12 @@ export default function HomePage() {
         containerClassName="absolute top-8 left-8 z-10"
       />
 
-      {/* Bottom Right - Start Recap Button */}
-      <div className="absolute bottom-8 right-8 z-10 space-y-4">
-        {isPreloading && preloadStatus && (
-          <div className="bg-black/60 backdrop-blur-sm rounded-lg p-4 border border-white/20 max-w-xs">
-            <div className="text-sm text-white font-medium">{preloadStatus}</div>
-          </div>
-        )}
-        
-        {/* Clear Cache Button */}
+      {/* Bottom Left - Clear Cache Button */}
+      <div className="absolute bottom-8 left-8 z-10">
         <button
           onClick={clearCache}
           disabled={isClearingCache || isPreloading}
-          className="w-full flex items-center justify-center gap-2 px-6 py-2 bg-gray-700/80 hover:bg-gray-600/80 disabled:bg-gray-800/50 backdrop-blur-sm text-white rounded-lg transition-all duration-200 font-medium text-sm border border-white/20"
+          className="flex items-center justify-center gap-2 px-6 py-2 bg-gray-700/80 hover:bg-gray-600/80 disabled:bg-gray-800/50 backdrop-blur-sm text-white rounded-lg transition-all duration-200 font-medium text-sm border border-white/20"
         >
           {isClearingCache ? (
             <>
@@ -441,24 +493,59 @@ export default function HomePage() {
             </>
           )}
         </button>
-        
-        <button
-          onClick={startRecap}
-          disabled={isPreloading}
-          className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600/90 to-pink-600/90 hover:from-purple-700/90 hover:to-pink-700/90 disabled:from-gray-600/90 disabled:to-gray-700/90 backdrop-blur-sm text-white rounded-lg transition-all duration-200 font-semibold text-lg shadow-2xl border border-white/20"
-        >
-          {isPreloading ? (
-            <>
-              <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
-              Preparing Recap...
-            </>
-          ) : (
-            <>
-              <Play className="w-6 h-6" />
-              Start Year-End Recap
-            </>
+      </div>
+
+      {/* Bottom Right - Vel'Koz Agent & Start Recap Button */}
+      <div className="absolute bottom-0 right-0 z-10 flex items-end gap-6">
+        {/* Vel'Koz Agent Image - positioned lower and cropped right/bottom */}
+        <div className="relative group overflow-hidden" style={{ marginBottom: '-10vh', marginRight: '-5vw' }}>
+          <div className="absolute inset-20 bg-purple-500/20 rounded-full blur-xl group-hover:bg-purple-500/30 transition-all duration-300"></div>
+          <img 
+            src="/images/ai-agents/velkoz.png"
+            alt="Vel'Koz - The Eye of the Void"
+            className="relative h-[70vh] w-auto object-contain drop-shadow-2xl transform group-hover:scale-105 transition-transform duration-300"
+          />
+          
+          {/* Dialogue Bubble */}
+          <div className="absolute top-8 right-60">
+            <DialogueBubble 
+              text={velkozNarration}
+              typingSpeed={40}
+              onComplete={() => {
+                // Show start button after opening intro completes
+                console.log('Vel\'Koz finished speaking');
+                setShowStartButton(true);
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Buttons Column */}
+{/*         <div className="space-y-4 mb-8 mr-8">
+          {isPreloading && preloadStatus && (
+            <div className="bg-black/60 backdrop-blur-sm rounded-lg p-4 border border-white/20 max-w-xs">
+              <div className="text-sm text-white font-medium">{preloadStatus}</div>
+            </div>
           )}
-        </button>
+          
+          <button
+            onClick={startRecap}
+            disabled={isPreloading}
+            className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600/90 to-pink-600/90 hover:from-purple-700/90 hover:to-pink-700/90 disabled:from-gray-600/90 disabled:to-gray-700/90 backdrop-blur-sm text-white rounded-lg transition-all duration-200 font-semibold text-lg shadow-2xl border border-white/20"
+          >
+            {isPreloading ? (
+              <>
+                <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
+                Preparing Recap...
+              </>
+            ) : (
+              <>
+                <Play className="w-6 h-6" />
+                Start Year-End Recap
+              </>
+            )}
+          </button>
+        </div> */}
       </div>
 
       {/* Mobile Orientation Hint */}
@@ -482,7 +569,7 @@ export default function HomePage() {
       </div>
 
       {/* Center Content - Welcome Message */}
-      <div className="absolute inset-0 flex items-center justify-center z-5">
+{/*       <div className="absolute inset-0 flex items-center justify-center z-5">
         <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-8 border border-white/10 max-w-2xl mx-4">
           <div className="text-center">
             <h2 className="text-4xl font-bold text-white mb-4">
@@ -559,7 +646,24 @@ export default function HomePage() {
             )}
           </div>
         </div>
-      </div>
+      </div> */}
+
+      {/* Center Start Button - appears after intro, centered on entire screen */}
+      {showStartButton && !isPreloading && (
+        <div className="fixed inset-0 flex items-center justify-center z-30 pointer-events-none">
+          <button
+            onClick={handleStartRecap}
+            className="group relative transition-all duration-300 hover:scale-105 active:scale-95 pointer-events-auto"
+          >
+            <img 
+              src="/images/ui/start_recep.png"
+              alt="Start Year-End Recap"
+              className="w-64 h-auto drop-shadow-2xl"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

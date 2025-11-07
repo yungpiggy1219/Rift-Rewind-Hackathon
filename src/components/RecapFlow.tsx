@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import useSWR from 'swr';
-import { ChevronLeft, ChevronRight, Loader2, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AgentId, ScenePayload, NarrationResponse } from '@/src/lib/types';
 import { SCENE_ORDER } from '@/src/lib/sceneRegistry';
-import AgentNarrator from './AgentNarrator';
+import DialogueBubble from '../../app/components/DialogueBubble';
+import SummonerCard from '../../app/components/SummonerCard';
 import Viz from './Viz';
 import ShareCardButton from './ShareCardButton';
 
@@ -217,14 +218,13 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
       {/* Top Navigation Bar */}
       <div className="absolute top-0 left-0 right-0 z-30 p-4">
         <div className="flex justify-between items-center">
-          {/* Back Button - Top Left */}
-          <button
-            onClick={goBack}
-            className="flex items-center gap-2 px-3 py-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
+          {/* SummonerCard with Menu - Top Left */}
+          <SummonerCard
+            playerName={playerName}
+            containerClassName="relative"
+            showMenuButton={true}
+            onBackToMenu={goBack}
+          />
 
           {/* Share Button - Top Right */}
           <div>
@@ -253,42 +253,33 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
               <p className="text-gray-300 text-sm">Analyzing your League journey...</p>
             </div>
           ) : sceneData && narration ? (
-            <div className="w-full h-full max-w-7xl mx-auto flex items-center">
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 w-full h-full max-h-[calc(100vh-200px)]">
-                {/* Visualization Panel */}
-                <div className="bg-black/40 backdrop-blur-lg rounded-2xl p-6 border border-white/20 flex flex-col overflow-hidden">
-                  <h2 className="text-2xl font-bold text-white mb-4 flex-shrink-0">
-                    {sceneData?.insight?.summary}
-                  </h2>
-                  
-                  <div className="flex-1 mb-4 overflow-hidden">
-                    <Viz 
-                      kind={sceneData?.vizKind || 'highlight'} 
-                      data={sceneData?.insight?.vizData} 
-                    />
-                  </div>
-                  
-                  {/* Metrics Grid */}
-                  <div className="grid grid-cols-2 gap-3 flex-shrink-0">
-                    {(sceneData?.insight?.metrics || []).slice(0, 4).map((metric: { label: string; value: string | number; unit?: string; context?: string }, index: number) => (
-                      <div key={index} className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <div className="text-xs text-gray-300">{metric.label}</div>
-                        <div className="text-lg font-bold text-white">
-                          {metric.value}{metric.unit || ''}
-                        </div>
-                        {metric.context && (
-                          <div className="text-xs text-gray-400 truncate">{metric.context}</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+            <div className="w-full h-full max-w-5xl mx-auto flex items-center justify-center">
+              {/* Centered Visualization Panel */}
+              <div className="bg-black/40 backdrop-blur-lg rounded-2xl p-6 border border-white/20 flex flex-col overflow-hidden max-w-3xl w-full max-h-[calc(100vh-200px)]">
+                <h2 className="text-2xl font-bold text-white mb-4 flex-shrink-0">
+                  {sceneData?.insight?.summary}
+                </h2>
+                
+                <div className="flex-1 mb-4 overflow-hidden">
+                  <Viz 
+                    kind={sceneData?.vizKind || 'highlight'} 
+                    data={sceneData?.insight?.vizData} 
+                  />
                 </div>
-
-                {/* Narration Panel */}
-                <div className="flex flex-col overflow-hidden">
-                  <div className="h-full overflow-hidden">
-                    <AgentNarrator narration={narration} agentId={agentId} />
-                  </div>
+                
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-2 gap-3 flex-shrink-0">
+                  {(sceneData?.insight?.metrics || []).slice(0, 4).map((metric: { label: string; value: string | number; unit?: string; context?: string }, index: number) => (
+                    <div key={index} className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                      <div className="text-xs text-gray-300">{metric.label}</div>
+                      <div className="text-lg font-bold text-white">
+                        {metric.value}{metric.unit || ''}
+                      </div>
+                      {metric.context && (
+                        <div className="text-xs text-gray-400 truncate">{metric.context}</div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -299,39 +290,66 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
         <div className="h-20 flex-shrink-0"></div>
       </div>
 
-      {/* Bottom Navigation - Fixed Position */}
-      <div className="absolute bottom-0 left-0 right-0 z-30 p-4">
-        <div className="flex justify-between items-center max-w-4xl mx-auto">
-          {/* Previous Button */}
-          <button
-            onClick={goToPrevious}
-            disabled={currentSceneIndex === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-black/40 hover:bg-black/60 disabled:bg-black/20 disabled:text-gray-500 backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Previous
-          </button>
+      {/* Vel'Koz Character with Dialogue - Bottom Right */}
+      <div className="absolute bottom-0 right-0 z-25 pointer-events-none">
+        <div className="relative" style={{ marginBottom: '-10vh', marginRight: '-5vw' }}>
+          <img 
+            src="/images/ai-agents/velkoz.png"
+            alt="Vel'Koz"
+            className="h-[50vh] w-auto object-contain drop-shadow-2xl pointer-events-none"
+          />
+          
+          {/* Dialogue Bubble */}
+          {narration && (
+            <div className="absolute top-8 right-[45vh] pointer-events-auto">
+              <DialogueBubble 
+                text={[
+                  narration.opening,
+                  narration.analysis,
+                  narration.actionable
+                ]}
+                typingSpeed={35}
+                className="max-w-md"
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
-          {/* Scene Counter */}
-          <div className="bg-black/40 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
-            <div className="text-center">
-              <div className="text-lg font-bold text-white">
-                {currentSceneIndex + 1} / {SCENE_ORDER.length}
-              </div>
-              <div className="text-xs text-gray-300 max-w-32 truncate">
-                {SCENE_ORDER[currentSceneIndex]?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-              </div>
+      {/* Previous Button - Left Center */}
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 z-30">
+        <button
+          onClick={goToPrevious}
+          disabled={currentSceneIndex === 0}
+          className="flex items-center gap-2 px-4 py-2 bg-black/40 hover:bg-black/60 disabled:bg-black/20 disabled:text-gray-500 backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          <span className="hidden sm:inline">Previous</span>
+        </button>
+      </div>
+
+      {/* Next/Complete Button - Right Center */}
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30">
+        <button
+          onClick={goToNext}
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-700/80 hover:to-pink-700/80 backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
+        >
+          <span className="hidden sm:inline">{currentSceneIndex === SCENE_ORDER.length - 1 ? 'Back to Menu' : 'Next'}</span>
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Scene Counter - Bottom Center */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
+        <div className="bg-black/40 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
+          <div className="text-center">
+            <div className="text-base sm:text-lg font-bold text-white">
+              {currentSceneIndex + 1} / {SCENE_ORDER.length}
+            </div>
+            <div className="text-xs text-gray-300 max-w-32 truncate hidden sm:block">
+              {SCENE_ORDER[currentSceneIndex]?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
             </div>
           </div>
-
-          {/* Next/Complete Button */}
-          <button
-            onClick={goToNext}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-700/80 hover:to-pink-700/80 backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
-          >
-            {currentSceneIndex === SCENE_ORDER.length - 1 ? 'Back to Menu' : 'Next'}
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
