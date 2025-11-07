@@ -26,7 +26,10 @@ export async function computeDamageShare(ctx: { puuid: string; matchIds: string[
       date: '',
       kills: 0,
       deaths: 0,
-      assists: 0
+      assists: 0,
+      items: [] as number[],
+      summoner1Id: 0,
+      summoner2Id: 0
     };
     
     // Process matches in batches
@@ -74,7 +77,10 @@ export async function computeDamageShare(ctx: { puuid: string; matchIds: string[
             date: matchDate,
             kills: playerParticipant.kills,
             deaths: playerParticipant.deaths,
-            assists: playerParticipant.assists
+            assists: playerParticipant.assists,
+            items: playerParticipant.items || [],
+            summoner1Id: playerParticipant.summoner1Id || 0,
+            summoner2Id: playerParticipant.summoner2Id || 0
           };
         }
       }
@@ -155,7 +161,10 @@ export async function computeDamageShare(ctx: { puuid: string; matchIds: string[
             championName: maxDamageMatch.championName,
             championId: maxDamageMatch.championId,
             date: maxDamageMatch.date,
-            kda: `${maxDamageMatch.kills}/${maxDamageMatch.deaths}/${maxDamageMatch.assists}`
+            kda: `${maxDamageMatch.kills}/${maxDamageMatch.deaths}/${maxDamageMatch.assists}`,
+            items: maxDamageMatch.items,
+            summoner1Id: maxDamageMatch.summoner1Id,
+            summoner2Id: maxDamageMatch.summoner2Id
           },
           // Stats for display
           stats: {
@@ -205,6 +214,17 @@ export async function computeDamageShare(ctx: { puuid: string; matchIds: string[
           avgDamageDealt: 0,
           avgDamageToChampions: 0,
           championDamagePercent: 0,
+          maxDamageMatch: {
+            damage: 0,
+            matchId: '',
+            championName: 'Unknown',
+            championId: 0,
+            date: '',
+            kda: '0/0/0',
+            items: [],
+            summoner1Id: 0,
+            summoner2Id: 0
+          },
           stats: {
             totalDamage: 0,
             totalDamageToChampions: 0,

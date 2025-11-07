@@ -647,6 +647,88 @@ export default function RecapFlow({
                                       ?.kda || "0/0/0"}
                                   </span>
                                 </div>
+                                
+                                {/* Items Build */}
+                                <div className="bg-black/30 rounded-lg px-6 py-4">
+                                  <p className="text-sm text-gray-300 mb-3">Items</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {(sceneData?.insight?.vizData?.maxDamageMatch?.items || [])
+                                      .filter((item: number) => item !== 0)
+                                      .map((itemId: number, idx: number) => (
+                                        <img
+                                          key={idx}
+                                          src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/item/${itemId}.png`}
+                                          alt={`Item ${itemId}`}
+                                          className="w-10 h-10 rounded border border-gray-600"
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                          }}
+                                        />
+                                      ))}
+                                  </div>
+                                </div>
+
+                                {/* Summoner Spells */}
+                                <div className="bg-black/30 rounded-lg px-6 py-4">
+                                  <p className="text-sm text-gray-300 mb-3">Summoner Spells</p>
+                                  <div className="flex gap-2">
+                                    {sceneData?.insight?.vizData?.maxDamageMatch?.summoner1Id && (
+                                      <img
+                                        src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 21 ? 'Barrier' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 1 ? 'Boost' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 14 ? 'Dot' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 3 ? 'Exhaust' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 4 ? 'Flash' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 6 ? 'Haste' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 7 ? 'Heal' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 13 ? 'Mana' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 30 ? 'PoroRecall' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 31 ? 'PoroThrow' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 11 ? 'Smite' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 39 ? 'SnowURFSnowball_Mark' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 32 ? 'Snowball' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner1Id === 12 ? 'Teleport' :
+                                          'Flash'
+                                        }.png`}
+                                        alt="Summoner 1"
+                                        className="w-10 h-10 rounded border border-gray-600"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                    )}
+                                    {sceneData?.insight?.vizData?.maxDamageMatch?.summoner2Id && (
+                                      <img
+                                        src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 21 ? 'Barrier' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 1 ? 'Boost' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 14 ? 'Dot' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 3 ? 'Exhaust' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 4 ? 'Flash' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 6 ? 'Haste' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 7 ? 'Heal' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 13 ? 'Mana' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 30 ? 'PoroRecall' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 31 ? 'PoroThrow' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 11 ? 'Smite' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 39 ? 'SnowURFSnowball_Mark' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 32 ? 'Snowball' :
+                                          sceneData.insight.vizData.maxDamageMatch.summoner2Id === 12 ? 'Teleport' :
+                                          'Flash'
+                                        }.png`}
+                                        alt="Summoner 2"
+                                        className="w-10 h-10 rounded border border-gray-600"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -731,7 +813,7 @@ export default function RecapFlow({
 
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
                                   <span className="text-sm text-gray-300">
-                                    Highest Damage Taken
+                                    Total Damage Taken
                                   </span>
                                   <span className="text-2xl font-bold text-blue-400">
                                     {Math.round(
@@ -767,6 +849,88 @@ export default function RecapFlow({
                                       ?.maxDamageTakenMatch?.result ||
                                       "Unknown"}
                                   </span>
+                                </div>
+                                
+                                {/* Items Build */}
+                                <div className="bg-black/30 rounded-lg px-6 py-4">
+                                  <p className="text-sm text-gray-300 mb-3">Items</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {(sceneData?.insight?.vizData?.maxDamageTakenMatch?.items || [])
+                                      .filter((item: number) => item !== 0)
+                                      .map((itemId: number, idx: number) => (
+                                        <img
+                                          key={idx}
+                                          src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/item/${itemId}.png`}
+                                          alt={`Item ${itemId}`}
+                                          className="w-10 h-10 rounded border border-gray-600"
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                          }}
+                                        />
+                                      ))}
+                                  </div>
+                                </div>
+
+                                {/* Summoner Spells */}
+                                <div className="bg-black/30 rounded-lg px-6 py-4">
+                                  <p className="text-sm text-gray-300 mb-3">Summoner Spells</p>
+                                  <div className="flex gap-2">
+                                    {sceneData?.insight?.vizData?.maxDamageTakenMatch?.summoner1Id && (
+                                      <img
+                                        src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 21 ? 'Barrier' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 1 ? 'Boost' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 14 ? 'Dot' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 3 ? 'Exhaust' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 4 ? 'Flash' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 6 ? 'Haste' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 7 ? 'Heal' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 13 ? 'Mana' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 30 ? 'PoroRecall' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 31 ? 'PoroThrow' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 11 ? 'Smite' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 39 ? 'SnowURFSnowball_Mark' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 32 ? 'Snowball' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner1Id === 12 ? 'Teleport' :
+                                          'Flash'
+                                        }.png`}
+                                        alt="Summoner 1"
+                                        className="w-10 h-10 rounded border border-gray-600"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                    )}
+                                    {sceneData?.insight?.vizData?.maxDamageTakenMatch?.summoner2Id && (
+                                      <img
+                                        src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 21 ? 'Barrier' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 1 ? 'Boost' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 14 ? 'Dot' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 3 ? 'Exhaust' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 4 ? 'Flash' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 6 ? 'Haste' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 7 ? 'Heal' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 13 ? 'Mana' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 30 ? 'PoroRecall' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 31 ? 'PoroThrow' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 11 ? 'Smite' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 39 ? 'SnowURFSnowball_Mark' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 32 ? 'Snowball' :
+                                          sceneData.insight.vizData.maxDamageTakenMatch.summoner2Id === 12 ? 'Teleport' :
+                                          'Flash'
+                                        }.png`}
+                                        alt="Summoner 2"
+                                        className="w-10 h-10 rounded border border-gray-600"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -889,6 +1053,87 @@ export default function RecapFlow({
                                   </span>
                                 </div>
 
+                                {/* Items Build */}
+                                <div className="bg-black/30 rounded-lg px-6 py-4">
+                                  <p className="text-sm text-gray-300 mb-3">Items</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {(sceneData?.insight?.vizData?.maxHealMatch?.items || [])
+                                      .filter((item: number) => item !== 0)
+                                      .map((itemId: number, idx: number) => (
+                                        <img
+                                          key={idx}
+                                          src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/item/${itemId}.png`}
+                                          alt={`Item ${itemId}`}
+                                          className="w-10 h-10 rounded border border-gray-600"
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                          }}
+                                        />
+                                      ))}
+                                  </div>
+                                </div>
+
+                                {/* Summoner Spells */}
+                                <div className="bg-black/30 rounded-lg px-6 py-4">
+                                  <p className="text-sm text-gray-300 mb-3">Summoner Spells</p>
+                                  <div className="flex gap-2">
+                                    {sceneData?.insight?.vizData?.maxHealMatch?.summoner1Id && (
+                                      <img
+                                        src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 21 ? 'Barrier' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 1 ? 'Boost' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 14 ? 'Dot' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 3 ? 'Exhaust' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 4 ? 'Flash' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 6 ? 'Haste' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 7 ? 'Heal' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 13 ? 'Mana' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 30 ? 'PoroRecall' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 31 ? 'PoroThrow' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 11 ? 'Smite' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 39 ? 'SnowURFSnowball_Mark' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 32 ? 'Snowball' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner1Id === 12 ? 'Teleport' :
+                                          'Flash'
+                                        }.png`}
+                                        alt="Summoner 1"
+                                        className="w-10 h-10 rounded border border-gray-600"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                    )}
+                                    {sceneData?.insight?.vizData?.maxHealMatch?.summoner2Id && (
+                                      <img
+                                        src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 21 ? 'Barrier' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 1 ? 'Boost' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 14 ? 'Dot' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 3 ? 'Exhaust' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 4 ? 'Flash' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 6 ? 'Haste' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 7 ? 'Heal' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 13 ? 'Mana' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 30 ? 'PoroRecall' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 31 ? 'PoroThrow' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 11 ? 'Smite' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 39 ? 'SnowURFSnowball_Mark' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 32 ? 'Snowball' :
+                                          sceneData.insight.vizData.maxHealMatch.summoner2Id === 12 ? 'Teleport' :
+                                          'Flash'
+                                        }.png`}
+                                        alt="Summoner 2"
+                                        className="w-10 h-10 rounded border border-gray-600"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>

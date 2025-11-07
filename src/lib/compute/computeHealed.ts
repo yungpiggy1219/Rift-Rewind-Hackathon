@@ -28,7 +28,10 @@ export async function computeHealed(ctx: { puuid: string; matchIds: string[] }):
       deaths: 0,
       assists: 0,
       win: false,
-      healsOnTeammates: 0
+      healsOnTeammates: 0,
+      items: [] as number[],
+      summoner1Id: 0,
+      summoner2Id: 0
     };
     
     // Process matches in batches
@@ -78,7 +81,10 @@ export async function computeHealed(ctx: { puuid: string; matchIds: string[] }):
             deaths: playerParticipant.deaths,
             assists: playerParticipant.assists,
             win: playerParticipant.win,
-            healsOnTeammates
+            healsOnTeammates,
+            items: playerParticipant.items || [],
+            summoner1Id: playerParticipant.summoner1Id || 0,
+            summoner2Id: playerParticipant.summoner2Id || 0
           };
         }
       }
@@ -176,7 +182,10 @@ export async function computeHealed(ctx: { puuid: string; matchIds: string[] }):
             date: maxHealMatch.date,
             kda: `${maxHealMatch.kills}/${maxHealMatch.deaths}/${maxHealMatch.assists}`,
             result: maxHealMatch.win ? 'Victory' : 'Defeat',
-            healsOnTeammates: maxHealMatch.healsOnTeammates
+            healsOnTeammates: maxHealMatch.healsOnTeammates,
+            items: maxHealMatch.items,
+            summoner1Id: maxHealMatch.summoner1Id,
+            summoner2Id: maxHealMatch.summoner2Id
           },
           // Stats for display
           stats: {
@@ -220,6 +229,19 @@ export async function computeHealed(ctx: { puuid: string; matchIds: string[] }):
         ],
         vizData: {
           type: "healing_statistics",
+          maxHealMatch: {
+            healing: 0,
+            matchId: '',
+            championName: 'Unknown',
+            championId: 0,
+            date: '',
+            kda: '0/0/0',
+            result: 'Unknown',
+            healsOnTeammates: 0,
+            items: [],
+            summoner1Id: 0,
+            summoner2Id: 0
+          },
           stats: {
             totalHealing: 0,
             avgHealing: 0,

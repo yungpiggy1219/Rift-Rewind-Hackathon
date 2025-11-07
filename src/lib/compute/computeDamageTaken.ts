@@ -26,7 +26,10 @@ export async function computeDamageTaken(ctx: { puuid: string; matchIds: string[
       kills: 0,
       deaths: 0,
       assists: 0,
-      win: false
+      win: false,
+      items: [] as number[],
+      summoner1Id: 0,
+      summoner2Id: 0
     };
     
     // Process matches in batches
@@ -73,7 +76,10 @@ export async function computeDamageTaken(ctx: { puuid: string; matchIds: string[
             kills: playerParticipant.kills,
             deaths: playerParticipant.deaths,
             assists: playerParticipant.assists,
-            win: playerParticipant.win
+            win: playerParticipant.win,
+            items: playerParticipant.items || [],
+            summoner1Id: playerParticipant.summoner1Id || 0,
+            summoner2Id: playerParticipant.summoner2Id || 0
           };
         }
       }
@@ -153,7 +159,10 @@ export async function computeDamageTaken(ctx: { puuid: string; matchIds: string[
             championId: maxDamageTakenMatch.championId,
             date: maxDamageTakenMatch.date,
             kda: `${maxDamageTakenMatch.kills}/${maxDamageTakenMatch.deaths}/${maxDamageTakenMatch.assists}`,
-            result: maxDamageTakenMatch.win ? 'Victory' : 'Defeat'
+            result: maxDamageTakenMatch.win ? 'Victory' : 'Defeat',
+            items: maxDamageTakenMatch.items,
+            summoner1Id: maxDamageTakenMatch.summoner1Id,
+            summoner2Id: maxDamageTakenMatch.summoner2Id
           },
           // Stats for display
           stats: {
@@ -198,6 +207,18 @@ export async function computeDamageTaken(ctx: { puuid: string; matchIds: string[
         ],
         vizData: {
           type: "damage_taken_statistics",
+          maxDamageTakenMatch: {
+            damageTaken: 0,
+            matchId: '',
+            championName: 'Unknown',
+            championId: 0,
+            date: '',
+            kda: '0/0/0',
+            result: 'Unknown',
+            items: [],
+            summoner1Id: 0,
+            summoner2Id: 0
+          },
           stats: {
             totalDamageTaken: 0,
             avgDamageTaken: 0,
