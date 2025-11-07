@@ -134,6 +134,10 @@ export default function RecapFlow({
   const [contentComplete, setContentComplete] = useState(false); // Track if main content is complete
   const [showHeatmap, setShowHeatmap] = useState(false); // Track if heatmap should show
   const [dialogueComplete, setDialogueComplete] = useState(false); // Track if Vel'Koz dialogue is complete
+  const [showQuestions, setShowQuestions] = useState(false); // Track if question buttons should show
+  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null); // Track selected question
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null); // Track AI answer
+  const [isLoadingAnswer, setIsLoadingAnswer] = useState(false); // Track loading state for answer
   const [particles] = useState(() =>
     Array.from({ length: 15 }, () => ({
       left: Math.random() * 100,
@@ -291,6 +295,9 @@ export default function RecapFlow({
       setContentComplete(false);
       setShowHeatmap(false);
       setDialogueComplete(false);
+      setShowQuestions(false);
+      setSelectedQuestion(null);
+      setAiAnswer(null);
     } else {
       // On last scene, "Back to Menu" button - play baron recall sound fully
       if (baronRecallSfxRef.current) {
@@ -328,6 +335,9 @@ export default function RecapFlow({
       setContentComplete(false);
       setShowHeatmap(false);
       setDialogueComplete(false);
+      setShowQuestions(false);
+      setSelectedQuestion(null);
+      setAiAnswer(null);
     }
   };
 
@@ -335,6 +345,53 @@ export default function RecapFlow({
     router.push(
       `/menu/${puuid}?name=${encodeURIComponent(playerName || "Summoner")}&tag=`
     );
+  };
+
+  // Handle question click - fetch AI answer
+  const handleQuestionClick = async (question: string) => {
+    setSelectedQuestion(question);
+    setIsLoadingAnswer(true);
+    setAiAnswer(null);
+
+    try {
+      console.log("[RecapFlow] Requesting answer for question:", question);
+      console.log("[RecapFlow] Scene data insight:", sceneData?.insight);
+      
+      const response = await fetch("/api/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agentId,
+          playerName: playerName || "Summoner",
+          sceneId: currentSceneId,
+          question,
+          insight: sceneData?.insight, // This is the SceneInsight object the API expects
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("[RecapFlow] API error:", errorData);
+        throw new Error(errorData.error || "Failed to get answer");
+      }
+
+      const data = await response.json();
+      console.log("[RecapFlow] Received answer:", data);
+      setAiAnswer(data.answer || "Unable to provide answer at this time.");
+    } catch (error) {
+      console.error("[RecapFlow] Error fetching answer:", error);
+      setAiAnswer(
+        "My computational resources are temporarily unavailable. Try again."
+      );
+    } finally {
+      setIsLoadingAnswer(false);
+    }
+  };
+
+  // Handle back to questions
+  const handleBackToQuestions = () => {
+    setSelectedQuestion(null);
+    setAiAnswer(null);
   };
 
   // Calculate tilt values based on mouse position
@@ -660,30 +717,30 @@ export default function RecapFlow({
                               {/* Stats Column - Right */}
                               <div className="flex-1 flex flex-col gap-4">
                                 <div>
-                                  <h3 className="text-3xl font-bold text-white">
+                                  <h3 className="text-3xl font-bold text-white font-friz">
                                     {sceneData?.insight?.vizData?.maxDamageMatch
                                       ?.championName || "Unknown"}
                                   </h3>
-                                  <p className="text-sm text-gray-400 mt-1">
+                                  <p className="text-sm text-gray-400 mt-1 font-friz">
                                     Highest Damage Dealt Game
                                   </p>
                                 </div>
 
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
-                                  <span className="text-sm text-gray-300">
+                                  <span className="text-sm text-gray-300 font-friz">
                                     KDA
                                   </span>
-                                  <span className="text-2xl font-bold text-cyan-400">
+                                  <span className="text-2xl font-bold text-cyan-400 font-friz">
                                     {sceneData?.insight?.vizData?.maxDamageMatch
                                       ?.kda || "0/0/0"}
                                   </span>
                                 </div>
 
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
-                                  <span className="text-sm text-gray-300">
+                                  <span className="text-sm text-gray-300 font-friz">
                                     Total Damage to Champions
                                   </span>
-                                  <span className="text-2xl font-bold text-yellow-400">
+                                  <span className="text-2xl font-bold text-yellow-400 font-friz">
                                     {Math.round(
                                       (sceneData?.insight?.vizData?.stats
                                         ?.highestDamage || 0) / 1000
@@ -694,7 +751,7 @@ export default function RecapFlow({
 
                                 {/* Items Build */}
                                 <div className="bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-300 mb-3">
+                                  <p className="text-sm text-gray-300 mb-3 font-friz">
                                     Items
                                   </p>
                                   <div className="flex flex-wrap gap-2">
@@ -2561,18 +2618,76 @@ export default function RecapFlow({
 
           {/* Dialogue Bubble - Show AI-generated narration after content complete */}
           {narration && contentComplete && (
-            <div className="absolute top-8 right-[45vh] pointer-events-auto">
-              <DialogueBubble
-                text={[
-                  narration.opening,
-                  narration.analysis,
-                  narration.actionable,
-                ]}
-                typingSpeed={35}
-                className="max-w-md"
-                onAdvance={playDialogueClickSound}
-                onComplete={() => setDialogueComplete(true)}
-              />
+            <div className="absolute top-8 right-[45vh] pointer-events-auto flex flex-col gap-4">
+              {/* Main Dialogue */}
+              {!selectedQuestion && (
+                <DialogueBubble
+                  text={
+                    currentSceneIndex === 0
+                      ? [narration.opening, narration.analysis, narration.actionable]
+                      : [narration.analysis, narration.actionable]
+                  }
+                  typingSpeed={35}
+                  className="max-w-md"
+                  onAdvance={playDialogueClickSound}
+                  onComplete={() => {
+                    setDialogueComplete(true);
+                    setShowQuestions(true);
+                  }}
+                />
+              )}
+
+              {/* Question Buttons - Show BELOW dialogue after it completes */}
+              {showQuestions && !selectedQuestion && dialogueComplete && narration?.followUpQuestions && (
+                <div className="bg-gradient-to-br from-purple-900/90 to-blue-900/90 backdrop-blur-xl rounded-2xl p-6 border-2 border-purple-500/50 shadow-2xl max-w-md">
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <span className="text-purple-400">💭</span> Ask Vel&apos;Koz
+                  </h3>
+                  <div className="space-y-3">
+                    {narration.followUpQuestions.slice(0, 3).map((fq, idx: number) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleQuestionClick(fq.question)}
+                        className="w-full text-left px-4 py-3 bg-black/30 hover:bg-black/50 text-white rounded-lg transition-all duration-200 border border-purple-400/30 hover:border-purple-400/60 text-sm"
+                      >
+                        {fq.question}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* AI Answer Display - Replaces question buttons */}
+              {selectedQuestion && (
+                <>
+                  {isLoadingAnswer ? (
+                    <div className="bg-gradient-to-br from-purple-900/90 to-blue-900/90 backdrop-blur-xl rounded-2xl p-6 border-2 border-purple-500/50 shadow-2xl max-w-md">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="w-5 h-5 animate-spin text-purple-400" />
+                        <p className="text-white">Analyzing data...</p>
+                      </div>
+                    </div>
+                  ) : aiAnswer ? (
+                    <>
+                      <DialogueBubble
+                        text={[aiAnswer]}
+                        typingSpeed={35}
+                        className="max-w-md"
+                        onAdvance={playDialogueClickSound}
+                        onComplete={() => {}}
+                      />
+                      {/* Back Button */}
+                      <button
+                        onClick={handleBackToQuestions}
+                        className="px-4 py-2 bg-black/60 hover:bg-black/80 text-white rounded-lg transition-all duration-200 border border-purple-400/30 hover:border-purple-400/60 text-sm flex items-center gap-2"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        Back to Questions
+                      </button>
+                    </>
+                  ) : null}
+                </>
+              )}
             </div>
           )}
         </div>

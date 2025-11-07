@@ -146,7 +146,7 @@ export default function LoginPage() {
               className="mx-auto mb-6 drop-shadow-2xl max-w-2xl w-full"
             />
             
-            <p className="text-2xl text-blue-200 mb-8 drop-shadow-lg">
+            <p className="text-2xl text-blue-200 mb-8 drop-shadow-lg font-friz">
               Your League of Legends year-end recap
             </p>
           </div>
@@ -163,7 +163,7 @@ export default function LoginPage() {
             {/* Make inputs horizontally aligned on sm+ screens, stacked on xs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
               <div>
-                <label className="block text-white text-sm font-semibold mb-2 text-left">
+                <label className="block text-white text-sm font-semibold mb-2 text-left font-friz">
                   Game Name
                 </label>
                 <input
@@ -177,7 +177,7 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-white text-sm font-semibold mb-2 text-left">
+                <label className="block text-white text-sm font-semibold mb-2 text-left font-friz">
                   Tag Line
                 </label>
                 <input
@@ -200,7 +200,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !gameName || !tagLine}
-              className="w-full px-8 py-4 bg-gradient-to-r from-purple-600/90 to-pink-600/90 hover:from-purple-700/90 hover:to-pink-700/90 disabled:from-gray-600/50 disabled:to-gray-700/50 text-white rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 shadow-2xl border border-white/20 backdrop-blur-sm transform hover:scale-105"
+              className="w-full px-8 py-4 bg-gradient-to-r from-purple-600/90 to-pink-600/90 hover:from-purple-700/90 hover:to-pink-700/90 disabled:from-gray-600/50 disabled:to-gray-700/50 text-white rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 shadow-2xl border border-white/20 backdrop-blur-sm transform hover:scale-105 font-friz"
             >
               {loading ? (
                 <>
@@ -217,7 +217,7 @@ export default function LoginPage() {
         </div>
 
           {/* Footer Info */}
-          <div className="text-white/70 text-sm space-y-2">
+          <div className="text-white/70 text-sm space-y-2 font-friz">
             <p className="drop-shadow-lg">Made for Rift Rewind Hackathon</p>
             <p className="drop-shadow-lg">By Yung-Chu Chuang</p>
           </div>

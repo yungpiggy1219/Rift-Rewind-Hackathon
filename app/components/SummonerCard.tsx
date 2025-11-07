@@ -87,14 +87,14 @@ export default function SummonerCard({
 
           {/* Summoner Info - Smaller, more compact text */}
           <div className="min-w-0 flex-1">
-            {/* Name - Smaller font sizes */}
-            <h1 className="text-xs sm:text-sm md:text-base font-bold text-white truncate leading-tight">
+            {/* Name - Smaller font sizes with Friz Quadrata */}
+            <h1 className="text-xs sm:text-sm md:text-base font-bold text-white truncate leading-tight font-friz">
               {displayName}
-              {displayTag && <span className="text-gray-300 text-[10px] sm:text-xs md:text-sm">#{displayTag}</span>}
+              {displayTag && <span className="text-gray-300 text-[10px] sm:text-xs md:text-sm font-friz">#{displayTag}</span>}
             </h1>
             
-            {/* Info - Very compact */}
-            <div className="text-gray-300 text-[10px] sm:text-xs md:text-sm leading-tight space-y-0.5">
+            {/* Info - Very compact with Friz Quadrata */}
+            <div className="text-gray-300 text-[10px] sm:text-xs md:text-sm leading-tight space-y-0.5 font-friz">
               <div className="truncate">Lv {displayLevel}</div>
               {rankedInfo && rankedInfo.length > 0 ? (
                 rankedInfo.slice(0, 1).map((rank, index) => (
@@ -139,7 +139,7 @@ export default function SummonerCard({
                         setIsDropdownOpen(false);
                         onBackToMenu?.();
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs sm:text-sm text-white hover:bg-white/10 transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs sm:text-sm text-white hover:bg-white/10 transition-colors font-friz"
                     >
                       <Home className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span>Back to Menu</span>

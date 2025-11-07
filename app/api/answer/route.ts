@@ -157,17 +157,22 @@ Respond in this EXACT JSON format (no markdown, just raw JSON):
     console.log(`[AWS Bedrock] Generating answer for ${agentId} on ${sceneId}`);
     
     const command = new InvokeModelCommand({
-      modelId: 'anthropic.claude-3-haiku-20240307-v1:0',
+      modelId: 'amazon.nova-lite-v1:0', // AWS's own lightweight model
       body: JSON.stringify({
-        anthropic_version: 'bedrock-2023-05-31',
-        max_tokens: 600,
-        temperature: 0.7,
         messages: [
           {
             role: 'user',
-            content: prompt
+            content: [
+              {
+                text: prompt
+              }
+            ]
           }
-        ]
+        ],
+        inferenceConfig: {
+          max_new_tokens: 600,
+          temperature: 0.7
+        }
       }),
       contentType: 'application/json',
       accept: 'application/json',
@@ -175,7 +180,7 @@ Respond in this EXACT JSON format (no markdown, just raw JSON):
 
     const response = await client.send(command);
     const responseBody = JSON.parse(new TextDecoder().decode(response.body));
-    const aiResponse = responseBody.content[0].text;
+    const aiResponse = responseBody.output.message.content[0].text;
     
     console.log(`[AWS Bedrock] Raw answer response:`, aiResponse);
     

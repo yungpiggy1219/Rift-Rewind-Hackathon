@@ -1,8 +1,26 @@
 @import "tailwindcss";
 
+/* Friz Quadrata Font - Classic League of Legends Font */
+@font-face {
+  font-family: 'Friz Quadrata';
+  src: url('/friz-quadrata-regular-os-5870333951e7c.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Friz Quadrata';
+  src: url('/friz-quadrata-bold-italic-os-5870341205e0f.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-friz: 'Friz Quadrata', serif;
 }
 
 @theme inline {
@@ -10,6 +28,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-friz);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -136,4 +155,13 @@ html, body, #__next {
 
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Friz Quadrata Font Utilities */
+.font-friz {
+  font-family: 'Friz Quadrata', serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Friz Quadrata', serif;
 }
