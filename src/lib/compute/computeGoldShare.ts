@@ -96,7 +96,7 @@ export async function computeGoldShare(ctx: { puuid: string; matchIds: string[] 
     const overallAvgGoldPerMinute = gpmCount > 0 ? Math.round(totalGPM / gpmCount) : 0;
     
     // Prepare monthly data for chart
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const chartData = monthNames.map((name, index) => {
       const monthNum = index + 1;
       const monthData = monthlyGoldPerMinute[monthNum];

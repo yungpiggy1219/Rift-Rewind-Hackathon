@@ -19,7 +19,7 @@ export async function computeYearInMotion(ctx: { puuid: string; matchIds: string
     }
     
     // Step 2: Fetch match details from cache for analysis
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const monthlyHours: Record<string, number> = {};
     let totalMatches = 0;
     let totalSeconds = 0;

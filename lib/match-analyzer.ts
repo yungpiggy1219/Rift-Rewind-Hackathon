@@ -114,8 +114,8 @@ export class MatchAnalyzer {
         gamesPlayed: stats.games,
       }))
       .sort((a, b) => {
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'];
         return months.indexOf(a.month) - months.indexOf(b.month);
       });
   }

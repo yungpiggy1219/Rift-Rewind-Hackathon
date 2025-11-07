@@ -230,19 +230,23 @@ export default function Viz({ kind, data }: VizProps) {
     case 'heatmap':
       return (
         <div className="grid grid-cols-4 gap-2 p-4">
-          {data.months?.length > 0 ? data.months.map((month: any) => (
-            <div 
-              key={month.month}
-              className="bg-gray-700 rounded-lg p-3 text-center"
-              style={{
-                backgroundColor: `rgba(59, 130, 246, ${month.intensity || 0.1})`
-              }}
-            >
-              <div className="text-xs text-gray-300">{month.month}</div>
-              <div className="text-lg font-bold text-white">{month.matches}</div>
-              <div className="text-xs text-gray-400">{month.hours}h</div>
-            </div>
-          )) : (
+          {data.months?.length > 0 ? data.months.map((month: any) => {
+            const hours = month.hours ?? 0; // Use 0 if null/undefined
+            const matches = month.matches ?? 0;
+            return (
+              <div 
+                key={month.month}
+                className="bg-gray-700 rounded-lg p-3 text-center"
+                style={{
+                  backgroundColor: `rgba(59, 130, 246, ${month.intensity || 0.1})`
+                }}
+              >
+                <div className="text-xs text-gray-300">{month.month}</div>
+                <div className="text-lg font-bold text-white">{matches}</div>
+                <div className="text-xs text-gray-400">{hours} hours</div>
+              </div>
+            );
+          }) : (
             <div className="col-span-4 text-center text-gray-400 py-8">
               <div className="text-lg font-semibold mb-2">No Data Available</div>
               <div className="text-sm">Activity data requires match history access</div>

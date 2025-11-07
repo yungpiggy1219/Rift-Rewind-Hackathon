@@ -10,6 +10,7 @@ import DialogueBubble from '../../app/components/DialogueBubble';
 import SummonerCard from '../../app/components/SummonerCard';
 import Viz from './Viz';
 import ShareCardButton from './ShareCardButton';
+import ProgressiveText from './ProgressiveText';
 
 interface RecapFlowProps {
   puuid: string;
@@ -25,6 +26,9 @@ const fetcher = async (url: string, options?: RequestInit) => {
 export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [contentComplete, setContentComplete] = useState(false); // Track if main content is complete
+  const [showHeatmap, setShowHeatmap] = useState(false); // Track if heatmap should show
+  const [dialogueComplete, setDialogueComplete] = useState(false); // Track if Vel'Koz dialogue is complete
   const [particles] = useState(() => 
     Array.from({ length: 15 }, () => ({
       left: Math.random() * 100,
@@ -123,6 +127,10 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
   const goToNext = () => {
     if (currentSceneIndex < SCENE_ORDER.length - 1) {
       setCurrentSceneIndex(currentSceneIndex + 1);
+      // Reset state for next scene
+      setContentComplete(false);
+      setShowHeatmap(false);
+      setDialogueComplete(false);
     } else {
       // On last scene, "Complete" button goes back to menu
       goBack();
@@ -132,6 +140,10 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
   const goToPrevious = () => {
     if (currentSceneIndex > 0) {
       setCurrentSceneIndex(currentSceneIndex - 1);
+      // Reset state for previous scene
+      setContentComplete(false);
+      setShowHeatmap(false);
+      setDialogueComplete(false);
     }
   };
 
@@ -256,31 +268,73 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
             <div className="w-full h-full max-w-5xl mx-auto flex items-center justify-center">
               {/* Centered Visualization Panel */}
               <div className="bg-black/40 backdrop-blur-lg rounded-2xl p-6 border border-white/20 flex flex-col overflow-hidden max-w-3xl w-full max-h-[calc(100vh-200px)]">
-                <h2 className="text-2xl font-bold text-white mb-4 flex-shrink-0">
-                  {sceneData?.insight?.summary}
-                </h2>
                 
-                <div className="flex-1 mb-4 overflow-hidden">
-                  <Viz 
-                    kind={sceneData?.vizKind || 'highlight'} 
-                    data={sceneData?.insight?.vizData} 
-                  />
-                </div>
-                
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-2 gap-3 flex-shrink-0">
-                  {(sceneData?.insight?.metrics || []).slice(0, 4).map((metric: { label: string; value: string | number; unit?: string; context?: string }, index: number) => (
-                    <div key={index} className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                      <div className="text-xs text-gray-300">{metric.label}</div>
-                      <div className="text-lg font-bold text-white">
-                        {metric.value}{metric.unit || ''}
-                      </div>
-                      {metric.context && (
-                        <div className="text-xs text-gray-400 truncate">{metric.context}</div>
-                      )}
+                {/* Year in Motion - Special Progressive Content */}
+                {currentSceneId === 'year_in_motion' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${sceneData?.insight?.vizData?.totalMatches || 0} matches.`,
+                          `${sceneData?.insight?.vizData?.totalHours || 0} hours of data collected.`,
+                          `${sceneData?.insight?.vizData?.peakMonth || 'N/A'} — your peak of activity — demonstrated unrelenting commitment.`,
+                          `Fascinating levels of consistency... for a human.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
                     </div>
-                  ))}
-                </div>
+                    
+                    {/* Heatmap - Shows after text completes */}
+                    {showHeatmap && (
+                      <div 
+                        className="flex-1 overflow-auto"
+                        style={{
+                          animation: 'slideInFromBottom 0.6s ease-out forwards',
+                          opacity: 0
+                        }}
+                      >
+                        <Viz 
+                          kind="heatmap"
+                          data={sceneData?.insight?.vizData}
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {/* Other Scenes - Default Layout */}
+                    <h2 className="text-2xl font-bold text-white mb-4 flex-shrink-0">
+                      {sceneData?.insight?.summary}
+                    </h2>
+                    
+                    <div className="flex-1 mb-4 overflow-hidden">
+                      <Viz 
+                        kind={sceneData?.vizKind || 'highlight'} 
+                        data={sceneData?.insight?.vizData} 
+                      />
+                    </div>
+                    
+                    {/* Metrics Grid */}
+                    <div className="grid grid-cols-2 gap-3 flex-shrink-0">
+                      {(sceneData?.insight?.metrics || []).slice(0, 4).map((metric: { label: string; value: string | number; unit?: string; context?: string }, index: number) => (
+                        <div key={index} className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                          <div className="text-xs text-gray-300">{metric.label}</div>
+                          <div className="text-lg font-bold text-white">
+                            {metric.value}{metric.unit || ''}
+                          </div>
+                          {metric.context && (
+                            <div className="text-xs text-gray-400 truncate">{metric.context}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           ) : null}
@@ -299,17 +353,27 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
             className="h-[50vh] w-auto object-contain drop-shadow-2xl pointer-events-none"
           />
           
-          {/* Dialogue Bubble */}
-          {narration && (
+          {/* Dialogue Bubble - For year_in_motion, only show after content complete */}
+          {narration && (currentSceneId !== 'year_in_motion' || contentComplete) && (
             <div className="absolute top-8 right-[45vh] pointer-events-auto">
               <DialogueBubble 
-                text={[
-                  narration.opening,
-                  narration.analysis,
-                  narration.actionable
-                ]}
+                text={
+                  currentSceneId === 'year_in_motion' 
+                    ? [
+                        // Mock Vel'Koz analysis for Year in Motion
+                        "Intriguing patterns detected in your temporal distribution.",
+                        "Your commitment to mastery is... noted.",
+                        "Continue this trajectory, and perhaps you will transcend mortal limitations."
+                      ]
+                    : [
+                        narration.opening,
+                        narration.analysis,
+                        narration.actionable
+                      ]
+                }
                 typingSpeed={35}
                 className="max-w-md"
+                onComplete={() => setDialogueComplete(true)}
               />
             </div>
           )}
@@ -332,7 +396,8 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
       <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30">
         <button
           onClick={goToNext}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-700/80 hover:to-pink-700/80 backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
+          disabled={!dialogueComplete}
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-700/80 hover:to-pink-700/80 disabled:from-gray-600/80 disabled:to-gray-700/80 disabled:cursor-not-allowed backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
         >
           <span className="hidden sm:inline">{currentSceneIndex === SCENE_ORDER.length - 1 ? 'Back to Menu' : 'Next'}</span>
           <ChevronRight className="w-4 h-4" />
