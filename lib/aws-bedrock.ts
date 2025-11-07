@@ -27,16 +27,22 @@ export async function generateInsights(matchData: any[]): Promise<string> {
 
   try {
     const command = new InvokeModelCommand({
-      modelId: 'anthropic.claude-3-haiku-20240307-v1:0', // Cost-effective model
+      modelId: 'amazon.nova-lite-v1:0', // AWS's own lightweight model
       body: JSON.stringify({
-        anthropic_version: 'bedrock-2023-05-31',
-        max_tokens: 1000,
         messages: [
           {
             role: 'user',
-            content: prompt
+            content: [
+              {
+                text: prompt
+              }
+            ]
           }
-        ]
+        ],
+        inferenceConfig: {
+          max_new_tokens: 1000,
+          temperature: 0.7
+        }
       }),
       contentType: 'application/json',
       accept: 'application/json',
@@ -45,7 +51,7 @@ export async function generateInsights(matchData: any[]): Promise<string> {
     const response = await client.send(command);
     const responseBody = JSON.parse(new TextDecoder().decode(response.body));
     
-    return responseBody.content[0].text;
+    return responseBody.output.message.content[0].text;
   } catch (error) {
     console.error('Error generating insights:', error);
     return 'Unable to generate insights at this time. Please try again later.';
@@ -70,16 +76,22 @@ export async function generateYearEndSummary(playerData: any): Promise<string> {
 
   try {
     const command = new InvokeModelCommand({
-      modelId: 'anthropic.claude-3-haiku-20240307-v1:0',
+      modelId: 'amazon.nova-lite-v1:0',
       body: JSON.stringify({
-        anthropic_version: 'bedrock-2023-05-31',
-        max_tokens: 1500,
         messages: [
           {
             role: 'user',
-            content: prompt
+            content: [
+              {
+                text: prompt
+              }
+            ]
           }
-        ]
+        ],
+        inferenceConfig: {
+          max_new_tokens: 1500,
+          temperature: 0.7
+        }
       }),
       contentType: 'application/json',
       accept: 'application/json',
@@ -88,7 +100,7 @@ export async function generateYearEndSummary(playerData: any): Promise<string> {
     const response = await client.send(command);
     const responseBody = JSON.parse(new TextDecoder().decode(response.body));
     
-    return responseBody.content[0].text;
+    return responseBody.output.message.content[0].text;
   } catch (error) {
     console.error('Error generating year-end summary:', error);
     return 'Unable to generate summary at this time. Please try again later.';
@@ -111,7 +123,7 @@ export async function generateAgentNarration(
     throw new Error(`Unknown agent: ${agentId}`);
   }
 
-  // Build context-rich prompt for the agent
+  // Build context-rich prompt for the agent with enhanced personality
   const prompt = `You are ${agent.name}, ${agent.title}. 
 
 CHARACTER TRAITS:
@@ -119,6 +131,16 @@ CHARACTER TRAITS:
 - Tone: ${agent.tone}
 - Catchphrases: ${agent.catchphrases.join(', ')}
 - Voice Style: ${agent.voiceStyle}
+
+${agentId === 'velkoz' ? `
+SPECIAL NOTE FOR VEL'KOZ:
+- You are a void entity obsessed with acquiring knowledge through observation and disintegration
+- You view humans as "specimens" and their data as "fascinating research material"
+- Use clinical, scientific language: "specimen," "data reveals," "analysis indicates," "fascinating," "intriguing patterns"
+- Be slightly condescending but intellectually curious
+- Reference your research, experiments, and accumulated knowledge
+- Use phrases like "Through rigorous examination," "My ocular sensors detect," "Knowledge through disintegration"
+` : ''}
 
 TASK:
 You are narrating a League of Legends year-end recap for player "${playerName}".
@@ -134,39 +156,54 @@ ${insight.metrics.map(m => `- ${m.label}: ${m.value}${m.unit || ''} ${m.context 
 
 INSTRUCTIONS:
 1. Stay completely in character as ${agent.name}
-2. Use ${agent.name}'s unique speaking style and catchphrases
+2. Use ${agent.name}'s unique speaking style and catchphrases naturally throughout
 3. Create an engaging 3-part narration:
    - Opening: A brief character-appropriate greeting (2-3 sentences)
-   - Analysis: Discuss the statistics in ${agent.name}'s voice (4-5 sentences)
+   - Analysis: Discuss the statistics in ${agent.name}'s voice (4-5 sentences, reference specific numbers)
    - Actionable: Give advice in character (2-3 sentences)
 4. Be encouraging but honest about performance
-5. Reference the specific numbers provided
+5. Reference the specific numbers and metrics provided
 6. Make it entertaining and memorable
+7. Generate 1-3 follow-up questions that the player might want to ask about this scene
+   - Questions should be relevant to the scene and statistics
+   - Keep questions in a curious, exploratory tone (not in the agent's voice)
+   - Example questions: "How do I improve my KDA?", "Which champions should I focus on?", "What's my rank trajectory?"
 
-Respond in this EXACT JSON format:
+Respond in this EXACT JSON format (no markdown, just raw JSON):
 {
   "title": "A catchy title for this scene in character",
   "opening": "Your opening lines in character",
   "analysis": "Your analysis of the stats in character",
   "actionable": "Your advice in character",
-  "tags": ["relevant", "tags"]
+  "tags": ["relevant", "tags"],
+  "followUpQuestions": [
+    {
+      "question": "A question the player might ask",
+      "context": "Brief description of what this explores"
+    }
+  ]
 }`;
 
   try {
-    console.log(`[AWS Bedrock] Generating narration for ${agentId} on ${sceneId}`);
+    console.log(`[AWS Bedrock] Generating narration for ${agentId} on ${sceneId} using Amazon Nova Lite`);
     
     const command = new InvokeModelCommand({
-      modelId: 'anthropic.claude-3-haiku-20240307-v1:0', // Cost-effective model
+      modelId: 'amazon.nova-lite-v1:0', // AWS's own lightweight model
       body: JSON.stringify({
-        anthropic_version: 'bedrock-2023-05-31',
-        max_tokens: 800,
-        temperature: 0.8, // More creative for personality
         messages: [
           {
             role: 'user',
-            content: prompt
+            content: [
+              {
+                text: prompt
+              }
+            ]
           }
-        ]
+        ],
+        inferenceConfig: {
+          max_new_tokens: 800,
+          temperature: 0.8 // More creative for personality
+        }
       }),
       contentType: 'application/json',
       accept: 'application/json',
@@ -174,9 +211,9 @@ Respond in this EXACT JSON format:
 
     const response = await client.send(command);
     const responseBody = JSON.parse(new TextDecoder().decode(response.body));
-    const aiResponse = responseBody.content[0].text;
+    const aiResponse = responseBody.output.message.content[0].text;
     
-    console.log(`[AWS Bedrock] Raw response:`, aiResponse);
+    console.log(`[AWS Bedrock] Raw response from Nova Lite:`, aiResponse);
     
     // Parse the JSON response
     // Handle potential markdown code blocks

@@ -63,12 +63,31 @@ export interface NarrationRequest {
   playerName?: string;
 }
 
+export interface FollowUpQuestion {
+  question: string;
+  context?: string; // Optional context for what this question explores
+}
+
 export interface NarrationResponse {
   title: string;
   opening: string;
   analysis: string;
   actionable: string;
   tags?: string[];
+  followUpQuestions?: FollowUpQuestion[]; // 1-3 questions users might want to ask
+}
+
+export interface AnswerRequest {
+  agentId: AgentId;
+  sceneId: SceneId;
+  question: string;
+  insight: SceneInsight;
+  playerName?: string;
+}
+
+export interface AnswerResponse {
+  answer: string;
+  relatedTips?: string[];
 }
 
 // Riot API Types

@@ -1,15 +1,80 @@
 'use client';
 
-import { NarrationResponse } from '@/src/lib/types';
+import { useState } from 'react';
+import { NarrationResponse, SceneInsight, AgentId, SceneId, AnswerResponse } from '@/src/lib/types';
 import { AGENTS } from '@/src/lib/agents';
+import FollowUpQuestions from './FollowUpQuestions';
+import AnswerModal from './AnswerModal';
 
 interface AgentNarratorProps {
   narration: NarrationResponse;
-  agentId: string;
+  agentId: AgentId;
+  sceneId?: SceneId;
+  sceneInsight?: SceneInsight;
+  playerName?: string;
 }
 
-export default function AgentNarrator({ narration, agentId }: AgentNarratorProps) {
+export default function AgentNarrator({ 
+  narration, 
+  agentId, 
+  sceneId, 
+  sceneInsight,
+  playerName 
+}: AgentNarratorProps) {
   const agent = AGENTS[agentId as keyof typeof AGENTS];
+  const [selectedQuestion, setSelectedQuestion] = useState<string>('');
+  const [answer, setAnswer] = useState<AnswerResponse | undefined>();
+  const [isLoadingAnswer, setIsLoadingAnswer] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  
+  const handleQuestionClick = async (question: string, context?: string) => {
+    console.log('[AgentNarrator] Question clicked:', question, context);
+    
+    if (!sceneId || !sceneInsight) {
+      console.warn('[AgentNarrator] Missing scene data for answer generation');
+      return;
+    }
+
+    setSelectedQuestion(question);
+    setShowModal(true);
+    setIsLoadingAnswer(true);
+    setAnswer(undefined);
+
+    try {
+      const response = await fetch('/api/answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentId,
+          sceneId,
+          question,
+          insight: sceneInsight,
+          playerName: playerName || 'Summoner'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate answer');
+      }
+
+      const data = await response.json();
+      setAnswer(data);
+    } catch (error) {
+      console.error('[AgentNarrator] Error fetching answer:', error);
+      setAnswer({
+        answer: 'I apologize, but I\'m having difficulty accessing my knowledge banks at the moment. Please try again.',
+        relatedTips: []
+      });
+    } finally {
+      setIsLoadingAnswer(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedQuestion('');
+    setAnswer(undefined);
+  };
   
   if (!agent) {
     return (
@@ -66,7 +131,25 @@ export default function AgentNarrator({ narration, agentId }: AgentNarratorProps
             ))}
           </div>
         )}
+
+        {/* Follow-up Questions */}
+        {narration.followUpQuestions && narration.followUpQuestions.length > 0 && (
+          <FollowUpQuestions 
+            questions={narration.followUpQuestions}
+            onQuestionClick={handleQuestionClick}
+          />
+        )}
       </div>
+
+      {/* Answer Modal */}
+      <AnswerModal
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        question={selectedQuestion}
+        answer={answer}
+        isLoading={isLoadingAnswer}
+        agentId={agentId}
+      />
     </div>
   );
 }

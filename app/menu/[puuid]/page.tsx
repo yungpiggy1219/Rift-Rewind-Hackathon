@@ -434,7 +434,7 @@ export default function HomePage() {
       <div 
         className="w-screen h-screen flex items-center justify-center relative"
         style={{
-          backgroundImage: 'url(/images/backgrounds/background_1.jpg)',
+          backgroundImage: 'url(/images/backgrounds/background_menu.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
@@ -459,7 +459,7 @@ export default function HomePage() {
       <div 
         className="w-screen h-screen flex items-center justify-center relative"
         style={{
-          backgroundImage: 'url(/images/backgrounds/background_1.jpg)',
+          backgroundImage: 'url(/images/backgrounds/background_menu.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
@@ -512,7 +512,7 @@ export default function HomePage() {
     <div 
       className="w-screen h-screen relative overflow-hidden"
       style={{
-        backgroundImage: 'url(/images/backgrounds/background_1.jpg)',
+        backgroundImage: 'url(/images/backgrounds/background_menu.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
