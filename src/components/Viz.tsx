@@ -71,7 +71,19 @@ export default function Viz({ kind, data }: VizProps) {
                 tick={{ fontSize: 11 }}
                 label={{ value: 'Month', position: 'insideBottom', offset: -5, fill: '#9CA3AF' }}
               />
-              <YAxis stroke="#9CA3AF" />
+              {/* Left Y-axis for Damage */}
+              <YAxis 
+                yAxisId="left"
+                stroke="#EF4444"
+                label={{ value: 'Damage to Champions', angle: -90, position: 'insideLeft', fill: '#EF4444', fontSize: 11 }}
+              />
+              {/* Right Y-axis for GPM (also used for Win Rate 0-100) */}
+              <YAxis 
+                yAxisId="right"
+                orientation="right"
+                stroke="#F59E0B"
+                label={{ value: 'Gold Per Minute', angle: 90, position: 'insideRight', fill: '#F59E0B', fontSize: 11 }}
+              />
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: '#1F2937', 
@@ -85,6 +97,12 @@ export default function Viz({ kind, data }: VizProps) {
                   if (name === 'Win Rate %') {
                     return [`${value}%`, name];
                   }
+                  if (name === 'Damage to Champions') {
+                    return [value.toLocaleString(), name];
+                  }
+                  if (name === 'Gold Per Minute') {
+                    return [`${value} GPM`, name];
+                  }
                   return [value.toLocaleString(), name];
                 }}
               />
@@ -95,18 +113,24 @@ export default function Viz({ kind, data }: VizProps) {
                   stroke="#F59E0B"
                   strokeWidth={2}
                   dot={{ fill: '#F59E0B' }}
+                  yAxisId="left"
                 />
               ) : (
-                data.series?.map((series: any) => (
-                  <Line 
-                    key={series.name}
-                    type="monotone" 
-                    dataKey={series.name}
-                    stroke={series.color || '#3B82F6'}
-                    strokeWidth={2}
-                    dot={{ fill: series.color || '#3B82F6', r: 3 }}
-                  />
-                ))
+                data.series?.map((series: any) => {
+                  // Damage uses left axis, GPM and Win Rate use right axis
+                  const axisId = series.name === 'Damage to Champions' ? 'left' : 'right';
+                  return (
+                    <Line 
+                      key={series.name}
+                      type="monotone" 
+                      dataKey={series.name}
+                      stroke={series.color || '#3B82F6'}
+                      strokeWidth={2}
+                      dot={{ fill: series.color || '#3B82F6', r: 3 }}
+                      yAxisId={axisId}
+                    />
+                  );
+                })
               )}
             </LineChart>
           </ResponsiveContainer>
@@ -230,7 +254,7 @@ export default function Viz({ kind, data }: VizProps) {
     case 'heatmap':
       return (
         <div className="grid grid-cols-4 gap-2 p-4">
-          {data.months?.length > 0 ? data.months.map((month: any) => {
+          {(data as any)?.months?.length > 0 ? (data as any).months.map((month: any) => {
             const hours = month.hours ?? 0; // Use 0 if null/undefined
             const matches = month.matches ?? 0;
             return (

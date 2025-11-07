@@ -593,9 +593,9 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       <ProgressiveText
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
-                          `${Math.round((sceneData?.insight?.vizData?.totalGold || 0) / 1000)}K total gold earned.`,
-                          `Average of ${sceneData?.insight?.vizData?.avgGoldPerMinute || 0} gold per minute.`,
-                          `Economic efficiency: ${sceneData?.insight?.vizData?.goldShare || 0}% team gold share.`
+                          `${Math.round((sceneData?.insight?.vizData?.totalGoldEarned || 0) / 1000)}K total gold earned.`,
+                          `Average of ${sceneData?.insight?.vizData?.averages?.avgGoldPerMinute || 0} gold per minute.`,
+                          `Your gold income throughout the year — economic efficiency tracked.`
                         ]}
                         typingSpeed={40}
                         onComplete={() => {
@@ -616,8 +616,8 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       <ProgressiveText
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
-                          `${sceneData?.insight?.vizData?.mostPlayedPosition?.position || sceneData?.insight?.metrics?.[2]?.value || 'Unknown'} — ${sceneData?.insight?.vizData?.mostPlayedPosition?.games || 0} games played.`,
-                          `Win rate: ${sceneData?.insight?.vizData?.mostPlayedPosition?.winRate?.toFixed(1) || sceneData?.insight?.metrics?.[1]?.value || 0}% in this role.`,
+                          `${sceneData?.insight?.vizData?.mostPlayedPosition?.position || 'Unknown'} — ${sceneData?.insight?.vizData?.mostPlayedPosition?.games || 0} games played.`,
+                          `Win rate: ${sceneData?.insight?.vizData?.mostPlayedPosition?.winRate?.toFixed(1) || 0}% in this role.`,
                           `You have found your preferred battlefield.`
                         ]}
                         typingSpeed={40}
@@ -628,8 +628,66 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       />
                     </div>
                     {showHeatmap && (
-                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
-                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      <div className="flex-1 overflow-auto flex items-center justify-center" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        {/* Position Card with Top 3 Champions */}
+                        <div className="max-w-4xl w-full">
+                          <div className="bg-gradient-to-br from-indigo-900/30 to-purple-900/30 border border-indigo-700/50 rounded-xl p-6">
+                            <div className="flex gap-8 items-center">
+                              {/* Top 3 Champions - Left */}
+                              <div className="flex-shrink-0 flex flex-col gap-3">
+                                {(sceneData?.insight?.vizData?.mostPlayedPosition?.topChampions || []).slice(0, 3).map((champ: any, idx: number) => (
+                                  <div key={idx} className="relative group">
+                                    <img 
+                                      src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/champion/${champ.championName}.png`}
+                                      alt={champ.championName || 'Champion'}
+                                      className={`rounded-lg border-2 shadow-lg transition-all ${
+                                        idx === 0 ? 'w-32 h-32 border-yellow-500/70' : 
+                                        idx === 1 ? 'w-28 h-28 border-gray-400/70' : 
+                                        'w-24 h-24 border-orange-600/70'
+                                      }`}
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = '/images/champions/purepng.com-classic-ahri-splashartahrilolleague-of-legendsrender-331521944371xxthp.png';
+                                      }}
+                                    />
+                                    <div className="absolute -bottom-2 -right-2 bg-black/80 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold text-white border-2 border-indigo-500">
+                                      {champ.games}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              
+                              {/* Stats Column - Right */}
+                              <div className="flex-1 flex flex-col gap-4">
+                                <div>
+                                  <h3 className="text-3xl font-bold text-white">{sceneData?.insight?.vizData?.mostPlayedPosition?.position || 'Unknown Position'}</h3>
+                                  <p className="text-sm text-gray-400 mt-1">Most Played Position</p>
+                                </div>
+                                
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Matches</span>
+                                  <span className="text-2xl font-bold text-white">{sceneData?.insight?.vizData?.stats?.matches || 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Win Rate</span>
+                                  <span className="text-2xl font-bold text-cyan-400">{sceneData?.insight?.vizData?.stats?.winRate || 0}%</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Avg Damage/Min</span>
+                                  <span className="text-2xl font-bold text-orange-400">{sceneData?.insight?.vizData?.stats?.avgDamagePerMin || 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Vision Score</span>
+                                  <span className="text-2xl font-bold text-yellow-400">{sceneData?.insight?.vizData?.stats?.avgVisionScore || 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">CS/Min</span>
+                                  <span className="text-2xl font-bold text-green-400">{sceneData?.insight?.vizData?.stats?.avgCSPerMin || '0.0'}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>

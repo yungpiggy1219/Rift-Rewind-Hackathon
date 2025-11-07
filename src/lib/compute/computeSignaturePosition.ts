@@ -37,6 +37,11 @@ export async function computeSignaturePosition(ctx: { puuid: string; matchIds: s
       totalKills: number;
       totalDeaths: number;
       totalAssists: number;
+      totalDamageDealt: number;
+      totalVisionScore: number;
+      totalMinionsKilled: number;
+      totalGameDuration: number;
+      championCounts: Record<string, { count: number; championId: number }>;
     }> = {};
     
     VALID_POSITIONS.forEach(pos => {
@@ -47,7 +52,12 @@ export async function computeSignaturePosition(ctx: { puuid: string; matchIds: s
         losses: 0,
         totalKills: 0,
         totalDeaths: 0,
-        totalAssists: 0
+        totalAssists: 0,
+        totalDamageDealt: 0,
+        totalVisionScore: 0,
+        totalMinionsKilled: 0,
+        totalGameDuration: 0,
+        championCounts: {}
       };
     });
     
@@ -94,6 +104,20 @@ export async function computeSignaturePosition(ctx: { puuid: string; matchIds: s
           stats.totalKills += playerParticipant.kills;
           stats.totalDeaths += playerParticipant.deaths;
           stats.totalAssists += playerParticipant.assists;
+          stats.totalDamageDealt += playerParticipant.totalDamageDealtToChampions || 0;
+          stats.totalVisionScore += playerParticipant.visionScore || 0;
+          stats.totalMinionsKilled += (playerParticipant.totalMinionsKilled || 0) + (playerParticipant.neutralMinionsKilled || 0);
+          stats.totalGameDuration += match.gameDuration / 60; // Convert to minutes
+          
+          // Track champion usage for this position
+          const championName = playerParticipant.championName;
+          const championId = playerParticipant.championId;
+          if (championName) {
+            if (!stats.championCounts[championName]) {
+              stats.championCounts[championName] = { count: 0, championId };
+            }
+            stats.championCounts[championName].count++;
+          }
         } else {
           console.log(`[computeSignaturePosition] Unknown position: ${position}`);
         }
@@ -147,6 +171,25 @@ export async function computeSignaturePosition(ctx: { puuid: string; matchIds: s
     
     // Find most played position
     const mostPlayedPosition = positionStatsList[0];
+    
+    // Get top 3 champions for most played position
+    const mostPlayedPosKey = mostPlayedPosition.position;
+    const championsList = Object.entries(positionStats[mostPlayedPosKey].championCounts)
+      .map(([name, data]) => ({ championName: name, championId: data.championId, games: data.count }))
+      .sort((a, b) => b.games - a.games)
+      .slice(0, 3);
+    
+    // Calculate additional stats for most played position
+    const posData = positionStats[mostPlayedPosKey];
+    const avgDamagePerMin = posData.totalGameDuration > 0 
+      ? Math.round(posData.totalDamageDealt / posData.totalGameDuration)
+      : 0;
+    const avgVisionScore = posData.games > 0 
+      ? Math.round(posData.totalVisionScore / posData.games)
+      : 0;
+    const avgCSPerMin = posData.totalGameDuration > 0 
+      ? ((posData.totalMinionsKilled / posData.totalGameDuration)).toFixed(1)
+      : '0.0';
     
     // Position name mapping for better display
     const positionNames: Record<Position, string> = {
@@ -240,7 +283,18 @@ export async function computeSignaturePosition(ctx: { puuid: string; matchIds: s
             wins: mostPlayedPosition.wins,
             losses: mostPlayedPosition.losses,
             winRate: mostPlayedPosition.winRate,
-            avgKDA: mostPlayedPosition.avgKDA
+            avgKDA: mostPlayedPosition.avgKDA,
+            avgDamagePerMin,
+            avgVisionScore,
+            avgCSPerMin,
+            topChampions: championsList
+          },
+          stats: {
+            matches: mostPlayedPosition.games,
+            winRate: mostPlayedPosition.winRate.toFixed(1),
+            avgDamagePerMin,
+            avgVisionScore,
+            avgCSPerMin
           },
           playedPositions,
           isFlexPlayer,
