@@ -269,7 +269,7 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
               {/* Centered Visualization Panel */}
               <div className="bg-black/40 backdrop-blur-lg rounded-2xl p-6 border border-white/20 flex flex-col overflow-hidden max-w-3xl w-full max-h-[calc(100vh-200px)]">
                 
-                {/* Year in Motion - Special Progressive Content */}
+                {/* Progressive Content for All Scenes */}
                 {currentSceneId === 'year_in_motion' ? (
                   <>
                     <div className="mb-6" key={currentSceneId}>
@@ -288,20 +288,9 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                         }}
                       />
                     </div>
-                    
-                    {/* Heatmap - Shows after text completes */}
                     {showHeatmap && (
-                      <div 
-                        className="flex-1 overflow-auto"
-                        style={{
-                          animation: 'slideInFromBottom 0.6s ease-out forwards',
-                          opacity: 0
-                        }}
-                      >
-                        <Viz 
-                          kind="heatmap"
-                          data={sceneData?.insight?.vizData}
-                        />
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="heatmap" data={sceneData?.insight?.vizData} />
                       </div>
                     )}
                   </>
@@ -322,38 +311,392 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                         }}
                       />
                     </div>
-                    
-                    {/* Radar Chart - Shows after text completes */}
                     {showHeatmap && (
-                      <div 
-                        className="flex-1 overflow-auto"
-                        style={{
-                          animation: 'slideInFromBottom 0.6s ease-out forwards',
-                          opacity: 0
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="radar" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'damage_share' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${Math.round((sceneData?.insight?.vizData?.totalDamageDealtToChampions || 0) / 1000)}K total damage to champions.`,
+                          `Average: ${(sceneData?.insight?.vizData?.avgDamageToChampions || 0).toLocaleString()} per game.`,
+                          `Peak performance: ${Math.round((sceneData?.insight?.vizData?.maxDamageMatch?.damage || 0) / 1000)}K damage with ${sceneData?.insight?.vizData?.maxDamageMatch?.championName || 'Unknown'}.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
                         }}
-                      >
-                        <Viz 
-                          kind="radar"
-                          data={sceneData?.insight?.vizData}
-                        />
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'damage_taken' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${Math.round((sceneData?.insight?.vizData?.totalDamageTaken || 0) / 1000)}K total damage absorbed.`,
+                          `You tanked ${(sceneData?.insight?.vizData?.avgDamageTaken || 0).toLocaleString()} damage per game on average.`,
+                          `${sceneData?.insight?.vizData?.tankPercentage || 0}% of your team's damage taken.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'total_healed' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${Math.round((sceneData?.insight?.vizData?.totalHealing || 0) / 1000)}K total healing provided.`,
+                          `Average: ${(sceneData?.insight?.vizData?.avgHealing || 0).toLocaleString()} healing per game.`,
+                          `Life saved, data recorded.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'gold_share' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${Math.round((sceneData?.insight?.vizData?.totalGold || 0) / 1000)}K total gold earned.`,
+                          `Average: ${sceneData?.insight?.vizData?.avgGoldPerMinute || 0} gold per minute.`,
+                          `Economic efficiency: ${sceneData?.insight?.vizData?.goldShare || 0}% team gold share.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="line" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'signature_position' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${sceneData?.insight?.vizData?.mostPlayedPosition?.position || sceneData?.insight?.metrics?.[2]?.value || 'Unknown'} — ${sceneData?.insight?.vizData?.mostPlayedPosition?.games || 0} games played.`,
+                          `Win rate: ${sceneData?.insight?.vizData?.mostPlayedPosition?.winRate?.toFixed(1) || sceneData?.insight?.metrics?.[1]?.value || 0}% in this role.`,
+                          `You have found your preferred battlefield.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'growth_over_time' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${sceneData?.insight?.metrics?.[3]?.value || 'Stable'} trend detected over the year.`,
+                          `Win rate: ${sceneData?.insight?.metrics?.[0]?.value || 0}% across all games.`,
+                          `Average damage: ${sceneData?.insight?.metrics?.[1]?.value || 0}K per game.`,
+                          `Your evolution has been... documented.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="line" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'vision_score' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${sceneData?.insight?.vizData?.averages?.avgVisionScore || sceneData?.insight?.metrics?.[0]?.value || 0} average vision score per game.`,
+                          `${sceneData?.insight?.vizData?.totals?.totalVisionWardsBought || sceneData?.insight?.vizData?.totals?.totalWardsPurchased || 0} control wards purchased.`,
+                          `Vision control is data control.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'weaknesses' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `Areas for improvement identified.`,
+                          `Deaths per game: ${sceneData?.insight?.vizData?.bars?.[0]?.value || sceneData?.insight?.metrics?.[0]?.value || 0} — optimization required.`,
+                          `Fountain time: ${sceneData?.insight?.vizData?.bars?.[1]?.value || sceneData?.insight?.metrics?.[1]?.value || 0}% of game time.`,
+                          `Knowledge of weakness is the first step to power.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'best_friend' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${sceneData?.insight?.vizData?.title || 'Unknown Ally'} — your most frequent partner.`,
+                          `${sceneData?.insight?.vizData?.stats?.[0]?.value || 0} games together.`,
+                          `Win rate: ${sceneData?.insight?.vizData?.stats?.[1]?.value || '0%'}.`,
+                          `Cooperation yields interesting results.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="badge" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'aram' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${sceneData?.insight?.vizData?.stats?.totalGames || sceneData?.insight?.metrics?.[0]?.value || 0} ARAM games detected.`,
+                          `Win rate: ${sceneData?.insight?.vizData?.stats?.winRate || sceneData?.insight?.metrics?.[1]?.value || 0}%.`,
+                          `Chaos incarnate... yet still measurable.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="infographic" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'ranked_stats' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${sceneData?.insight?.vizData?.rank || 'Unranked'} — ${sceneData?.insight?.vizData?.lp || 0} LP.`,
+                          `${sceneData?.insight?.vizData?.wins || 0}W - ${sceneData?.insight?.vizData?.losses || 0}L (${sceneData?.insight?.vizData?.winRate || 0}% win rate).`,
+                          `The ladder awaits your continued ascension.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="highlight" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'killing_spree' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `Highest killing spree: ${sceneData?.insight?.vizData?.stats?.longestSpree || sceneData?.insight?.metrics?.[2]?.value || 0} consecutive kills.`,
+                          `${sceneData?.insight?.vizData?.stats?.pentaKills || sceneData?.insight?.metrics?.[0]?.value || 0} pentakills achieved.`,
+                          `Efficiency in execution.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'dragon_slayer' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${sceneData?.insight?.metrics?.[0]?.value || 0} dragons slain.`,
+                          `${sceneData?.insight?.metrics?.[1]?.value || 0} barons secured.`,
+                          `Objective control measured and documented.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'sniper' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${sceneData?.insight?.metrics?.[0]?.value || 0} total skillshots hit.`,
+                          `${sceneData?.insight?.metrics?.[1]?.value || 0} average per game.`,
+                          `Precision from distance... intriguing.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="highlight" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'fancy_feet' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${sceneData?.insight?.metrics?.[0]?.value || 0} total skillshots dodged.`,
+                          `${sceneData?.insight?.metrics?.[1]?.value || 0} average dodges per game.`,
+                          `Movement patterns analyzed and categorized.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="highlight" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
+                ) : currentSceneId === 'path_forward' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `Analysis complete. Your journey documented.`,
+                          `${sceneData?.insight?.metrics?.[0]?.value || 0} games played in 2025.`,
+                          `The future requires deliberate action.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="highlight" data={sceneData?.insight?.vizData} />
                       </div>
                     )}
                   </>
                 ) : (
                   <>
-                    {/* Other Scenes - Default Layout */}
+                    {/* Fallback for any undefined scenes */}
                     <h2 className="text-2xl font-bold text-white mb-4 flex-shrink-0">
                       {sceneData?.insight?.summary}
                     </h2>
-                    
                     <div className="flex-1 mb-4 overflow-hidden">
-                      <Viz 
-                        kind={sceneData?.vizKind || 'highlight'} 
-                        data={sceneData?.insight?.vizData} 
-                      />
+                      <Viz kind={sceneData?.vizKind || 'highlight'} data={sceneData?.insight?.vizData} />
                     </div>
-                    
-                    {/* Metrics Grid */}
                     <div className="grid grid-cols-2 gap-3 flex-shrink-0">
                       {(sceneData?.insight?.metrics || []).slice(0, 4).map((metric: { label: string; value: string | number; unit?: string; context?: string }, index: number) => (
                         <div key={index} className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
@@ -387,24 +730,118 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
             className="h-[50vh] w-auto object-contain drop-shadow-2xl pointer-events-none"
           />
           
-          {/* Dialogue Bubble - For special scenes, only show after content complete */}
-          {narration && ((currentSceneId !== 'year_in_motion' && currentSceneId !== 'signature_champion') || contentComplete) && (
+          {/* Dialogue Bubble - Show after content complete for all scenes */}
+          {narration && contentComplete && (
             <div className="absolute top-8 right-[45vh] pointer-events-auto">
               <DialogueBubble 
                 text={
                   currentSceneId === 'year_in_motion' 
                     ? [
-                        // Mock Vel'Koz analysis for Year in Motion
                         "Intriguing patterns detected in your temporal distribution.",
                         "Your commitment to mastery is... noted.",
                         "Continue this trajectory, and perhaps you will transcend mortal limitations."
                       ]
                     : currentSceneId === 'signature_champion'
                     ? [
-                        // Mock Vel'Koz analysis for Signature Champion
                         "A predictable choice. Specialization yields efficiency.",
                         "Your win rate correlates with repeated exposure to mechanical patterns.",
                         "Mastery achieved through repetition... how very mortal."
+                      ]
+                    : currentSceneId === 'damage_share'
+                    ? [
+                        "Your damage output has been quantified and analyzed.",
+                        "Fascinating how numbers reveal the truth of combat prowess.",
+                        "Continue refining your offensive capabilities, subject."
+                      ]
+                    : currentSceneId === 'damage_taken'
+                    ? [
+                        "The punishment you endure is... substantial.",
+                        "Either you are exceptionally durable, or exceptionally reckless.",
+                        "Data suggests a combination of both."
+                      ]
+                    : currentSceneId === 'total_healed'
+                    ? [
+                        "Life force restoration measured and catalogued.",
+                        "Your support capabilities demonstrate utility.",
+                        "Healing is merely damage prevention... efficient."
+                      ]
+                    : currentSceneId === 'gold_share'
+                    ? [
+                        "Economic efficiency: a critical factor in victory.",
+                        "Your gold acquisition patterns reveal strategic priorities.",
+                        "Resource management correlates directly with success."
+                      ]
+                    : currentSceneId === 'signature_position'
+                    ? [
+                        "You have established territorial preferences.",
+                        "Consistency in role selection shows adaptability... or stubbornness.",
+                        "The data remains inconclusive on which."
+                      ]
+                    : currentSceneId === 'growth_over_time'
+                    ? [
+                        "Your progression arc has been documented.",
+                        "Evolution through experience... a predictable phenomenon.",
+                        "Yet the rate of improvement varies. Fascinating."
+                      ]
+                    : currentSceneId === 'vision_score'
+                    ? [
+                        "Information is power. Vision is information.",
+                        "Your investment in map awareness shows tactical understanding.",
+                        "Those who see more, control more."
+                      ]
+                    : currentSceneId === 'weaknesses'
+                    ? [
+                        "Every specimen has vulnerabilities.",
+                        "Acknowledging weakness is the first step to optimization.",
+                        "These data points require your attention, subject."
+                      ]
+                    : currentSceneId === 'best_friend'
+                    ? [
+                        "Cooperation detected. Duo synergy analyzed.",
+                        "This alliance yields statistical significance.",
+                        "Perhaps companionship has measurable strategic value."
+                      ]
+                    : currentSceneId === 'aram'
+                    ? [
+                        "Chaos on the Howling Abyss... yet patterns emerge.",
+                        "Even randomness can be quantified and understood.",
+                        "Your performance in disorder has been catalogued."
+                      ]
+                    : currentSceneId === 'ranked_stats'
+                    ? [
+                        "The competitive ladder: a hierarchy of skill.",
+                        "Your position reflects accumulated performance data.",
+                        "Climb higher, and the view becomes more... enlightening."
+                      ]
+                    : currentSceneId === 'killing_spree'
+                    ? [
+                        "Sequential eliminations without interruption.",
+                        "Your aggression patterns show efficient lethality.",
+                        "Death comes swiftly when properly calculated."
+                      ]
+                    : currentSceneId === 'dragon_slayer'
+                    ? [
+                        "Objective control: the foundation of strategic dominance.",
+                        "Dragons provide measurable power increases.",
+                        "Your team's success hinges on these acquisitions."
+                      ]
+                    : currentSceneId === 'sniper'
+                    ? [
+                        "Precision from distance demonstrates mechanical finesse.",
+                        "Range advantage: a fundamental combat principle.",
+                        "Your long-range eliminations have been noted."
+                      ]
+                    : currentSceneId === 'fancy_feet'
+                    ? [
+                        "Spatial repositioning: critical for survival.",
+                        "Your movement data reveals defensive priorities.",
+                        "Those who move well, live longer."
+                      ]
+                    : currentSceneId === 'path_forward'
+                    ? [
+                        "All data converges to this conclusion.",
+                        "Improvement requires deliberate, focused action.",
+                        "Your path forward is clear. Will you follow it?"
                       ]
                     : [
                         narration.opening,
