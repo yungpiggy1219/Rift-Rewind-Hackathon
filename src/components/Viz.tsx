@@ -1,7 +1,7 @@
 'use client';
 
 import { VizKind } from '@/src/lib/types';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Cell } from 'recharts';
 
 interface VizProps {
   kind: VizKind;
@@ -77,12 +77,19 @@ export default function Viz({ kind, data }: VizProps) {
                 stroke="#EF4444"
                 label={{ value: 'Damage to Champions', angle: -90, position: 'insideLeft', fill: '#EF4444', fontSize: 11 }}
               />
-              {/* Right Y-axis for GPM (also used for Win Rate 0-100) */}
+              {/* Right Y-axis for GPM */}
               <YAxis 
                 yAxisId="right"
                 orientation="right"
                 stroke="#F59E0B"
                 label={{ value: 'Gold Per Minute', angle: 90, position: 'insideRight', fill: '#F59E0B', fontSize: 11 }}
+              />
+              {/* Hidden Y-axis for Win Rate (0-100%) - uses full height */}
+              <YAxis 
+                yAxisId="winRate"
+                orientation="right"
+                domain={[0, 100]}
+                hide={true}
               />
               <Tooltip 
                 contentStyle={{ 
@@ -106,6 +113,14 @@ export default function Viz({ kind, data }: VizProps) {
                   return [value.toLocaleString(), name];
                 }}
               />
+              <Legend 
+                verticalAlign="top"
+                height={36}
+                iconType="line"
+                wrapperStyle={{
+                  paddingBottom: '10px'
+                }}
+              />
               {data.chartData ? (
                 <Line 
                   type="monotone" 
@@ -117,8 +132,13 @@ export default function Viz({ kind, data }: VizProps) {
                 />
               ) : (
                 data.series?.map((series: any) => {
-                  // Damage uses left axis, GPM and Win Rate use right axis
-                  const axisId = series.name === 'Damage to Champions' ? 'left' : 'right';
+                  // Damage uses left axis, GPM uses right axis, Win Rate uses hidden winRate axis (0-100)
+                  let axisId = 'left';
+                  if (series.name === 'Gold Per Minute') {
+                    axisId = 'right';
+                  } else if (series.name === 'Win Rate %') {
+                    axisId = 'winRate';
+                  }
                   return (
                     <Line 
                       key={series.name}
