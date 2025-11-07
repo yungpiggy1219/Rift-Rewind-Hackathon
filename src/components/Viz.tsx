@@ -484,6 +484,112 @@ export default function Viz({ kind, data }: VizProps) {
         </div>
       );
 
+    case 'ranked':
+      if (!data || (!data.soloQueue && !data.flexQueue)) {
+        return (
+          <div className="text-center text-gray-400 py-8">
+            <div className="text-lg font-semibold mb-2">No Ranked Data</div>
+            <div className="text-sm">Play ranked games to see your competitive stats</div>
+          </div>
+        );
+      }
+
+      // Helper function to render a ranked card
+      const renderRankedCard = (queueData: any, queueType: string) => {
+        if (!queueData) {
+          // Show unranked card
+          return (
+            <div className="bg-linear-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border-2 border-gray-700 shadow-2xl">
+              <div className="text-center mb-4">
+                <h2 className="text-2xl font-bold text-white mb-2">{queueType}</h2>
+              </div>
+              
+              <div className="flex flex-col items-center justify-center py-4">
+                <img 
+                  src="/images/ranked/unranked.png"
+                  alt="Unranked"
+                  className="w-24 h-24 object-contain mb-4"
+                />
+                <div className="text-2xl font-bold text-gray-400">Unranked</div>
+                <div className="text-sm text-gray-500 mt-2">Play placements</div>
+              </div>
+            </div>
+          );
+        }
+
+        const rankImageName = (queueData.tier || 'unranked').toLowerCase();
+        const rankImagePath = `/images/ranked/${rankImageName}.png`;
+        
+        return (
+          <div className="bg-linear-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border-2 border-gray-700 shadow-2xl">
+            <div className="text-center mb-4">
+              <h2 className="text-2xl font-bold text-white mb-2">{queueType}</h2>
+            </div>
+            
+            <div className="flex items-center justify-between mb-4">
+              {/* Rank Image */}
+              <div className="shrink-0">
+                <img 
+                  src={rankImagePath}
+                  alt={`${queueData.tier} ${queueData.rankDivision}`}
+                  className="w-24 h-24 object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/images/ranked/unranked.png';
+                  }}
+                />
+              </div>
+              
+              {/* Rank Info */}
+              <div className="flex-1 ml-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-white mb-1">
+                    {queueData.tier} {queueData.rankDivision}
+                  </div>
+                  <div className="text-xl text-cyan-400 font-semibold">
+                    {queueData.lp} LP
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Win Rate Progress Bar */}
+            <div className="mb-4">
+              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-linear-to-r from-cyan-500 to-blue-500 transition-all duration-500"
+                  style={{ width: `${queueData.winRate}%` }}
+                />
+              </div>
+            </div>
+            
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-cyan-400">
+                  {queueData.winRate}%
+                </div>
+                <div className="text-xs text-gray-400 mt-1">WR</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-white">
+                  {queueData.wins}W - {queueData.losses}L
+                </div>
+                <div className="text-xs text-gray-400 mt-1">{queueData.totalGames} Games</div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+      
+      return (
+        <div className="flex items-center justify-center p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
+            {renderRankedCard(data.soloQueue, 'Ranked Solo')}
+            {renderRankedCard(data.flexQueue, 'Ranked Flex')}
+          </div>
+        </div>
+      );
+
     default:
       return (
         <div className="h-64 bg-gray-700 rounded-lg flex items-center justify-center">

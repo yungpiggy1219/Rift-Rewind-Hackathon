@@ -121,43 +121,41 @@ export async function resolveSummoner(gameName: string, tagLine: string): Promis
 
 // Fetch ranked stats for a summoner
 export async function fetchRankedStats(puuid: string, platform?: string): Promise<{
-  tier: string;
-  rank: string;
-  leaguePoints: number;
-  wins: number;
-  losses: number;
-  queueType: string;
+  soloQueue: {
+    tier: string;
+    rank: string;
+    leaguePoints: number;
+    wins: number;
+    losses: number;
+    queueType: string;
+  } | null;
+  flexQueue: {
+    tier: string;
+    rank: string;
+    leaguePoints: number;
+    wins: number;
+    losses: number;
+    queueType: string;
+  } | null;
 } | null> {
   try {
-    // First, get the summoner ID from the PUUID
+    // Get the account to determine the correct platform
     const account = await getAccountByPuuid(puuid);
-    if (!account || !account.summonerId) {
-      console.warn(`[fetchRankedStats] No summoner ID found for PUUID ${puuid}`);
-      return null;
-    }
-
-    const targetPlatform = platform || account.platform || getPlatformRegion(account.region);
+    const targetPlatform = platform || account?.platform || getPlatformRegion(RIOT_REGION);
     
-    console.log(`[fetchRankedStats] Fetching ranked stats for ${account.summonerId} on ${targetPlatform}`);
+    console.log(`[fetchRankedStats] Fetching ranked stats for PUUID ${puuid} on ${targetPlatform}`);
     
     const cacheKey = `ranked-stats:${puuid}:2025`;
-    const cached = await cache.get<{
-      tier: string;
-      rank: string;
-      leaguePoints: number;
-      wins: number;
-      losses: number;
-      queueType: string;
-    }>(cacheKey);
+    const cached = await cache.get(cacheKey);
     
     if (cached) {
       console.log(`[fetchRankedStats] Cache hit for ${puuid}`);
-      return cached;
+      return cached as any;
     }
     
-    // Fetch league entries for this summoner
+    // Fetch league entries directly by PUUID
     const leagueData = await riotRequest(
-      `/lol/league/v4/entries/by-summoner/${account.summonerId}`,
+      `/lol/league/v4/entries/by-puuid/${puuid}`,
       targetPlatform
     ) as Array<{
       queueType: string;
@@ -173,9 +171,14 @@ export async function fetchRankedStats(puuid: string, platform?: string): Promis
       return null;
     }
     
-    // Prioritize RANKED_SOLO_5x5 queue
-    const soloQueue = leagueData.find(entry => entry.queueType === 'RANKED_SOLO_5x5');
-    const rankedData = soloQueue || leagueData[0];
+    // Get both Solo/Duo and Flex queue data
+    const soloQueue = leagueData.find(entry => entry.queueType === 'RANKED_SOLO_5x5') || null;
+    const flexQueue = leagueData.find(entry => entry.queueType === 'RANKED_FLEX_SR') || null;
+    
+    const rankedData = {
+      soloQueue,
+      flexQueue
+    };
     
     // Cache for 1 hour (ranked stats change frequently)
     await cache.set(cacheKey, rankedData, 3600);

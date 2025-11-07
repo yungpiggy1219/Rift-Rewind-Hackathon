@@ -686,7 +686,7 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       </div>
                     )}
                   </>
-                ) : currentSceneId === 'cs' ? (
+                ) : currentSceneId === 'farmer' ? (
                   <>
                     <div className="mb-6" key={currentSceneId}>
                       <ProgressiveText
@@ -1068,9 +1068,9 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       <ProgressiveText
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
-                          `${sceneData?.insight?.vizData?.rank || 'Unranked'} — ${sceneData?.insight?.vizData?.lp || 0} LP.`,
-                          `${sceneData?.insight?.vizData?.wins || 0}W - ${sceneData?.insight?.vizData?.losses || 0}L (${sceneData?.insight?.vizData?.winRate || 0}% win rate).`,
-                          `The ladder awaits your continued ascension.`
+                          `Analyzing ranked behavior... patterns of improvement detected.`,
+                          `Your climb through the Rift contributes valuable data to my research.`,
+                          `Ascend again — for science demands replication.`
                         ]}
                         typingSpeed={40}
                         onComplete={() => {
@@ -1081,7 +1081,7 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                     </div>
                     {showHeatmap && (
                       <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
-                        <Viz kind="highlight" data={sceneData?.insight?.vizData} />
+                        <Viz kind="ranked" data={sceneData?.insight?.vizData} />
                       </div>
                     )}
                   </>

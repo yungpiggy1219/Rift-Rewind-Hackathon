@@ -7,7 +7,7 @@ export type SceneId =
   | "damage_taken"
   | "total_healed"
   | "gold_share"
-  | "cs"
+  | "farmer"
   | "growth_over_time"
   | "vision_score"
   // | "peak_performance" 
@@ -207,7 +207,8 @@ export type VizKind =
   | "bar" 
   | "badge" 
   | "infographic" 
-  | "goal";
+  | "goal"
+  | "ranked";
 
 // Legacy types for compatibility
 export interface PlayerInsights {

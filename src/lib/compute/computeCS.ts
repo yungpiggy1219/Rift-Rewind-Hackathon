@@ -130,20 +130,15 @@ export async function computeCS(ctx: { puuid: string; matchIds: string[] }): Pro
     
     // Determine farming level
     let farmingLevel = 'Learning';
-    let farmingColor = '#6B7280'; // gray
     
     if (avgCSPerMin >= 8) {
       farmingLevel = 'Elite Farmer';
-      farmingColor = '#F59E0B'; // gold
     } else if (avgCSPerMin >= 7) {
       farmingLevel = 'Excellent';
-      farmingColor = '#10B981'; // green
     } else if (avgCSPerMin >= 6) {
       farmingLevel = 'Good';
-      farmingColor = '#3B82F6'; // blue
     } else if (avgCSPerMin >= 5) {
       farmingLevel = 'Average';
-      farmingColor = '#9CA3AF'; // light gray
     }
     
     console.log(`[computeCS] Analysis complete:`, {
@@ -201,7 +196,7 @@ export async function computeCS(ctx: { puuid: string; matchIds: string[] }): Pro
     }
     
     const payload: ScenePayload = {
-      sceneId: 'cs',
+      sceneId: 'farmer',
       vizKind: 'line',
       insight: {
         summary,
@@ -240,7 +235,7 @@ export async function computeCS(ctx: { puuid: string; matchIds: string[] }): Pro
     console.error('[computeCS] Error:', error);
     
     return {
-      sceneId: 'cs',
+      sceneId: 'farmer',
       vizKind: 'line',
       insight: {
         summary: 'Unable to analyze CS statistics',

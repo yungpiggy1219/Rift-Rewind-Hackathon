@@ -22,10 +22,19 @@ export async function POST(
 
     // Get the scene definition
     const scene = sceneRegistry[sceneId as keyof typeof sceneRegistry];
+    console.log(`[Insights API] Scene lookup result:`, {
+      sceneId,
+      found: !!scene,
+      availableScenes: Object.keys(sceneRegistry)
+    });
+    
     if (!scene) {
       console.error(`[Insights API] Scene not found: ${sceneId}`);
       return NextResponse.json(
-        { error: `Scene '${sceneId}' not found` },
+        { 
+          error: `Scene '${sceneId}' not found`,
+          availableScenes: Object.keys(sceneRegistry)
+        },
         { status: 404 }
       );
     }
