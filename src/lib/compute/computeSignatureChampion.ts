@@ -100,7 +100,51 @@ export async function computeSignatureChampion(ctx: { puuid: string; matchIds: s
       : (mostPlayedChampion.totalKills + mostPlayedChampion.totalAssists) / mostPlayedChampion.totalDeaths;
     const avgGold = Math.round(mostPlayedChampion.totalGold / mostPlayedChampion.games);
     
+    // Calculate additional stats from match data
+    let totalDamageDealt = 0;
+    let totalVisionScore = 0;
+    let totalMinionsKilled = 0;
+    let totalGameDuration = 0;
+    let gamesWithData = 0;
+    
+    // Fetch detailed stats for the most played champion
+    for (let i = 0; i < Math.min(matchIds.length, 100); i += batchSize) {
+      const batch = matchIds.slice(i, i + batchSize);
+      
+      const matchPromises = batch.map(async (matchId) => {
+        try {
+          return await fetchMatchDetail(matchId);
+        } catch (error) {
+          return null;
+        }
+      });
+      
+      const matches = await Promise.all(matchPromises);
+      
+      for (const match of matches) {
+        if (!match) continue;
+        
+        const playerParticipant = match.participants.find(p => p.puuid === ctx.puuid);
+        if (!playerParticipant || playerParticipant.championId !== mostPlayedChampion.championId) continue;
+        
+        gamesWithData++;
+        totalDamageDealt += playerParticipant.totalDamageDealtToChampions || 0;
+        totalVisionScore += playerParticipant.visionScore || 0;
+        totalMinionsKilled += (playerParticipant.totalMinionsKilled || 0) + (playerParticipant.neutralMinionsKilled || 0);
+        totalGameDuration += match.gameDuration || 0;
+      }
+    }
+    
+    const avgDamagePerMin = gamesWithData > 0 && totalGameDuration > 0 
+      ? Math.round((totalDamageDealt / totalGameDuration) * 60)
+      : 0;
+    const avgVisionScore = gamesWithData > 0 ? Math.round(totalVisionScore / gamesWithData) : 0;
+    const avgCSPerMin = gamesWithData > 0 && totalGameDuration > 0
+      ? ((totalMinionsKilled / totalGameDuration) * 60).toFixed(1)
+      : '0.0';
+    
     console.log(`[computeSignatureChampion] Most played: ${mostPlayedChampion.championName} (${mostPlayedChampion.games} games, ${winRate.toFixed(1)}% WR)`);
+    console.log(`[computeSignatureChampion] Dmg/Min: ${avgDamagePerMin}, Vision: ${avgVisionScore}, CS/Min: ${avgCSPerMin}`);
     
     // Get top 3 champions for comparison
     const top3Champions = championList.slice(0, 3);
@@ -150,26 +194,27 @@ export async function computeSignatureChampion(ctx: { puuid: string; matchIds: s
             wins: mostPlayedChampion.wins,
             winRate: winRate,
             avgKDA: avgKDA,
+            avgDamagePerMin: avgDamagePerMin,
+            avgVisionScore: avgVisionScore,
+            avgCSPerMin: parseFloat(avgCSPerMin),
             avgGold: avgGold
           },
-          top3Champions: top3Champions.map(champ => ({
-            championId: champ.championId,
-            championName: champ.championName,
-            games: champ.games,
-            winRate: (champ.wins / champ.games) * 100,
-            avgKDA: champ.totalDeaths === 0 
-              ? champ.totalKills + champ.totalAssists
-              : (champ.totalKills + champ.totalAssists) / champ.totalDeaths
-          })),
-          // Radar chart data for champion mastery
-          categories: ["Games Played", "Win Rate", "KDA", "Gold Efficiency", "Consistency", "Impact"],
+          // Stats for display
+          stats: {
+            winRate: winRate.toFixed(1),
+            kda: avgKDA.toFixed(2),
+            damagePerMin: avgDamagePerMin,
+            visionScore: avgVisionScore,
+            csPerMin: avgCSPerMin
+          },
+          // Radar chart data - 5 key stats only
+          categories: ["Win Rate", "KDA", "Dmg/Min", "Vision", "CS/Min"],
           values: [
-            Math.min(mostPlayedChampion.games / 20 * 100, 100), // Games played (normalized to 20 games = 100%)
-            winRate, // Win rate
-            Math.min(avgKDA / 3 * 100, 100), // KDA (normalized to 3.0 = 100%)
-            Math.min(avgGold / 15000 * 100, 100), // Gold efficiency (normalized to 15k = 100%)
-            Math.min(winRate, 100), // Consistency (based on win rate)
-            Math.min(avgKDA * 20, 100) // Impact (KDA based)
+            winRate, // Win rate (0-100%)
+            Math.min(avgKDA / 5 * 100, 100), // KDA normalized (5.0 KDA = 100%)
+            Math.min(avgDamagePerMin / 1000 * 100, 100), // Dmg/Min normalized (1000 = 100%)
+            Math.min(avgVisionScore / 50 * 100, 100), // Vision normalized (50 = 100%)
+            Math.min(parseFloat(avgCSPerMin) / 8 * 100, 100) // CS/Min normalized (8 = 100%)
           ],
           maxValue: 100
         }
