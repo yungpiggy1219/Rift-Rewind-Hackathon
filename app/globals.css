@@ -33,6 +33,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  cursor: url('/cursor_normal.png'), auto;
 }
 
 /* Disable text selection/highlighting for entire project */
@@ -41,6 +42,14 @@ body {
   -moz-user-select: none; /* Firefox */
   -ms-user-select: none; /* IE10+/Edge */
   user-select: none; /* Standard */
+  cursor: url('/cursor_normal.png'), auto;
+}
+
+/* Custom cursor for clickable elements on hover */
+button:hover, a:hover, [role="button"]:hover, input[type="submit"]:hover, 
+input[type="button"]:hover, select:hover, [onclick]:hover, .cursor-pointer:hover,
+label:hover, input[type="checkbox"]:hover, input[type="radio"]:hover {
+  cursor: url('/cursor_click.png'), pointer !important;
 }
 
 /* Lock the app to the viewport: prevent page scrolling and ensure full-viewport layout */
