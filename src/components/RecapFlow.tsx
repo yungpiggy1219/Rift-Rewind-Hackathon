@@ -305,6 +305,40 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       </div>
                     )}
                   </>
+                ) : currentSceneId === 'signature_champion' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${sceneData?.insight?.vizData?.mostPlayed?.championName || 'Unknown'} — ${sceneData?.insight?.vizData?.mostPlayed?.games || 0} matches, ${sceneData?.insight?.vizData?.mostPlayed?.winRate?.toFixed(1) || 0}% win rate.`,
+                          `Your mastery of this champion is... adequate.`,
+                          `The data suggests continued focus on this selection.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Radar Chart - Shows after text completes */}
+                    {showHeatmap && (
+                      <div 
+                        className="flex-1 overflow-auto"
+                        style={{
+                          animation: 'slideInFromBottom 0.6s ease-out forwards',
+                          opacity: 0
+                        }}
+                      >
+                        <Viz 
+                          kind="radar"
+                          data={sceneData?.insight?.vizData}
+                        />
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <>
                     {/* Other Scenes - Default Layout */}
@@ -353,8 +387,8 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
             className="h-[50vh] w-auto object-contain drop-shadow-2xl pointer-events-none"
           />
           
-          {/* Dialogue Bubble - For year_in_motion, only show after content complete */}
-          {narration && (currentSceneId !== 'year_in_motion' || contentComplete) && (
+          {/* Dialogue Bubble - For special scenes, only show after content complete */}
+          {narration && ((currentSceneId !== 'year_in_motion' && currentSceneId !== 'signature_champion') || contentComplete) && (
             <div className="absolute top-8 right-[45vh] pointer-events-auto">
               <DialogueBubble 
                 text={
@@ -364,6 +398,13 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                         "Intriguing patterns detected in your temporal distribution.",
                         "Your commitment to mastery is... noted.",
                         "Continue this trajectory, and perhaps you will transcend mortal limitations."
+                      ]
+                    : currentSceneId === 'signature_champion'
+                    ? [
+                        // Mock Vel'Koz analysis for Signature Champion
+                        "A predictable choice. Specialization yields efficiency.",
+                        "Your win rate correlates with repeated exposure to mechanical patterns.",
+                        "Mastery achieved through repetition... how very mortal."
                       ]
                     : [
                         narration.opening,
