@@ -92,7 +92,7 @@ export default function RecapPage() {
         playerName={playerName}
         tagLine={tagLine}
         rankedInfo={rankedInfo}
-        containerClassName="absolute top-20 left-8 z-20"
+        containerClassName="absolute top-8 left-8 z-20"
       />
     </div>
   );

@@ -416,28 +416,6 @@ export default function RecapFlow({
       <div className="absolute inset-0 bg-black/50 z-10"></div>
 
       {/* Top Navigation Bar */}
-      <div className="absolute top-0 left-0 right-0 z-30 p-4">
-        <div className="flex justify-between items-center">
-          {/* SummonerCard with Menu - Top Left */}
-          <SummonerCard
-            playerName={playerName}
-            containerClassName="relative"
-            showMenuButton={true}
-            onBackToMenu={goBack}
-          />
-
-          {/* Share Button - Top Right */}
-          <div>
-            {sceneData && (
-              <ShareCardButton
-                sceneId={currentSceneId}
-                playerName={playerName}
-                sceneData={sceneData}
-              />
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Main Content Area - Fixed Height Layout */}
       <div className="absolute inset-0 z-20 flex flex-col">
@@ -450,11 +428,8 @@ export default function RecapFlow({
             <div className="text-center bg-black/40 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
               <Loader2 className="w-10 h-10 animate-spin text-blue-400 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-white mb-2">
-                Loading Scene {currentSceneIndex + 1}
+                Making cookies for poros...
               </h3>
-              <p className="text-gray-300 text-sm">
-                Analyzing your League journey...
-              </p>
             </div>
           ) : sceneData && narration ? (
             <div className="w-full h-full max-w-5xl mx-auto flex items-center justify-center">
@@ -975,7 +950,6 @@ export default function RecapFlow({
                                   </p>
                                 </div>
 
-
                                 <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
                                   <span className="text-sm text-gray-300">
                                     KDA
@@ -986,7 +960,7 @@ export default function RecapFlow({
                                   </span>
                                 </div>
 
-                                                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
                                   <span className="text-sm text-gray-300">
                                     Total Damage Taken
                                   </span>
@@ -2585,125 +2559,15 @@ export default function RecapFlow({
             className="h-[50vh] w-auto object-contain drop-shadow-2xl pointer-events-none"
           />
 
-          {/* Dialogue Bubble - Show after content complete for all scenes */}
+          {/* Dialogue Bubble - Show AI-generated narration after content complete */}
           {narration && contentComplete && (
             <div className="absolute top-8 right-[45vh] pointer-events-auto">
               <DialogueBubble
-                text={
-                  currentSceneId === "year_in_motion"
-                    ? [
-                        "Intriguing patterns detected in your temporal distribution.",
-                        "Your commitment to mastery is... noted.",
-                        "Continue this trajectory, and perhaps you will transcend mortal limitations.",
-                      ]
-                    : currentSceneId === "signature_champion"
-                    ? [
-                        "A predictable choice. Specialization yields efficiency.",
-                        "Your win rate correlates with repeated exposure to mechanical patterns.",
-                        "Mastery achieved through repetition... how very mortal.",
-                      ]
-                    : currentSceneId === "damage_share"
-                    ? [
-                        "Your damage output has been quantified and analyzed.",
-                        "Fascinating how numbers reveal the truth of combat prowess.",
-                        "Continue refining your offensive capabilities, subject.",
-                      ]
-                    : currentSceneId === "damage_taken"
-                    ? [
-                        "The punishment you endure is... substantial.",
-                        "Either you are exceptionally durable, or exceptionally reckless.",
-                        "Data suggests a combination of both.",
-                      ]
-                    : currentSceneId === "total_healed"
-                    ? [
-                        "Life force restoration measured and catalogued.",
-                        "Your support capabilities demonstrate utility.",
-                        "Healing is merely damage prevention... efficient.",
-                      ]
-                    : currentSceneId === "gold_share"
-                    ? [
-                        "Economic efficiency: a critical factor in victory.",
-                        "Your gold acquisition patterns reveal strategic priorities.",
-                        "Resource management correlates directly with success.",
-                      ]
-                    : currentSceneId === "signature_position"
-                    ? [
-                        "You have established territorial preferences.",
-                        "Consistency in role selection shows adaptability... or stubbornness.",
-                        "The data remains inconclusive on which.",
-                      ]
-                    : currentSceneId === "growth_over_time"
-                    ? [
-                        "Your progression arc has been documented.",
-                        "Evolution through experience... a predictable phenomenon.",
-                        "Yet the rate of improvement varies. Fascinating.",
-                      ]
-                    : currentSceneId === "vision_score"
-                    ? [
-                        "Information is power. Vision is information.",
-                        "Your investment in map awareness shows tactical understanding.",
-                        "Those who see more, control more.",
-                      ]
-                    : currentSceneId === "weaknesses"
-                    ? [
-                        "Every specimen has vulnerabilities.",
-                        "Acknowledging weakness is the first step to optimization.",
-                        "These data points require your attention, subject.",
-                      ]
-                    : currentSceneId === "best_friend"
-                    ? [
-                        "Cooperation detected. Duo synergy analyzed.",
-                        "This alliance yields statistical significance.",
-                        "Perhaps companionship has measurable strategic value.",
-                      ]
-                    : currentSceneId === "aram"
-                    ? [
-                        "Chaos on the Howling Abyss... yet patterns emerge.",
-                        "Even randomness can be quantified and understood.",
-                        "Your performance in disorder has been catalogued.",
-                      ]
-                    : currentSceneId === "ranked_stats"
-                    ? [
-                        "The competitive ladder: a hierarchy of skill.",
-                        "Your position reflects accumulated performance data.",
-                        "Climb higher, and the view becomes more... enlightening.",
-                      ]
-                    : currentSceneId === "killing_spree"
-                    ? [
-                        "Sequential eliminations without interruption.",
-                        "Your aggression patterns show efficient lethality.",
-                        "Death comes swiftly when properly calculated.",
-                      ]
-                    : currentSceneId === "dragon_slayer"
-                    ? [
-                        "Objective control: the foundation of strategic dominance.",
-                        "Dragons provide measurable power increases.",
-                        "Your team's success hinges on these acquisitions.",
-                      ]
-                    : currentSceneId === "sniper"
-                    ? [
-                        "Precision from distance demonstrates mechanical finesse.",
-                        "Range advantage: a fundamental combat principle.",
-                        "Your long-range eliminations have been noted.",
-                      ]
-                    : currentSceneId === "fancy_feet"
-                    ? [
-                        "Spatial repositioning: critical for survival.",
-                        "Your movement data reveals defensive priorities.",
-                        "Those who move well, live longer.",
-                      ]
-                    : currentSceneId === "path_forward"
-                    ? [
-                        "All data converges to this conclusion.",
-                        "Improvement requires deliberate, focused action.",
-                        "Your path forward is clear. Will you follow it?",
-                      ]
-                    : [
-                        narration.opening,
-                        narration.analysis,
-                        narration.actionable,
-                      ]
-                }
+                text={[
+                  narration.opening,
+                  narration.analysis,
+                  narration.actionable,
+                ]}
                 typingSpeed={35}
                 className="max-w-md"
                 onAdvance={playDialogueClickSound}
