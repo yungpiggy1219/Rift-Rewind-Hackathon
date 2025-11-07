@@ -7,6 +7,7 @@ export type SceneId =
   | "damage_taken"
   | "total_healed"
   | "gold_share"
+  | "cs"
   | "growth_over_time"
   | "vision_score"
   // | "peak_performance" 
@@ -19,8 +20,6 @@ export type SceneId =
   | "sniper"
   | "fancy_feet"
   | "path_forward"; 
-  // | "social_comparison" 
-  // | "legacy"
 
 export interface SceneMetric {
   label: string;
@@ -45,7 +44,7 @@ export interface ScenePayload {
 }
 
 // Agent Types
-export type AgentId = "velkoz" | "teemo" | "heimer" | "kayle" | "draven";
+export type AgentId = "velkoz" | "teemo" | "heimer";
 
 export interface AgentPersona {
   id: AgentId;
@@ -110,6 +109,9 @@ export interface MatchParticipant {
   wardsPlaced?: number;
   wardsKilled?: number;
   visionWardsBoughtInGame?: number;
+  // CS data
+  totalMinionsKilled?: number;
+  neutralMinionsKilled?: number;
   // Timeline data
   timeSpentDead?: number;
   longestTimeSpentLiving?: number;

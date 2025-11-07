@@ -24,6 +24,81 @@ const fetcher = async (url: string, options?: RequestInit) => {
   return response.json();
 };
 
+// Component to display best friend's profile with stats
+function BestFriendProfile({ puuid, stats, recentGames }: { puuid: string; stats: any; recentGames: any }) {
+  const { data: profileData, error: profileError } = useSWR(
+    `/api/profile/${puuid}`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const { data: rankedData } = useSWR(
+    puuid ? `/api/ranked/${puuid}` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  if (profileError) {
+    return (
+      <div className="max-w-2xl mx-auto text-center p-8">
+        <p className="text-gray-400">Unable to load profile</p>
+      </div>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <div className="max-w-2xl mx-auto text-center p-8">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-500" />
+        <p className="text-gray-400 mt-2">Loading profile...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <SummonerCard
+        profile={profileData}
+        playerName={profileData?.name}
+        tagLine={profileData?.tagLine}
+        rankedInfo={rankedData}
+        containerClassName="relative"
+        showMenuButton={false}
+      />
+      
+      {/* Stats Grid Below Card */}
+      <div className="mt-6 grid grid-cols-2 gap-4">
+        {stats?.map((stat: any, index: number) => (
+          <div key={index} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+            <p className="text-sm text-gray-400 mb-1">{stat.label}</p>
+            <p className="text-2xl font-bold" style={{ color: stat.color || '#fff' }}>
+              {stat.value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Recent Games Section */}
+      {recentGames && recentGames.length > 0 && (
+        <div className="mt-6 bg-gray-800/30 rounded-lg p-4 border border-gray-700/50">
+          <h3 className="text-lg font-semibold text-white mb-3">Recent Games Together</h3>
+          <div className="space-y-2">
+            {recentGames.map((game: any, index: number) => (
+              <div key={index} className="flex items-center justify-between text-sm bg-black/20 rounded px-3 py-2">
+                <span className="text-gray-300">{game.championName}</span>
+                <span className="text-gray-500">{game.date}</span>
+                <span className={game.won ? 'text-green-400 font-semibold' : 'text-red-400 font-semibold'}>
+                  {game.won ? 'Victory' : 'Defeat'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -611,6 +686,30 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       </div>
                     )}
                   </>
+                ) : currentSceneId === 'cs' ? (
+                  <>
+                    <div className="mb-6" key={currentSceneId}>
+                      <ProgressiveText
+                        key={`${currentSceneId}-${currentSceneIndex}`}
+                        segments={[
+                          `${(sceneData?.insight?.vizData?.stats?.totalCS || 0).toLocaleString()} total creeps slain.`,
+                          `Average CS per minute: ${sceneData?.insight?.vizData?.stats?.avgCSPerMin || 0}.`,
+                          `Your best performance: ${sceneData?.insight?.vizData?.bestCSGame?.cs || 0} CS on ${sceneData?.insight?.vizData?.bestCSGame?.championName || 'Unknown'}.`,
+                          `Every minion matters. Gold is power.`
+                        ]}
+                        typingSpeed={40}
+                        onComplete={() => {
+                          setContentComplete(true);
+                          setShowHeatmap(true);
+                        }}
+                      />
+                    </div>
+                    {showHeatmap && (
+                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        <Viz kind="line" data={sceneData?.insight?.vizData} />
+                      </div>
+                    )}
+                  </>
                 ) : currentSceneId === 'signature_position' ? (
                   <>
                     <div className="mb-6" key={currentSceneId}>
@@ -927,8 +1026,16 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       />
                     </div>
                     {showHeatmap && (
-                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
-                        <Viz kind="badge" data={sceneData?.insight?.vizData} />
+                      <div className="flex-1 overflow-auto pb-6" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        {sceneData?.insight?.vizData?.puuid ? (
+                          <BestFriendProfile 
+                            puuid={sceneData.insight.vizData.puuid as string}
+                            stats={sceneData?.insight?.vizData?.stats}
+                            recentGames={sceneData?.insight?.vizData?.recentGames}
+                          />
+                        ) : (
+                          <Viz kind="badge" data={sceneData?.insight?.vizData} />
+                        )}
                       </div>
                     )}
                   </>

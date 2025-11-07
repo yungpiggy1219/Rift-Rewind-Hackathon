@@ -200,6 +200,7 @@ export async function computeAllies(ctx: { puuid: string; matchIds: string[] }):
       title: bestAlly.riotIdGameName,
       subtitle: relationshipLevel,
       icon: relationshipEmoji,
+      puuid: bestAlly.puuid, // Add puuid for SummonerCard
       stats: [
         {
           label: 'Games Together',

@@ -17,6 +17,7 @@ import { computeDragonSlayer } from "./compute/computeDragonSlayer";
 import { computeSniper } from "./compute/computeSniper";
 import { computeFancyFeet } from "./compute/computeFancyFeet";
 import { computePathForward } from "./compute/computePathForward";
+import { computeCS } from "./compute/computeCS";
 
 export interface SceneDefinition {
   label: string;
@@ -128,37 +129,33 @@ export const sceneRegistry: Record<SceneId, SceneDefinition> = {
     compute: computePathForward,
     vizKind: "highlight",
   },
-  /*
-  peak_performance: {
-    label: "Peak Performance",
-    compute: computePeak,
-    vizKind: "highlight"
+
+  farmer: {
+    label: "Farmer",
+    compute: computeCS,
+    vizKind: "line",
   },
-  legacy: {
-    label: "Your Legacy",
-    compute: async () => ({ sceneId: "legacy", vizKind: "timeline", insight: { summary: "Coming soon", details: [], action: "", metrics: [], vizData: {} } }),
-    vizKind: "timeline"
-  } */
 };
 
 export const SCENE_ORDER: SceneId[] = [
   "year_in_motion",
+  "growth_over_time",
+  "ranked_stats",
   "signature_champion",
+  "signature_position",
   "damage_share",
   "damage_taken",
   "total_healed",
+  "farmer",
   "gold_share",
-  "signature_position",
-  "growth_over_time",
   "vision_score",
-  "weaknesses",
-  "best_friend",
-  "aram",
-  "ranked_stats",
-  "killing_spree",
   "dragon_slayer",
   "sniper",
   "fancy_feet",
+  "killing_spree",
+  "best_friend",
+  "weaknesses",
+  "aram",
   "path_forward",
 ];
 

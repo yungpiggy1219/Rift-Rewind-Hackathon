@@ -71,11 +71,17 @@ export default function Viz({ kind, data }: VizProps) {
                 tick={{ fontSize: 11 }}
                 label={{ value: 'Month', position: 'insideBottom', offset: -5, fill: '#9CA3AF' }}
               />
-              {/* Left Y-axis for Damage */}
+              {/* Left Y-axis for primary metric */}
               <YAxis 
                 yAxisId="left"
-                stroke="#EF4444"
-                label={{ value: 'Damage to Champions', angle: -90, position: 'insideLeft', fill: '#EF4444', fontSize: 11 }}
+                stroke={data.type === 'cs_statistics' ? '#10B981' : '#EF4444'}
+                label={{ 
+                  value: data.type === 'cs_statistics' ? 'CS Per Minute' : 'Damage to Champions', 
+                  angle: -90, 
+                  position: 'insideLeft', 
+                  fill: data.type === 'cs_statistics' ? '#10B981' : '#EF4444', 
+                  fontSize: 11 
+                }}
               />
               {/* Right Y-axis for GPM */}
               <YAxis 
@@ -101,6 +107,9 @@ export default function Viz({ kind, data }: VizProps) {
                   if (data.type === 'gold_statistics') {
                     return [`${value} GPM`, 'Gold Per Minute'];
                   }
+                  if (data.type === 'cs_statistics') {
+                    return [`${value} CS/min`, 'CS Per Minute'];
+                  }
                   if (name === 'Win Rate %') {
                     return [`${value}%`, name];
                   }
@@ -124,11 +133,12 @@ export default function Viz({ kind, data }: VizProps) {
               {data.chartData ? (
                 <Line 
                   type="monotone" 
-                  dataKey="goldPerMinute"
-                  stroke="#F59E0B"
+                  dataKey={data.type === 'cs_statistics' ? 'csPerMinute' : 'goldPerMinute'}
+                  stroke={data.type === 'cs_statistics' ? '#10B981' : '#F59E0B'}
                   strokeWidth={2}
-                  dot={{ fill: '#F59E0B' }}
+                  dot={{ fill: data.type === 'cs_statistics' ? '#10B981' : '#F59E0B' }}
                   yAxisId="left"
+                  name={data.type === 'cs_statistics' ? 'CS Per Minute' : 'Gold Per Minute'}
                 />
               ) : (
                 data.series?.map((series: any) => {
