@@ -155,6 +155,13 @@ export async function computeDamageTaken(ctx: { puuid: string; matchIds: string[
             kda: `${maxDamageTakenMatch.kills}/${maxDamageTakenMatch.deaths}/${maxDamageTakenMatch.assists}`,
             result: maxDamageTakenMatch.win ? 'Victory' : 'Defeat'
           },
+          // Stats for display
+          stats: {
+            totalDamageTaken: totalDamageTaken,
+            avgDamageTaken: avgDamageTaken,
+            highestDamageTaken: maxDamageTakenMatch.damageTaken,
+            tankLevel: tankLevel
+          },
           // Bar chart data comparing to benchmarks
           categories: ["Your Average", "Tank Benchmark", "Fighter Benchmark", "Assassin Benchmark"],
           values: [
@@ -191,6 +198,12 @@ export async function computeDamageTaken(ctx: { puuid: string; matchIds: string[
         ],
         vizData: {
           type: "damage_taken_statistics",
+          stats: {
+            totalDamageTaken: 0,
+            avgDamageTaken: 0,
+            highestDamageTaken: 0,
+            tankLevel: 'N/A'
+          },
           categories: [],
           values: [],
           colors: []

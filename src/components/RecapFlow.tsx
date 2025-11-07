@@ -439,7 +439,7 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                         segments={[
                           `${Math.round((sceneData?.insight?.vizData?.totalDamageTaken || 0) / 1000)}K total damage absorbed.`,
                           `You tanked ${(sceneData?.insight?.vizData?.avgDamageTaken || 0).toLocaleString()} damage per game on average.`,
-                          `${sceneData?.insight?.vizData?.tankPercentage || 0}% of your team's damage taken.`
+                          `Your best match absorbed ${Math.round((sceneData?.insight?.vizData?.maxDamageTakenMatch?.damageTaken || 0) / 1000)}K damage taken with ${sceneData?.insight?.vizData?.maxDamageTakenMatch?.championName || 'Unknown'}.`
                         ]}
                         typingSpeed={40}
                         onComplete={() => {
@@ -449,8 +449,61 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       />
                     </div>
                     {showHeatmap && (
-                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
-                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      <div className="flex-1 overflow-auto flex items-center justify-center" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        {/* Champion Card - Highest Damage Taken Game */}
+                        <div className="max-w-4xl w-full">
+                          <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 border border-purple-700/50 rounded-xl p-6">
+                            <div className="flex gap-8 items-center">
+                              {/* Champion Loading Screen Image - Left */}
+                              <div className="flex-shrink-0">
+                                <img 
+                                  src={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${sceneData?.insight?.vizData?.maxDamageTakenMatch?.championName || 'Aatrox'}_0.jpg`}
+                                  alt={sceneData?.insight?.vizData?.maxDamageTakenMatch?.championName || 'Champion'}
+                                  className="w-64 h-auto rounded-lg border-2 border-purple-500/50 shadow-2xl"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/images/champions/purepng.com-classic-ahri-splashartahrilolleague-of-legendsrender-331521944371xxthp.png';
+                                  }}
+                                />
+                              </div>
+                              
+                              {/* Stats Column - Right */}
+                              <div className="flex-1 flex flex-col gap-4">
+                                <div>
+                                  <h3 className="text-3xl font-bold text-white">{sceneData?.insight?.vizData?.maxDamageTakenMatch?.championName || 'Unknown'}</h3>
+                                  <p className="text-sm text-gray-400 mt-1">Highest Damage Taken Game</p>
+                                </div>
+                                
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Total Damage Taken</span>
+                                  <span className="text-2xl font-bold text-white">{Math.round((sceneData?.insight?.vizData?.stats?.totalDamageTaken || 0) / 1000)}K</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Avg Damage Taken</span>
+                                  <span className="text-2xl font-bold text-purple-400">{(sceneData?.insight?.vizData?.stats?.avgDamageTaken || 0).toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Highest Damage Taken</span>
+                                  <span className="text-2xl font-bold text-blue-400">{Math.round((sceneData?.insight?.vizData?.stats?.highestDamageTaken || 0) / 1000)}K</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Tank Level</span>
+                                  <span className="text-2xl font-bold text-cyan-400">{sceneData?.insight?.vizData?.stats?.tankLevel || 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">KDA in Peak Game</span>
+                                  <span className="text-2xl font-bold text-yellow-400">{sceneData?.insight?.vizData?.maxDamageTakenMatch?.kda || '0/0/0'}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Result</span>
+                                  <span className={`text-2xl font-bold ${sceneData?.insight?.vizData?.maxDamageTakenMatch?.result === 'Victory' ? 'text-green-400' : 'text-red-400'}`}>
+                                    {sceneData?.insight?.vizData?.maxDamageTakenMatch?.result || 'Unknown'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>
@@ -460,9 +513,9 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       <ProgressiveText
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
-                          `${Math.round((sceneData?.insight?.vizData?.totalHealing || 0) / 1000)}K total healing provided.`,
-                          `Average of ${(sceneData?.insight?.vizData?.avgHealing || 0).toLocaleString()} healing per game.`,
-                          `Life saved, data recorded.`
+                          `${Math.round((sceneData?.insight?.vizData?.totalHeal || 0) / 1000)}K total healing.`,
+                          `Average of ${(sceneData?.insight?.vizData?.averages?.avgHeal || 0).toLocaleString()} healing per game.`,
+                          `Your best match healed ${Math.round((sceneData?.insight?.vizData?.maxHealMatch?.healing || 0) / 1000)}K with ${sceneData?.insight?.vizData?.maxHealMatch?.championName || 'Unknown'}.`
                         ]}
                         typingSpeed={40}
                         onComplete={() => {
@@ -472,8 +525,65 @@ export default function RecapFlow({ puuid, agentId, playerName }: RecapFlowProps
                       />
                     </div>
                     {showHeatmap && (
-                      <div className="flex-1 overflow-auto" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
-                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                      <div className="flex-1 overflow-auto flex items-center justify-center" style={{ animation: 'slideInFromBottom 0.6s ease-out forwards', opacity: 0 }}>
+                        {/* Champion Card - Highest Healing Game */}
+                        <div className="max-w-4xl w-full">
+                          <div className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 border border-green-700/50 rounded-xl p-6">
+                            <div className="flex gap-8 items-center">
+                              {/* Champion Loading Screen Image - Left */}
+                              <div className="flex-shrink-0">
+                                <img 
+                                  src={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${sceneData?.insight?.vizData?.maxHealMatch?.championName || 'Soraka'}_0.jpg`}
+                                  alt={sceneData?.insight?.vizData?.maxHealMatch?.championName || 'Champion'}
+                                  className="w-64 h-auto rounded-lg border-2 border-green-500/50 shadow-2xl"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/images/champions/purepng.com-classic-ahri-splashartahrilolleague-of-legendsrender-331521944371xxthp.png';
+                                  }}
+                                />
+                              </div>
+                              
+                              {/* Stats Column - Right */}
+                              <div className="flex-1 flex flex-col gap-4">
+                                <div>
+                                  <h3 className="text-3xl font-bold text-white">{sceneData?.insight?.vizData?.maxHealMatch?.championName || 'Unknown'}</h3>
+                                  <p className="text-sm text-gray-400 mt-1">Highest Healing Game</p>
+                                </div>
+                                
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Total Healing</span>
+                                  <span className="text-2xl font-bold text-white">{Math.round((sceneData?.insight?.vizData?.stats?.totalHealing || 0) / 1000)}K</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Avg Healing</span>
+                                  <span className="text-2xl font-bold text-green-400">{(sceneData?.insight?.vizData?.stats?.avgHealing || 0).toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Teammate Healing</span>
+                                  <span className="text-2xl font-bold text-emerald-400">{Math.round((sceneData?.insight?.vizData?.stats?.teammateHealing || 0) / 1000)}K</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Highest Healing Game</span>
+                                  <span className="text-2xl font-bold text-lime-400">{Math.round((sceneData?.insight?.vizData?.stats?.highestHealing || 0) / 1000)}K</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Healing Role</span>
+                                  <span className="text-2xl font-bold text-cyan-400">{sceneData?.insight?.vizData?.stats?.healingRole || 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">KDA in Peak Game</span>
+                                  <span className="text-2xl font-bold text-yellow-400">{sceneData?.insight?.vizData?.maxHealMatch?.kda || '0/0/0'}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
+                                  <span className="text-sm text-gray-300">Result</span>
+                                  <span className={`text-2xl font-bold ${sceneData?.insight?.vizData?.maxHealMatch?.result === 'Victory' ? 'text-green-400' : 'text-red-400'}`}>
+                                    {sceneData?.insight?.vizData?.maxHealMatch?.result || 'Unknown'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>

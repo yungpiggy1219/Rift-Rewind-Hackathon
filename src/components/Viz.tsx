@@ -117,30 +117,30 @@ export default function Viz({ kind, data }: VizProps) {
       // Handle different bar chart data formats
       let barChartData;
       
-      if (data.type === 'weakness_stats' && data.bars) {
+      if ((data as any)?.type === 'weakness_stats' && (data as any)?.bars) {
         // Weakness stats format with bars array containing label, value, color
-        barChartData = data.bars.map((bar: any) => ({
+        barChartData = (data as any).bars.map((bar: any) => ({
           category: bar.label,
           value: bar.value
         }));
-      } else if (data.type === 'killing_spree_stats' && data.bars) {
+      } else if ((data as any)?.type === 'killing_spree_stats' && (data as any)?.bars) {
         // Killing spree stats format with bars array
-        barChartData = data.bars.map((bar: any) => ({
+        barChartData = (data as any).bars.map((bar: any) => ({
           category: bar.label,
           value: bar.value
         }));
-      } else if (data.type === 'damage_statistics' || data.type === 'damage_taken_statistics' || data.type === 'healing_statistics' || data.type === 'vision_statistics') {
+      } else if ((data as any)?.type === 'damage_statistics' || (data as any)?.type === 'damage_taken_statistics' || (data as any)?.type === 'healing_statistics' || (data as any)?.type === 'vision_statistics') {
         // New damage/healing/vision stats format with categories and values arrays
-        barChartData = data.categories?.map((cat: string, i: number) => ({
+        barChartData = (data as any)?.categories?.map((cat: string, i: number) => ({
           category: cat,
-          value: data.values?.[i] || 0
+          value: (data as any)?.values?.[i] || 0
         })) || [];
       } else {
         // Legacy format with scores and benchmarks
-        barChartData = data.categories?.map((cat: string, i: number) => ({
+        barChartData = (data as any)?.categories?.map((cat: string, i: number) => ({
           category: cat,
-          score: data.scores?.[i] || 0,
-          benchmark: data.benchmarks?.[i] || 0
+          score: (data as any)?.scores?.[i] || 0,
+          benchmark: (data as any)?.benchmarks?.[i] || 0
         })) || [];
       }
       

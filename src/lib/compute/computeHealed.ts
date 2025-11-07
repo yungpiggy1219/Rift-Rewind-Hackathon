@@ -178,6 +178,14 @@ export async function computeHealed(ctx: { puuid: string; matchIds: string[] }):
             result: maxHealMatch.win ? 'Victory' : 'Defeat',
             healsOnTeammates: maxHealMatch.healsOnTeammates
           },
+          // Stats for display
+          stats: {
+            totalHealing: totalHeal,
+            avgHealing: avgHeal,
+            teammateHealing: totalHealsOnTeammates,
+            highestHealing: maxHealMatch.healing,
+            healingRole: healingRole
+          },
           // Bar chart data comparing healing types
           categories: ["Self Healing", "Teammate Healing"],
           values: [
@@ -212,6 +220,13 @@ export async function computeHealed(ctx: { puuid: string; matchIds: string[] }):
         ],
         vizData: {
           type: "healing_statistics",
+          stats: {
+            totalHealing: 0,
+            avgHealing: 0,
+            teammateHealing: 0,
+            highestHealing: 0,
+            healingRole: 'N/A'
+          },
           categories: [],
           values: [],
           colors: []
