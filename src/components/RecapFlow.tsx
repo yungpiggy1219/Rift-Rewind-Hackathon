@@ -138,6 +138,7 @@ export default function RecapFlow({
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null); // Track selected question
   const [aiAnswer, setAiAnswer] = useState<string | null>(null); // Track AI answer
   const [isLoadingAnswer, setIsLoadingAnswer] = useState(false); // Track loading state for answer
+  const [followUpDialogue, setFollowUpDialogue] = useState<string | null>(null); // Track follow-up dialogue after Q&A
   const [particles] = useState(() =>
     Array.from({ length: 15 }, () => ({
       left: Math.random() * 100,
@@ -298,6 +299,7 @@ export default function RecapFlow({
       setShowQuestions(false);
       setSelectedQuestion(null);
       setAiAnswer(null);
+      setFollowUpDialogue(null);
     } else {
       // On last scene, "Back to Menu" button - play baron recall sound fully
       if (baronRecallSfxRef.current) {
@@ -338,6 +340,7 @@ export default function RecapFlow({
       setShowQuestions(false);
       setSelectedQuestion(null);
       setAiAnswer(null);
+      setFollowUpDialogue(null);
     }
   };
 
@@ -392,6 +395,8 @@ export default function RecapFlow({
   const handleBackToQuestions = () => {
     setSelectedQuestion(null);
     setAiAnswer(null);
+    // Set Vel'Koz follow-up dialogue
+    setFollowUpDialogue("Fascinating... Anything else you wish to know about this data?");
   };
 
   // Calculate tilt values based on mouse position
@@ -2613,7 +2618,7 @@ export default function RecapFlow({
           <img
             src="/images/ai-agents/velkoz.png"
             alt="Vel'Koz"
-            className="h-[50vh] w-auto object-contain drop-shadow-2xl pointer-events-none"
+            className="h-[60vh] w-auto object-contain drop-shadow-2xl pointer-events-none"
           />
 
           {/* Dialogue Bubble - Show AI-generated narration after content complete */}
@@ -2623,7 +2628,9 @@ export default function RecapFlow({
               {!selectedQuestion && (
                 <DialogueBubble
                   text={
-                    currentSceneIndex === 0
+                    followUpDialogue
+                      ? followUpDialogue
+                      : currentSceneIndex === 0
                       ? [narration.opening, narration.analysis, narration.actionable]
                       : [narration.analysis, narration.actionable]
                   }

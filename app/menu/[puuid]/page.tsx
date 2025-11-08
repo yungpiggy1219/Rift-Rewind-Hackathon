@@ -563,7 +563,7 @@ export default function HomePage() {
           />
           
           {/* Dialogue Bubble */}
-          <div className="absolute top-8 right-60">
+          <div className="absolute top-8 right-120">
             <DialogueBubble 
               text={velkozNarration}
               typingSpeed={40}

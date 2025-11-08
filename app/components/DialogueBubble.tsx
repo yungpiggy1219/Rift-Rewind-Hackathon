@@ -109,19 +109,24 @@ export default function DialogueBubble({
   return (
     <div 
       onClick={handleAdvance}
-      className={`bg-purple-600/95 backdrop-blur-sm text-white text-sm px-8 py-6 rounded-m border border-purple-400/50 font-medium shadow-2xl max-w-s relative cursor-pointer hover:bg-purple-500/95 transition-colors ${className}`}
+      className={`backdrop-blur-sm text-gray-900 text-sm px-8 py-6 rounded-m border border-amber-600/50 font-medium shadow-2xl relative cursor-pointer hover:brightness-95 transition-all ${className}`}
       style={{
-        animation: isTyping ? 'none' : 'subtle-float 3s ease-in-out infinite'
+        animation: isTyping ? 'none' : 'subtle-float 3s ease-in-out infinite',
+        backgroundColor: '#F6E2C2',
+        maxWidth: '600px'
       }}
     >
       {/* Speech bubble tail */}
-      <div className="absolute -bottom-2 left-8 w-4 h-4 bg-purple-600/95 border-b border-r border-purple-400/50 transform rotate-45"></div>
+      <div 
+        className="absolute -bottom-2 left-8 w-4 h-4 border-b border-r border-amber-600/50 transform rotate-45"
+        style={{ backgroundColor: '#F6E2C2' }}
+      ></div>
       
       {/* Text content with fallback */}
       <p className="relative z-10 leading-relaxed font-friz text-base">
         {safeDisplayText}
         {isTyping && (
-          <span className="inline-block w-1 h-4 bg-white ml-1 animate-pulse"></span>
+          <span className="inline-block w-1 h-4 bg-black ml-1 animate-pulse"></span>
         )}
       </p>
 
@@ -138,7 +143,7 @@ export default function DialogueBubble({
       {!isTyping && hasMoreMessages && (
         <div className="absolute bottom-2 right-2 z-20">
           <svg 
-            className="w-3 h-3 text-white animate-bounce" 
+            className="w-3 h-3 text-black animate-bounce" 
             viewBox="0 0 20 20" 
             fill="currentColor"
           >
