@@ -140,6 +140,7 @@ export default function RecapFlow({
   const [isLoadingAnswer, setIsLoadingAnswer] = useState(false); // Track loading state for answer
   const [followUpDialogue, setFollowUpDialogue] = useState<string | null>(null); // Track follow-up dialogue after Q&A
   const [fadeIn, setFadeIn] = useState(false); // Track fade-in animation
+  const [isSceneTransitioning, setIsSceneTransitioning] = useState(false); // Track scene fade transition
   const [particles] = useState(() =>
     Array.from({ length: 15 }, () => ({
       left: Math.random() * 100,
@@ -335,15 +336,22 @@ export default function RecapFlow({
         });
       }
 
-      setCurrentSceneIndex(currentSceneIndex + 1);
-      // Reset state for next scene
-      setContentComplete(false);
-      setShowHeatmap(false);
-      setDialogueComplete(false);
-      setShowQuestions(false);
-      setSelectedQuestion(null);
-      setAiAnswer(null);
-      setFollowUpDialogue(null);
+      // Start fade transition
+      setIsSceneTransitioning(true);
+      
+      // After fade out completes, change scene
+      setTimeout(() => {
+        setCurrentSceneIndex(currentSceneIndex + 1);
+        // Reset state for next scene
+        setContentComplete(false);
+        setShowHeatmap(false);
+        setDialogueComplete(false);
+        setShowQuestions(false);
+        setSelectedQuestion(null);
+        setAiAnswer(null);
+        setFollowUpDialogue(null);
+        setIsSceneTransitioning(false); // Fade back in
+      }, 500);
     } else {
       // On last scene, "Back to Menu" button - play baron recall sound fully
       if (baronRecallSfxRef.current) {
@@ -376,15 +384,22 @@ export default function RecapFlow({
 
   const goToPrevious = () => {
     if (currentSceneIndex > 0) {
-      setCurrentSceneIndex(currentSceneIndex - 1);
-      // Reset state for previous scene
-      setContentComplete(false);
-      setShowHeatmap(false);
-      setDialogueComplete(false);
-      setShowQuestions(false);
-      setSelectedQuestion(null);
-      setAiAnswer(null);
-      setFollowUpDialogue(null);
+      // Start fade transition
+      setIsSceneTransitioning(true);
+      
+      // After fade out completes, change scene
+      setTimeout(() => {
+        setCurrentSceneIndex(currentSceneIndex - 1);
+        // Reset state for previous scene
+        setContentComplete(false);
+        setShowHeatmap(false);
+        setDialogueComplete(false);
+        setShowQuestions(false);
+        setSelectedQuestion(null);
+        setAiAnswer(null);
+        setFollowUpDialogue(null);
+        setIsSceneTransitioning(false); // Fade back in
+      }, 500);
     }
   };
 
@@ -513,6 +528,15 @@ export default function RecapFlow({
         }}
       />
       
+      {/* Scene Fade Transition Overlay */}
+      <div 
+        className="absolute inset-0 bg-black z-45 pointer-events-none"
+        style={{
+          opacity: isSceneTransitioning ? 1 : 0,
+          transition: 'opacity 0.5s ease-in-out',
+        }}
+      />
+      
       {/* Background Image with Tilt Effect */}
       <div
         className="absolute inset-0 w-full h-full"
@@ -538,7 +562,7 @@ export default function RecapFlow({
         <div className="h-20 flex-shrink-0"></div>
 
         {/* Scene Content - Takes remaining space */}
-        <div className="flex-1 flex items-center justify-center px-4 overflow-hidden">
+        <div className="flex-1 flex items-center justify-center px-4 overflow-hidden relative">
           {isLoading ? (
             <div 
               className="text-center bg-black/40 backdrop-blur-lg rounded-2xl p-6 border-4"
@@ -2770,9 +2794,9 @@ export default function RecapFlow({
         <button
           onClick={goToPrevious}
           disabled={currentSceneIndex === 0}
-          className="flex items-center gap-2 px-4 py-2 bg-black/40 hover:bg-black/60 disabled:bg-black/20 disabled:text-gray-500 backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
+          className="flex items-center gap-2 px-6 py-3 bg-black/40 hover:bg-black/60 disabled:bg-black/20 disabled:text-gray-500 backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-lg font-friz"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-5 h-5" />
           <span className="hidden sm:inline">Previous</span>
         </button>
       </div>
@@ -2782,18 +2806,18 @@ export default function RecapFlow({
         <button
           onClick={goToNext}
           disabled={!dialogueComplete}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-700/80 hover:to-pink-700/80 disabled:from-gray-600/80 disabled:to-gray-700/80 disabled:cursor-not-allowed backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
+          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-700/80 hover:to-pink-700/80 disabled:from-gray-600/80 disabled:to-gray-700/80 disabled:cursor-not-allowed backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-lg font-friz"
         >
           <span className="hidden sm:inline">
             {currentSceneIndex === SCENE_ORDER.length - 1
               ? "Back to Menu"
               : "Next"}
           </span>
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Scene Counter - Bottom Center */}
+      {/* Scene Counter - Bottom Center - REMOVE LATER */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
         <div className="bg-black/40 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
           <div className="text-center">
