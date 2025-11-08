@@ -4,38 +4,113 @@ import * as cache from './cache';
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
 const RIOT_REGION = process.env.RIOT_REGION || 'americas';
 
-async function riotRequest(path: string, region: string = RIOT_REGION): Promise<unknown> {
+// Rate limiting: 20 requests per second, 100 requests per 2 minutes
+const RATE_LIMIT_PER_SECOND = 20;
+const RATE_LIMIT_PER_2_MINUTES = 100;
+const REQUEST_INTERVAL_MS = 1000 / RATE_LIMIT_PER_SECOND; // ~50ms between requests
+
+// Track request timestamps for rate limiting
+let requestTimestamps: number[] = [];
+
+// Helper function to enforce rate limiting
+async function enforceRateLimit(): Promise<void> {
+  const now = Date.now();
+
+  // Remove timestamps older than 2 minutes
+  requestTimestamps = requestTimestamps.filter(ts => now - ts < 120000);
+
+  // Check 2-minute limit
+  if (requestTimestamps.length >= RATE_LIMIT_PER_2_MINUTES) {
+    const oldestRequest = Math.min(...requestTimestamps);
+    const waitTime = 120000 - (now - oldestRequest);
+    if (waitTime > 0) {
+      console.log(`[riotRequest] Rate limit: waiting ${waitTime}ms for 2-minute window`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      return enforceRateLimit(); // Recheck after waiting
+    }
+  }
+
+  // Check per-second limit
+  const recentRequests = requestTimestamps.filter(ts => now - ts < 1000);
+  if (recentRequests.length >= RATE_LIMIT_PER_SECOND) {
+    const waitTime = REQUEST_INTERVAL_MS;
+    console.log(`[riotRequest] Rate limit: waiting ${waitTime}ms for per-second limit`);
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+
+  requestTimestamps.push(now);
+}
+
+async function riotRequest(path: string, region: string = RIOT_REGION, retryCount: number = 0): Promise<unknown> {
   if (!RIOT_API_KEY) {
     throw new Error('RIOT_API_KEY is required but not provided');
   }
 
-  const url = `https://${region}.api.riotgames.com${path}`;
-  
-  try {
-    console.log(`[riotRequest] Fetching: ${url}`);
-    const response = await fetch(url, {
-      headers: {
-        'X-Riot-Token': RIOT_API_KEY
-      }
-    });
+  const maxRetries = 3;
+  const baseDelay = 1000; // 1 second
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error(`[riotRequest] API error:`, {
-        url,
-        status: response.status,
-        statusText: response.statusText,
-        body: errorBody
+  try {
+    await enforceRateLimit();
+
+    const url = `https://${region}.api.riotgames.com${path}`;
+
+    try {
+      console.log(`[riotRequest] Fetching: ${url} (attempt ${retryCount + 1})`);
+      const response = await fetch(url, {
+        headers: {
+          'X-Riot-Token': RIOT_API_KEY
+        },
+        // Add timeout to prevent hanging requests
+        signal: AbortSignal.timeout(30000) // 30 second timeout
       });
-      throw new Error(`Riot API error: ${response.status} ${response.statusText} - ${errorBody}`);
+
+      if (response.status === 429) {
+        // Rate limit exceeded
+        const retryAfter = response.headers.get('Retry-After');
+        const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : Math.pow(2, retryCount) * baseDelay;
+
+        if (retryCount < maxRetries) {
+          console.log(`[riotRequest] Rate limited, retrying in ${waitTime}ms (attempt ${retryCount + 1}/${maxRetries + 1})`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          return riotRequest(path, region, retryCount + 1);
+        } else {
+          throw new Error(`Rate limit exceeded after ${maxRetries} retries`);
+        }
+      }
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error(`[riotRequest] API error:`, {
+          url,
+          status: response.status,
+          statusText: response.statusText,
+          body: errorBody
+        });
+        throw new Error(`Riot API error: ${response.status} ${response.statusText} - ${errorBody}`);
+      }
+
+      const data = await response.json();
+      console.log(`[riotRequest] Success: ${url}`);
+      return data;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        if (retryCount < maxRetries) {
+          const waitTime = Math.pow(2, retryCount) * baseDelay;
+          console.log(`[riotRequest] Request timeout, retrying in ${waitTime}ms (attempt ${retryCount + 1}/${maxRetries + 1})`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          return riotRequest(path, region, retryCount + 1);
+        }
+      }
+
+      console.error(`[riotRequest] Request failed after ${retryCount + 1} attempts:`, {
+        url,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
     }
-    
-    const data = await response.json();
-    console.log(`[riotRequest] Success: ${url}`);
-    return data;
   } catch (error) {
     console.error(`[riotRequest] Request failed:`, {
-      url,
+      url: `https://${region}.api.riotgames.com${path}`,
       error: error instanceof Error ? error.message : String(error)
     });
     throw error;
@@ -150,7 +225,24 @@ export async function fetchRankedStats(puuid: string, platform?: string): Promis
     
     if (cached) {
       console.log(`[fetchRankedStats] Cache hit for ${puuid}`);
-      return cached as any;
+      return cached as {
+        soloQueue: {
+          tier: string;
+          rank: string;
+          leaguePoints: number;
+          wins: number;
+          losses: number;
+          queueType: string;
+        } | null;
+        flexQueue: {
+          tier: string;
+          rank: string;
+          leaguePoints: number;
+          wins: number;
+          losses: number;
+          queueType: string;
+        } | null;
+      };
     }
     
     // Fetch league entries directly by PUUID
@@ -388,16 +480,42 @@ export async function fetchMatchDetail(matchId: string, targetPuuid?: string): P
 export const fetchMatchDetailFromCache = fetchMatchDetail;
 
 // Stub function for computeAggregates - to be implemented
-export async function computeAggregates(puuid: string): Promise<any> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function computeAggregates(_puuid: string): Promise<{
+  peak: {
+    kills: number;
+    deaths: number;
+    assists: number;
+    gpm: number;
+    championName: string;
+    date: string;
+    matchId: string;
+  };
+  totals: {
+    games: number;
+    wins: number;
+    kills: number;
+    deaths: number;
+    assists: number;
+  };
+  kda: {
+    series: number[];
+  };
+  gpm: {
+    series: number[];
+  };
+}> {
   console.warn('[computeAggregates] This function needs to be implemented');
   // Return dummy data for now to prevent errors
   return {
     peak: {
-      kills: 0,
-      deaths: 0,
-      assists: 0,
-      gpm: 0,
-      championName: 'Unknown'
+      kills: 10,
+      deaths: 2,
+      assists: 15,
+      gpm: 450,
+      championName: 'Unknown',
+      date: new Date().toISOString(),
+      matchId: 'dummy'
     },
     totals: {
       games: 0,
@@ -405,6 +523,12 @@ export async function computeAggregates(puuid: string): Promise<any> {
       kills: 0,
       deaths: 0,
       assists: 0
+    },
+    kda: {
+      series: [2.5, 3.1, 1.8, 4.2, 2.9] // Dummy KDA series
+    },
+    gpm: {
+      series: [380, 420, 350, 480, 410] // Dummy GPM series
     }
   };
 }
