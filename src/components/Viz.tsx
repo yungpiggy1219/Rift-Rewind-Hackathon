@@ -81,14 +81,14 @@ export default function Viz({ kind, data }: VizProps) {
               {/* Left Y-axis for primary metric */}
               <YAxis 
                 yAxisId="left"
-                stroke={data.type === 'cs_statistics' ? '#10B981' : '#EF4444'}
+                stroke={data.type === 'cs_statistics' ? '#10B981' : data.type === 'gold_statistics' ? '#F59E0B' : '#EF4444'}
                 label={{ 
-                  value: data.type === 'cs_statistics' ? 'CS Per Minute' : 'Damage to Champions', 
+                  value: data.type === 'cs_statistics' ? 'CS Per Minute' : data.type === 'gold_statistics' ? 'Gold Per Minute' : 'Damage to Champions', 
                   angle: -90,
                   offset: -1,
                   dy: 30,
                   position: 'insideLeft', 
-                  fill: data.type === 'cs_statistics' ? '#10B981' : '#EF4444', 
+                  fill: data.type === 'cs_statistics' ? '#10B981' : data.type === 'gold_statistics' ? '#F59E0B' : '#EF4444', 
                   fontSize: 11 
                 }}
               />

@@ -939,7 +939,7 @@ export default function RecapFlow({
                         segments={[
                           `${(
                             sceneData?.insight?.vizData?.stats?.totalCS || 0
-                          ).toLocaleString()} total creeps slain.`,
+                          ).toLocaleString()} total minions slain.`,
                           `Average CS per minute: ${
                             sceneData?.insight?.vizData?.stats?.avgCSPerMin || 0
                           }.`,

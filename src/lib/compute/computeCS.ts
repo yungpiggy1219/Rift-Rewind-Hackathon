@@ -171,9 +171,9 @@ export async function computeCS(ctx: { puuid: string; matchIds: string[] }): Pro
     // Build insight summary
     const details: string[] = [
       `Analyzed ${processedMatches} matches for farming performance`,
-      `Total CS: ${totalCS.toLocaleString()} (${avgCS.toFixed(1)} per game)`,
-      `Average CS/min: ${avgCSPerMin.toFixed(2)}`,
-      `Best game: ${bestCSGame.cs} CS (${bestCSGame.csPerMin.toFixed(2)} CS/min) on ${bestCSGame.championName}`,
+      `Total Minions Killed: ${totalCS.toLocaleString()} (${avgCS.toFixed(1)} per game)`,
+      `Average Minions/min: ${avgCSPerMin.toFixed(2)}`,
+      `Best game: ${bestCSGame.cs} minions (${bestCSGame.csPerMin.toFixed(2)} minions/min) on ${bestCSGame.championName}`,
       `Average game duration: ${avgGameDuration.toFixed(1)} minutes`
     ];
     
@@ -181,16 +181,16 @@ export async function computeCS(ctx: { puuid: string; matchIds: string[] }): Pro
     let action = '';
     
     if (avgCSPerMin >= 8) {
-      summary = `Exceptional farming! You average ${avgCSPerMin.toFixed(2)} CS per minute across ${processedMatches} games. Your ${totalCS.toLocaleString()} total CS demonstrates elite-level farming efficiency. You're consistently maximizing your gold income.`;
+      summary = `Exceptional farming! You average ${avgCSPerMin.toFixed(2)} minions per minute across ${processedMatches} games. Your ${totalCS.toLocaleString()} total minions killed demonstrates elite-level farming efficiency. You're consistently maximizing your gold income.`;
       action = 'Maintain your farming discipline while looking for opportunities to translate your gold advantage into map pressure and objectives.';
     } else if (avgCSPerMin >= 6.5) {
-      summary = `Strong farming performance! With ${avgCSPerMin.toFixed(2)} CS per minute and ${totalCS.toLocaleString()} total CS, you're doing well. Your best game hit ${bestCSGame.cs} CS on ${bestCSGame.championName}, showing you know how to farm effectively.`;
-      action = 'Focus on maintaining your CS numbers during mid-game skirmishes and teamfights. Every wave matters!';
+      summary = `Strong farming performance! With ${avgCSPerMin.toFixed(2)} minions per minute and ${totalCS.toLocaleString()} total minions killed, you're doing well. Your best game had ${bestCSGame.cs} minions on ${bestCSGame.championName}, showing you know how to farm effectively.`;
+      action = 'Focus on maintaining your minion count during mid-game skirmishes and teamfights. Every wave matters!';
     } else if (avgCSPerMin >= 5) {
-      summary = `Decent farming with room to grow. Your ${avgCSPerMin.toFixed(2)} CS per minute across ${processedMatches} games is respectable, but you're leaving gold on the table. You've hit ${bestCSGame.cs} CS before, so you have the potential!`;
-      action = 'Work on last-hitting drills in practice tool. Aim to catch side waves and jungle camps between objectives. Target 7+ CS/min.';
+      summary = `Decent farming with room to grow. Your ${avgCSPerMin.toFixed(2)} minions per minute across ${processedMatches} games is respectable, but you're leaving gold on the table. You've hit ${bestCSGame.cs} minions before, so you have the potential!`;
+      action = 'Work on last-hitting drills in practice tool. Aim to catch side waves and jungle camps between objectives. Target 7+ minions/min.';
     } else {
-      summary = `Your farming needs attention. With ${avgCSPerMin.toFixed(2)} CS per minute, you're missing significant gold income. Better CS means more items, more power, and more wins. You've collected ${totalCS.toLocaleString()} CS total, but there's much more available.`;
+      summary = `Your farming needs attention. With ${avgCSPerMin.toFixed(2)} minions per minute, you're missing significant gold income. Better farming means more items, more power, and more wins. You've collected ${totalCS.toLocaleString()} minions total, but there's much more available.`;
       action = 'Priority: Practice last-hitting in practice tool for 10 minutes before each session. Focus on wave management and catching farm between fights. Every minion is gold!';
     }
     
@@ -203,24 +203,24 @@ export async function computeCS(ctx: { puuid: string; matchIds: string[] }): Pro
         action,
         metrics: [
           {
-            label: 'Total CS',
+            label: 'Total Minions Killed',
             value: totalCS.toLocaleString(),
             context: `across ${processedMatches} games`
           },
           {
-            label: 'Average CS/Game',
+            label: 'Average Minions/Game',
             value: avgCS.toFixed(1),
             context: farmingLevel
           },
           {
-            label: 'CS Per Minute',
+            label: 'Minions Per Minute',
             value: avgCSPerMin.toFixed(2),
             context: 'average efficiency'
           },
           {
             label: 'Best Performance',
             value: bestCSGame.cs,
-            context: `${bestCSGame.csPerMin.toFixed(2)} CS/min`
+            context: `${bestCSGame.csPerMin.toFixed(2)} minions/min`
           }
         ],
         vizData
