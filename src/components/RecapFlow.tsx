@@ -145,6 +145,8 @@ export default function RecapFlow({
   const [confetti, setConfetti] = useState<Array<{ id: number; left: number; delay: number; duration: number; animationType: string }>>([]); // Track confetti particles
   const [confettiCounter, setConfettiCounter] = useState(0); // Counter for generating unique confetti IDs
   const [isZoomingOut, setIsZoomingOut] = useState(false); // Track zoom out effect when returning to menu
+  const [zoomPhase, setZoomPhase] = useState<'none' | 'in' | 'out'>('none'); // Track zoom phase: none, in (zooming in), out (zooming out)
+  const [showZoomBackdrop, setShowZoomBackdrop] = useState(false); // Track black backdrop during zoom
   const [particles] = useState(() =>
     Array.from({ length: 15 }, () => ({
       left: Math.random() * 100,
@@ -426,12 +428,21 @@ export default function RecapFlow({
   };
 
   const goBack = () => {
-    setIsZoomingOut(true);
+    // Trigger zoom-in effect
+    setZoomPhase('in');
+    setShowZoomBackdrop(true);
+    
+    // After zoom-in completes, zoom back out and show black backdrop
+    setTimeout(() => {
+      setZoomPhase('out');
+    }, 600);
+    
+    // Navigate after all zoom effects complete
     setTimeout(() => {
       router.push(
         `/menu/${puuid}?name=${encodeURIComponent(playerName || "Summoner")}&tag=`
       );
-    }, 800); // Match the fade-to-black animation duration
+    }, 1200); // Total time for both zoom phases
   };
 
   // Handle question click - fetch AI answer
@@ -570,14 +581,26 @@ export default function RecapFlow({
           backgroundSize: "120%",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          transform: isZoomingOut ? undefined : `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.1)`,
-          transition: isZoomingOut ? undefined : "transform 0.15s ease-out",
+          transform: 
+            zoomPhase === 'in' ? 'scale(1.15)' :
+            zoomPhase === 'out' ? 'scale(1)' :
+            isZoomingOut ? undefined : `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.1)`,
+          transition: zoomPhase !== 'none' ? 'transform 0.6s ease-in-out' : "transform 0.15s ease-out",
           transformOrigin: "center center",
         }}
       />
 
       {/* Background Overlay */}
       <div className="absolute inset-0 bg-black/50 z-10"></div>
+
+      {/* Zoom Backdrop - Black fade overlay during zoom effect */}
+      <div 
+        className="absolute inset-0 bg-black z-40 pointer-events-none"
+        style={{
+          opacity: showZoomBackdrop ? (zoomPhase === 'out' ? 1 : 0.3) : 0,
+          transition: zoomPhase !== 'none' ? 'opacity 0.6s ease-in-out' : 'opacity 0s',
+        }}
+      />
 
       {/* Top Navigation Bar */}
 
@@ -602,13 +625,26 @@ export default function RecapFlow({
               </h3>
             </div>
           ) : sceneData && narration ? (
-            <div className="w-full h-full max-w-5xl mx-auto flex items-center justify-center">
+            <div className="w-full h-full max-w-5xl mx-auto flex items-center justify-center"
+              style={{
+                transform: 
+                  zoomPhase === 'in' ? 'scale(0.85)' :
+                  zoomPhase === 'out' ? 'scale(1)' :
+                  'scale(1)',
+                transition: zoomPhase !== 'none' ? 'transform 0.6s ease-in-out' : 'transform 0s',
+              }}
+            >
               {/* Centered Visualization Panel */}
               <div 
                 className="bg-black/40 backdrop-blur-lg rounded-2xl p-6 border-4 flex flex-col overflow-hidden max-w-3xl w-full max-h-[calc(100vh-200px)]"
                 style={{
                   borderColor: '#785A28',
-                  boxShadow: '0 0 0 1px #9D7B3A, 0 0 10px rgba(120, 90, 40, 0.5)'
+                  boxShadow: '0 0 0 1px #9D7B3A, 0 0 10px rgba(120, 90, 40, 0.5)',
+                  transform: 
+                    zoomPhase === 'in' ? 'scale(1.25)' :
+                    zoomPhase === 'out' ? 'scale(1)' :
+                    'scale(1)',
+                  transition: zoomPhase !== 'none' ? 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'transform 0s',
                 }}
               >
                 {/* Progressive Content for All Scenes */}
@@ -1874,7 +1910,16 @@ export default function RecapFlow({
       </div>
 
       {/* Vel'Koz Character with Dialogue - Bottom Right */}
-      <div className={`absolute bottom-0 right-0 z-25 pointer-events-none ${isZoomingOut ? 'zoom-out-velkoz' : 'velkoz-float'}`}>
+      <div className={`absolute bottom-0 right-0 z-25 pointer-events-none ${isZoomingOut ? 'zoom-out-velkoz' : 'velkoz-float'}`}
+        style={{
+          transform: 
+            zoomPhase === 'in' ? 'scale(0.7) translateX(20%)' :
+            zoomPhase === 'out' ? 'scale(1) translateX(0)' :
+            'scale(1) translateX(0)',
+          transition: zoomPhase !== 'none' ? 'transform 0.6s ease-in-out' : 'transform 0s',
+          transformOrigin: 'bottom right',
+        }}
+      >
         <div
           className="relative"
           style={{ marginBottom: "-10vh", marginRight: "-5vw" }}
@@ -2017,7 +2062,17 @@ export default function RecapFlow({
       )}
 
       {/* Previous Button - Left Center */}
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 z-30">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 z-30"
+        style={{
+          transform: 
+            zoomPhase === 'in' ? 'scale(0.8) translateX(-30%)' :
+            zoomPhase === 'out' ? 'scale(1) translateX(0)' :
+            'scale(1) translateX(0)',
+          transition: zoomPhase !== 'none' ? 'transform 0.6s ease-in-out' : 'transform 0s',
+          transformOrigin: 'left center',
+          opacity: zoomPhase !== 'none' ? 0.5 : 1,
+        }}
+      >
         <button
           onClick={goToPrevious}
           disabled={currentSceneIndex === 0}
@@ -2029,11 +2084,21 @@ export default function RecapFlow({
       </div>
 
       {/* Next/Complete Button - Right Center */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30">
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30"
+        style={{
+          transform: 
+            zoomPhase === 'in' ? 'scale(0.8) translateX(30%)' :
+            zoomPhase === 'out' ? 'scale(1) translateX(0)' :
+            'scale(1) translateX(0)',
+          transition: zoomPhase !== 'none' ? 'transform 0.6s ease-in-out' : 'transform 0s',
+          transformOrigin: 'right center',
+          opacity: zoomPhase !== 'none' ? 0.5 : 1,
+        }}
+      >
         <button
           onClick={goToNext}
           disabled={!dialogueComplete}
-          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-700/80 hover:to-pink-700/80 disabled:from-gray-600/80 disabled:to-gray-700/80 disabled:cursor-not-allowed backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-lg font-friz"
+          className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-700/80 hover:to-pink-700/80 disabled:from-gray-600/80 disabled:to-gray-700/80 disabled:cursor-not-allowed backdrop-blur-sm text-white rounded-lg transition-all duration-200 border border-white/20 text-lg font-friz"
         >
           <span className="hidden sm:inline">
             {currentSceneIndex === SCENE_ORDER.length - 1
