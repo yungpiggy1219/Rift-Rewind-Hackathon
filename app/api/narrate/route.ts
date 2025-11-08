@@ -6,11 +6,12 @@ import { generateAgentNarration } from '@/lib/aws-bedrock';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { agentId, sceneId, insight, playerName } = body as {
+    const { agentId, sceneId, insight, playerName, puuid } = body as {
       agentId: AgentId;
       sceneId: SceneId;
       insight: SceneInsight;
       playerName?: string;
+      puuid?: string;
     };
 
     if (!agentId || !sceneId || !insight) {
@@ -22,8 +23,8 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Narrate API] Generating narration for ${agentId} on ${sceneId}`);
 
-    // Check cache first
-    const cacheKey = cache.cacheKeys.narration(agentId, sceneId, playerName || 'unknown');
+    // Check cache first - use puuid if available, fallback to playerName
+    const cacheKey = cache.cacheKeys.narration(agentId, sceneId, puuid || playerName || 'unknown');
     const cachedNarration = await cache.get(cacheKey);
     
     if (cachedNarration) {

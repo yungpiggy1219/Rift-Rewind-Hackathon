@@ -151,6 +151,8 @@ export default function RecapFlow({
   const clickSfxRef = useRef<HTMLAudioElement | null>(null);
   const smiteSfxRef = useRef<HTMLAudioElement | null>(null);
   const baronRecallSfxRef = useRef<HTMLAudioElement | null>(null);
+  const drakeDeathSfxRef = useRef<HTMLAudioElement | null>(null);
+  const healSfxRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
   const currentSceneId = SCENE_ORDER[currentSceneIndex];
 
@@ -160,6 +162,8 @@ export default function RecapFlow({
       clickSfxRef.current = new Audio("/sfx/pm.mp3");
       smiteSfxRef.current = new Audio("/sfx/smite.mp3");
       baronRecallSfxRef.current = new Audio("/sfx/baron_recall.mp3");
+      drakeDeathSfxRef.current = new Audio("/sfx/drake_death.mp3");
+      healSfxRef.current = new Audio("/sfx/heal.mp3");
     }
     return () => {
       if (clickSfxRef.current) {
@@ -170,6 +174,12 @@ export default function RecapFlow({
       }
       if (baronRecallSfxRef.current) {
         baronRecallSfxRef.current.pause();
+      }
+      if (drakeDeathSfxRef.current) {
+        drakeDeathSfxRef.current.pause();
+      }
+      if (healSfxRef.current) {
+        healSfxRef.current.pause();
       }
     };
   }, []);
@@ -266,6 +276,7 @@ export default function RecapFlow({
           sceneId: currentSceneId,
           insight: sceneData?.insight,
           playerName: playerName || "unknown",
+          puuid: puuid,
         }),
       }) as Promise<NarrationResponse>;
     },
@@ -280,6 +291,30 @@ export default function RecapFlow({
 
   const isLoading = sceneLoading || narrationLoading;
   const error = sceneError || narrationError;
+
+  // Play scene-specific sound effects when scene data loads
+  useEffect(() => {
+    // Play sound only when scene is loaded (sceneData exists)
+    if (!sceneData) return;
+
+    if (currentSceneId === "dragon_slayer") {
+      // Play drake death sound for dragon slayer scene
+      if (drakeDeathSfxRef.current) {
+        drakeDeathSfxRef.current.currentTime = 0;
+        drakeDeathSfxRef.current.play().catch((error) => {
+          console.log("Drake death sound failed:", error);
+        });
+      }
+    } else if (currentSceneId === "total_healed") {
+      // Play heal sound for healing scene
+      if (healSfxRef.current) {
+        healSfxRef.current.currentTime = 0;
+        healSfxRef.current.play().catch((error) => {
+          console.log("Heal sound failed:", error);
+        });
+      }
+    }
+  }, [currentSceneId, sceneData]);
 
   const goToNext = () => {
     if (currentSceneIndex < SCENE_ORDER.length - 1) {
@@ -413,7 +448,7 @@ export default function RecapFlow({
         <div
           className="absolute inset-0 w-full h-full"
           style={{
-            backgroundImage: "url(/images/backgrounds/background_3.jpg)",
+            backgroundImage: `url(/images/backgrounds/background_${currentSceneIndex + 1}.jpg)`,
             backgroundSize: "120%",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
@@ -464,7 +499,7 @@ export default function RecapFlow({
       <div
         className="absolute inset-0 w-full h-full"
         style={{
-          backgroundImage: "url(/images/backgrounds/background_3.jpg)",
+          backgroundImage: `url(/images/backgrounds/background_${currentSceneIndex + 1}.jpg)`,
           backgroundSize: "120%",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
@@ -487,7 +522,13 @@ export default function RecapFlow({
         {/* Scene Content - Takes remaining space */}
         <div className="flex-1 flex items-center justify-center px-4 overflow-hidden">
           {isLoading ? (
-            <div className="text-center bg-black/40 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+            <div 
+              className="text-center bg-black/40 backdrop-blur-lg rounded-2xl p-6 border-4"
+              style={{
+                borderColor: '#785A28',
+                boxShadow: '0 0 0 1px #9D7B3A, 0 0 20px rgba(120, 90, 40, 0.5)'
+              }}
+            >
               <Loader2 className="w-10 h-10 animate-spin text-blue-400 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-white mb-2">
                 Making cookies for poros...
@@ -496,7 +537,13 @@ export default function RecapFlow({
           ) : sceneData && narration ? (
             <div className="w-full h-full max-w-5xl mx-auto flex items-center justify-center">
               {/* Centered Visualization Panel */}
-              <div className="bg-black/40 backdrop-blur-lg rounded-2xl p-6 border border-white/20 flex flex-col overflow-hidden max-w-3xl w-full max-h-[calc(100vh-200px)]">
+              <div 
+                className="bg-black/40 backdrop-blur-lg rounded-2xl p-6 border-4 flex flex-col overflow-hidden max-w-3xl w-full max-h-[calc(100vh-200px)]"
+                style={{
+                  borderColor: '#785A28',
+                  boxShadow: '0 0 0 1px #9D7B3A, 0 0 10px rgba(120, 90, 40, 0.5)'
+                }}
+              >
                 {/* Progressive Content for All Scenes */}
                 {currentSceneId === "year_in_motion" ? (
                   <>
