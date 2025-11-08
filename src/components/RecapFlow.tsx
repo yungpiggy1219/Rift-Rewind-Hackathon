@@ -1576,68 +1576,6 @@ export default function RecapFlow({
                         <div className="max-w-4xl w-full">
                           <div className="bg-gradient-to-br from-purple-900/30 to-red-900/30 border border-purple-700/50 rounded-xl p-8">
                             <div className="flex flex-col items-center gap-6">
-                              {/* Objective Images Placeholder */}
-                              <div className="flex gap-8 items-center justify-center flex-wrap">
-                                {/* Dragon */}
-                                <div className="flex flex-col items-center">
-                                  <div className="w-32 h-32 bg-gray-700/50 rounded-lg border-2 border-red-500/50 flex items-center justify-center mb-3 p-2 relative">
-                                    <div className="absolute inset-0 flex items-center justify-center text-4xl">
-                                      🐉
-                                    </div>
-                                  </div>
-                                  <div className="text-center">
-                                    <p className="text-sm text-gray-400">
-                                      Dragons Slain
-                                    </p>
-                                    <p className="text-2xl font-bold text-red-400">
-                                      {((sceneData?.insight?.vizData as Record<string, unknown>)?.bars as Array<{value: number}>)?.[1]?.value || 0}
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      total
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Baron */}
-                                <div className="flex flex-col items-center">
-                                  <div className="w-32 h-32 bg-gray-700/50 rounded-lg border-2 border-purple-500/50 flex items-center justify-center mb-3 p-2 relative">
-                                    <div className="absolute inset-0 flex items-center justify-center text-4xl">
-                                      👹
-                                    </div>
-                                  </div>
-                                  <div className="text-center">
-                                    <p className="text-sm text-gray-400">
-                                      Barons Secured
-                                    </p>
-                                    <p className="text-2xl font-bold text-purple-400">
-                                      {((sceneData?.insight?.vizData as Record<string, unknown>)?.bars as Array<{value: number}>)?.[0]?.value || 0}
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      total
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Elder Dragon */}
-                                <div className="flex flex-col items-center">
-                                  <div className="w-32 h-32 bg-gray-700/50 rounded-lg border-2 border-blue-500/50 flex items-center justify-center mb-3 p-2 relative">
-                                    <div className="absolute inset-0 flex items-center justify-center text-4xl">
-                                      🔮
-                                    </div>
-                                  </div>
-                                  <div className="text-center">
-                                    <p className="text-sm text-gray-400">
-                                      Elder Dragons
-                                    </p>
-                                    <p className="text-2xl font-bold text-blue-400">
-                                      {((sceneData?.insight?.vizData as Record<string, unknown>)?.bars as Array<{value: number}>)?.[2]?.value || 0}
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      total
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
 
                               {/* Objectives Summary */}
                               <div className="w-full grid grid-cols-2 gap-4">
