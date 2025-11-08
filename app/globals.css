@@ -48,6 +48,22 @@
   }
 }
 
+/* Gentle floating animation for Vel'Koz agent */
+@keyframes velkoz-float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  25% {
+    transform: translateY(-15px) translateX(5px);
+  }
+  50% {
+    transform: translateY(-30px) translateX(-5px);
+  }
+  75% {
+    transform: translateY(-15px) translateX(8px);
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -253,9 +269,89 @@ html, body, #__next {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+/* Confetti animations */
+@keyframes confetti-fall {
+  to {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes confetti-spin {
+  to {
+    transform: translateY(100vh) rotateZ(720deg);
+    opacity: 0;
+  }
+}
+
+@keyframes confetti-swing {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(30px) rotate(90deg);
+  }
+  50% {
+    transform: translateX(0) rotate(180deg);
+  }
+  75% {
+    transform: translateX(-30px) rotate(270deg);
+  }
+}
+
+/* Zoom out and fade effects for menu transition */
+@keyframes fade-to-black-background {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-to-black-velkoz {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.confetti {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.confetti-fall {
+  animation: confetti-fall linear forwards;
+}
+
+.confetti-spin {
+  animation: confetti-spin linear forwards;
+}
+
+.confetti-swing {
+  animation: confetti-swing linear forwards;
+}
+
+.zoom-out-background {
+  animation: fade-to-black-background 0.8s ease-out forwards;
+}
+
+.zoom-out-velkoz {
+  animation: fade-to-black-velkoz 0.8s ease-out forwards;
+}
+
 /* Friz Quadrata Font Utilities */
 .font-friz {
   font-family: 'Friz Quadrata', serif;
+}
+
+/* Vel'Koz Agent Floating Animation */
+.velkoz-float {
+  animation: velkoz-float 6s ease-in-out infinite;
 }
 
 h1, h2, h3, h4, h5, h6 {

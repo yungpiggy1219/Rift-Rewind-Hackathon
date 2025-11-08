@@ -142,6 +142,9 @@ export default function RecapFlow({
   const [followUpDialogue, setFollowUpDialogue] = useState<string | null>(null); // Track follow-up dialogue after Q&A
   const [fadeIn, setFadeIn] = useState(false); // Track fade-in animation
   const [isSceneTransitioning, setIsSceneTransitioning] = useState(false); // Track scene fade transition
+  const [confetti, setConfetti] = useState<Array<{ id: number; left: number; delay: number; duration: number; animationType: string }>>([]); // Track confetti particles
+  const [confettiCounter, setConfettiCounter] = useState(0); // Counter for generating unique confetti IDs
+  const [isZoomingOut, setIsZoomingOut] = useState(false); // Track zoom out effect when returning to menu
   const [particles] = useState(() =>
     Array.from({ length: 15 }, () => ({
       left: Math.random() * 100,
@@ -203,6 +206,24 @@ export default function RecapFlow({
         console.log("Click sound failed:", error);
       });
     }
+  };
+
+  // Function to create confetti particles
+  const generateConfetti = () => {
+    const confettiPieces = Array.from({ length: 50 }, (_, i) => ({
+      id: confettiCounter + i,
+      left: Math.random() * 100,
+      delay: Math.random() * 0.3,
+      duration: 2 + Math.random() * 1.5,
+      animationType: ['confetti-fall', 'confetti-spin', 'confetti-swing'][Math.floor(Math.random() * 3)]
+    }));
+    setConfetti((prev) => [...prev, ...confettiPieces]);
+    setConfettiCounter((prev) => prev + 50);
+
+    // Clean up confetti after animation completes
+    setTimeout(() => {
+      setConfetti((prev) => prev.filter((c) => c.id < confettiCounter));
+    }, 4000);
   };
 
   // Mouse tracking for tilt effect
@@ -405,9 +426,12 @@ export default function RecapFlow({
   };
 
   const goBack = () => {
-    router.push(
-      `/menu/${puuid}?name=${encodeURIComponent(playerName || "Summoner")}&tag=`
-    );
+    setIsZoomingOut(true);
+    setTimeout(() => {
+      router.push(
+        `/menu/${puuid}?name=${encodeURIComponent(playerName || "Summoner")}&tag=`
+      );
+    }, 800); // Match the fade-to-black animation duration
   };
 
   // Handle question click - fetch AI answer
@@ -540,14 +564,14 @@ export default function RecapFlow({
       
       {/* Background Image with Tilt Effect */}
       <div
-        className="absolute inset-0 w-full h-full"
+        className={`absolute inset-0 w-full h-full ${isZoomingOut ? 'zoom-out-background' : ''}`}
         style={{
           backgroundImage: `url(/images/backgrounds/background_${currentSceneIndex + 1}.jpg)`,
           backgroundSize: "120%",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          transform: `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.1)`,
-          transition: "transform 0.15s ease-out",
+          transform: isZoomingOut ? undefined : `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.1)`,
+          transition: isZoomingOut ? undefined : "transform 0.15s ease-out",
           transformOrigin: "center center",
         }}
       />
@@ -1739,6 +1763,12 @@ export default function RecapFlow({
                         onComplete={() => {
                           setContentComplete(true);
                           setShowHeatmap(true);
+                          // Trigger confetti for MVP scene
+                          if (currentSceneId === "path_forward") {
+                            setTimeout(() => {
+                              generateConfetti();
+                            }, 300);
+                          }
                         }}
                       />
                     </div>
@@ -1847,7 +1877,7 @@ export default function RecapFlow({
       </div>
 
       {/* Vel'Koz Character with Dialogue - Bottom Right */}
-      <div className="absolute bottom-0 right-0 z-25 pointer-events-none">
+      <div className={`absolute bottom-0 right-0 z-25 pointer-events-none ${isZoomingOut ? 'zoom-out-velkoz' : 'velkoz-float'}`}>
         <div
           className="relative"
           style={{ marginBottom: "-10vh", marginRight: "-5vw" }}
@@ -2018,7 +2048,7 @@ export default function RecapFlow({
       </div>
 
       {/* Scene Counter - Bottom Center - REMOVE LATER */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
+{/*       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
         <div className="bg-black/40 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
           <div className="text-center">
             <div className="text-base sm:text-lg font-bold text-white">
@@ -2031,7 +2061,7 @@ export default function RecapFlow({
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Floating Particles Effect */}
       <div className="absolute inset-0 pointer-events-none z-15">
@@ -2044,6 +2074,26 @@ export default function RecapFlow({
               top: `${particle.top}%`,
               animationDelay: `${particle.delay}s`,
               animationDuration: `${particle.duration}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Confetti Effect */}
+      <div className="fixed inset-0 pointer-events-none z-50">
+        {confetti.map((piece) => (
+          <div
+            key={piece.id}
+            className={`confetti ${piece.animationType}`}
+            style={{
+              left: `${piece.left}%`,
+              top: '0px',
+              width: '10px',
+              height: '10px',
+              backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#95E1D3', '#F38181', '#AA96DA'][Math.floor(Math.random() * 6)],
+              borderRadius: Math.random() > 0.5 ? '50%' : '0%',
+              animationDelay: `${piece.delay}s`,
+              animationDuration: `${piece.duration}s`,
             }}
           />
         ))}
