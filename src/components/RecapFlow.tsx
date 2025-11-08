@@ -1298,7 +1298,7 @@ export default function RecapFlow({
                                 </PieChart>
                               </ResponsiveContainer>
                             </div>
-                            <p className="text-sm text-gray-400 text-center mt-2">
+                            <p className="text-sm text-gray-400 text-center mt-2 font-friz">
                               Across all matches
                             </p>
                           </div>
@@ -1349,7 +1349,7 @@ export default function RecapFlow({
                                 </PieChart>
                               </ResponsiveContainer>
                             </div>
-                            <p className="text-sm text-gray-400 text-center mt-2">
+                            <p className="text-sm text-gray-400 text-center mt-2 font-friz">
                               Per match average
                             </p>
                           </div>
@@ -1358,20 +1358,20 @@ export default function RecapFlow({
                         {/* Stats Summary */}
                         <div className="grid grid-cols-2 gap-4 bg-gray-800/30 rounded-lg p-4 border border-gray-700/50">
                           <div className="text-center">
-                            <p className="text-sm text-gray-400">
+                            <p className="text-sm text-gray-400 font-friz">
                               Avg Deaths/Game
                             </p>
-                            <p className="text-3xl font-bold text-red-400">
+                            <p className="text-3xl font-bold text-red-400 font-friz">
                               {sceneData?.insight?.vizData?.stats?.avgDeathsPerGame?.toFixed(
                                 2
                               ) || 0}
                             </p>
                           </div>
                           <div className="text-center">
-                            <p className="text-sm text-gray-400">
+                            <p className="text-sm text-gray-400 font-friz">
                               Avg Time Dead
                             </p>
-                            <p className="text-3xl font-bold text-orange-400">
+                            <p className="text-3xl font-bold text-orange-400 font-friz">
                               {sceneData?.insight?.vizData?.stats?.avgTimeSpentDeadMinutes?.toFixed(
                                 1
                               ) || 0}{" "}
@@ -1461,16 +1461,57 @@ export default function RecapFlow({
                     </div>
                     {showHeatmap && (
                       <div
-                        className="flex-1 overflow-auto"
+                        className="flex-1 overflow-auto flex items-center justify-center"
                         style={{
                           animation: "slideInFromBottom 0.6s ease-out forwards",
                           opacity: 0,
                         }}
                       >
-                        <Viz
-                          kind="infographic"
-                          data={sceneData?.insight?.vizData}
-                        />
+                        {sceneData?.insight?.vizData?.bestGame ? (
+                          <div className="max-w-2xl w-full">
+                            {(() => {
+                              const bestGame = (sceneData.insight.vizData as Record<string, unknown>)?.bestGame as Record<string, unknown>;
+                              const damage = (bestGame?.damage as number) || 0;
+                              return (
+                                <ChampionCard
+                                  championName={bestGame?.championName as string}
+                                  championImageUrl={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/champion/${bestGame?.championName}.png`}
+                                  title="Best ARAM Performance"
+                                  subtitle={bestGame?.date as string}
+                                  stats={[
+                                    {
+                                      label: 'Kills',
+                                      value: bestGame?.kills as number,
+                                      color: '#10B981'
+                                    },
+                                    {
+                                      label: 'Deaths',
+                                      value: bestGame?.deaths as number,
+                                      color: '#EF4444'
+                                    },
+                                    {
+                                      label: 'Assists',
+                                      value: bestGame?.assists as number,
+                                      color: '#F59E0B'
+                                    },
+                                    {
+                                      label: 'Damage',
+                                      value: `${(damage / 1000).toFixed(0)}K`,
+                                      color: '#8B5CF6'
+                                    }
+                                  ]}
+                                  backgroundGradient="from-cyan-900/30 to-blue-900/30"
+                                  borderColor="border-cyan-700/50"
+                                />
+                              );
+                            })()}
+                          </div>
+                        ) : (
+                          <Viz
+                            kind="infographic"
+                            data={sceneData?.insight?.vizData}
+                          />
+                        )}
                       </div>
                     )}
                   </>
