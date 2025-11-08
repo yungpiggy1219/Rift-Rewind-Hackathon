@@ -2086,6 +2086,58 @@ export default function RecapFlow({
         </div>
       </div>
 
+      {/* Dragon Slayer Scene - Overlapping Objectives on Bottom Left */}
+      {currentSceneId === "dragon_slayer" && (
+        <div className="absolute bottom-0 left-0 z-20 pointer-events-none">
+          <div
+            className="relative"
+            style={{ marginBottom: "-8vh", marginLeft: "-8vw" }}
+          >
+            <div style={{ height: "320px", width: "500px", position: "relative" }}>
+              {/* Cloud Drake - Back layer */}
+              <img
+                src="/images/objectives/cloud_drake.webp"
+                alt="Cloud Drake"
+                className="absolute h-120 w-auto object-contain drop-shadow-2xl animate-float-cloud"
+                style={{ bottom: "700px", left: "1500px", opacity: 1 }}
+              />
+              
+              {/* Ocean Drake - Middle left */}
+              <img
+                src="/images/objectives/ocean_drake.png"
+                alt="Ocean Drake"
+                className="absolute h-120 w-auto object-contain drop-shadow-2xl animate-float-ocean"
+                style={{ bottom: "200px", left: "1500px", opacity: 1, zIndex: 5 }}
+              />
+              
+              {/* Infernal Drake - Center, largest */}
+              <img
+                src="/images/objectives/infernal_drake.webp"
+                alt="Infernal Drake"
+                className="absolute h-80 w-auto object-contain drop-shadow-2xl animate-float-infernal"
+                style={{ bottom: "300px", left: "600px", zIndex: 10 }}
+              />
+              
+              {/* Mountain Drake - Middle right */}
+              <img
+                src="/images/objectives/mountain_drake.webp"
+                alt="Mountain Drake"
+                className="absolute h-56 w-auto object-contain drop-shadow-2xl animate-float-mountain"
+                style={{ bottom: "800px", left: "700px", opacity: 1, zIndex: 5 }}
+              />
+              
+              {/* Baron - Right side */}
+              <img
+                src="/images/objectives/baron.webp"
+                alt="Baron Nashor"
+                className="absolute h-200 w-auto object-contain drop-shadow-2xl animate-float-baron"
+                style={{ bottom: "-80px", left: "200px", opacity: 1, zIndex: 3 }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Previous Button - Left Center */}
       <div className="absolute left-4 top-1/2 -translate-y-1/2 z-30">
         <button
