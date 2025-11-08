@@ -31,6 +31,7 @@ export default function RootLayout({
       >
         <GlobalMusicPlayer />
         {children}
+        <Analytics />
       </body>
     </html>
   );
