@@ -16,8 +16,8 @@ import { computeKillingSpree } from "./compute/computeKillingSpree";
 import { computeDragonSlayer } from "./compute/computeDragonSlayer";
 import { computeSniper } from "./compute/computeSniper";
 import { computeFancyFeet } from "./compute/computeFancyFeet";
-import { computePathForward } from "./compute/computePathForward";
 import { computeCS } from "./compute/computeCS";
+import { computeMVP } from "./compute/computeMVP";
 
 export interface SceneDefinition {
   label: string;
@@ -126,7 +126,7 @@ export const sceneRegistry: Record<SceneId, SceneDefinition> = {
 
   path_forward: {
     label: "Path Forward",
-    compute: computePathForward,
+    compute: computeMVP,
     vizKind: "highlight",
   },
 

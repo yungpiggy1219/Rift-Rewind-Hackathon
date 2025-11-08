@@ -1758,7 +1758,7 @@ export default function RecapFlow({
                             <div className="max-w-2xl w-full">
                               <ChampionCard
                                 championName={mvpMatch?.championName as string}
-                                championImageUrl={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/champion/${mvpMatch?.championName}.png`}
+                                championImageUrl={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/champion/${mvpMatch?.championName}_0.png`}
                                 title="🏆 MVP Performance of 2025"
                                 subtitle={`KDA Ratio: ${kda}`}
                                 stats={[
