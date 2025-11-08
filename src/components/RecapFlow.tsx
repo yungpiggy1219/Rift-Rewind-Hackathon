@@ -431,21 +431,35 @@ export default function RecapFlow({
   };
 
   const goBack = () => {
-    // Trigger zoom-in effect
-    setZoomPhase('in');
-    setShowZoomBackdrop(true);
-    
-    // After zoom-in completes, zoom back out and show black backdrop
-    setTimeout(() => {
-      setZoomPhase('out');
-    }, 600);
-    
-    // Navigate after all zoom effects complete
-    setTimeout(() => {
-      router.push(
-        `/menu/${puuid}?name=${encodeURIComponent(playerName || "Summoner")}&tag=`
-      );
-    }, 1200); // Total time for both zoom phases
+    // Clear cache before navigating back to menu
+    fetch(`/api/clear-cache?puuid=${puuid}`)
+      .then(response => {
+        if (response.ok) {
+          console.log('[RecapFlow] Cache cleared successfully');
+        } else {
+          console.warn('[RecapFlow] Failed to clear cache');
+        }
+      })
+      .catch(error => {
+        console.error('[RecapFlow] Error clearing cache:', error);
+      })
+      .finally(() => {
+        // Trigger zoom-in effect
+        setZoomPhase('in');
+        setShowZoomBackdrop(true);
+        
+        // After zoom-in completes, zoom back out and show black backdrop
+        setTimeout(() => {
+          setZoomPhase('out');
+        }, 600);
+        
+        // Navigate after all zoom effects complete
+        setTimeout(() => {
+          router.push(
+            `/menu/${puuid}?name=${encodeURIComponent(playerName || "Summoner")}&tag=`
+          );
+        }, 1200); // Total time for both zoom phases
+      });
   };
 
   // Handle question click - fetch AI answer
