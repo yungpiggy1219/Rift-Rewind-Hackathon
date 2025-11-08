@@ -1783,29 +1783,21 @@ export default function RecapFlow({
                         {(() => {
                           const mvpMatch = (sceneData.insight.vizData as Record<string, unknown>)?.mvpMatch as Record<string, unknown>;
                           const damage = (mvpMatch?.damage as number) || 0;
-                          const kda = (mvpMatch?.kda as number) || 0;
+                          const kills = (mvpMatch?.kills as number) || 0;
+                          const deaths = (mvpMatch?.deaths as number) || 0;
+                          const assists = (mvpMatch?.assists as number) || 0;
+                          const kda = `${kills}/${deaths}/${assists}`;
                           return (
                             <div className="max-w-2xl w-full">
                               <ChampionCard
                                 championName={mvpMatch?.championName as string}
-                                championImageUrl={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/champion/${mvpMatch?.championName}_0.png`}
+                                championImageUrl={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${mvpMatch?.championName}_0.jpg`}
                                 title="🏆 MVP Performance of 2025"
-                                subtitle={`KDA Ratio: ${kda}`}
                                 stats={[
                                   {
-                                    label: 'Kills',
-                                    value: mvpMatch?.kills as number,
+                                    label: 'KDA',
+                                    value: kda,
                                     color: '#10B981'
-                                  },
-                                  {
-                                    label: 'Deaths',
-                                    value: mvpMatch?.deaths as number,
-                                    color: '#EF4444'
-                                  },
-                                  {
-                                    label: 'Assists',
-                                    value: mvpMatch?.assists as number,
-                                    color: '#F59E0B'
                                   },
                                   {
                                     label: 'Damage',
@@ -1813,6 +1805,11 @@ export default function RecapFlow({
                                     color: '#8B5CF6'
                                   }
                                 ]}
+                                items={mvpMatch?.items as number[]}
+                                summonerSpells={{
+                                  spell1Id: (mvpMatch?.summoner1Id as number) || 4,
+                                  spell2Id: (mvpMatch?.summoner2Id as number) || 4
+                                }}
                                 backgroundGradient="from-yellow-900/30 to-amber-900/30"
                                 borderColor="border-yellow-700/50"
                               />
