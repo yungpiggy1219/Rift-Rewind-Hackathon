@@ -237,7 +237,16 @@ export default function LoginPage() {
           {/* Footer Info */}
           <div className="text-white/70 text-sm space-y-2 font-friz">
             <p className="drop-shadow-lg">Made for Rift Rewind Hackathon</p>
-            <p className="drop-shadow-lg">By Yung-Chu Chuang</p>
+            <p className="drop-shadow-lg">
+              By <a 
+                href="https://www.yungchuchuang.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-200 hover:text-blue-100 transition-colors underline"
+              >
+                Yung-Chu Chuang
+              </a>
+            </p>
           </div>
         </div>
       </div>
