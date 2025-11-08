@@ -695,12 +695,12 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${
-                            sceneData?.insight?.vizData?.mostPlayed
+                            ((sceneData?.insight?.vizData as Record<string, any>)?.mostPlayed as any)
                               ?.championName || "Unknown"
                           } — ${
-                            sceneData?.insight?.vizData?.mostPlayed?.games || 0
+                            ((sceneData?.insight?.vizData as Record<string, any>)?.mostPlayed as any)?.games || 0
                           } matches, ${
-                            sceneData?.insight?.vizData?.mostPlayed?.winRate?.toFixed(
+                            ((sceneData?.insight?.vizData as Record<string, any>)?.mostPlayed as any)?.winRate?.toFixed(
                               1
                             ) || 0
                           }% win rate.`,
@@ -724,30 +724,30 @@ export default function RecapFlow({
                         }}
                       >
                         <ChampionCard
-                          championName={sceneData?.insight?.vizData?.mostPlayed?.championName || "Unknown"}
+                          championName={((sceneData?.insight?.vizData as Record<string, any>)?.mostPlayed as any)?.championName || "Unknown"}
                           championImageUrl={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${
-                            sceneData?.insight?.vizData?.mostPlayed?.championName || "Aatrox"
+                            ((sceneData?.insight?.vizData as Record<string, any>)?.mostPlayed as any)?.championName || "Aatrox"
                           }_0.jpg`}
                           title="Most Played Champion"
                           stats={[
                             {
                               label: "Avg. nWin Rate",
-                              value: `${sceneData?.insight?.vizData?.stats?.winRate || 0}%`,
+                              value: `${((sceneData?.insight?.vizData as Record<string, any>)?.stats as any)?.winRate || 0}%`,
                               color: "#06b6d4"
                             },
                             {
                               label: "Avg. KDA",
-                              value: sceneData?.insight?.vizData?.stats?.kda || "0.00",
+                              value: ((sceneData?.insight?.vizData as Record<string, any>)?.stats as any)?.kda || "0.00",
                               color: "#ffffff"
                             },
                             {
                               label: "Avg. Damage to Champions",
-                              value: sceneData?.insight?.vizData?.stats?.damageToChampions || 0,
+                              value: ((sceneData?.insight?.vizData as Record<string, any>)?.stats as any)?.damageToChampions || 0,
                               color: "#fb923c"
                             },
                             {
                               label: "Avg. Vision Score",
-                              value: sceneData?.insight?.vizData?.stats?.visionScore || 0,
+                              value: ((sceneData?.insight?.vizData as Record<string, any>)?.stats as any)?.visionScore || 0,
                               color: "#eab308"
                             },
                           ]}

@@ -587,7 +587,8 @@ export default function HomePage() {
       />
 
       {/* Bottom Left - Clear Cache Button */}
-      <div className="absolute bottom-8 left-8 z-10">
+
+{/*      <div className="absolute bottom-8 left-8 z-10">
         <button
           onClick={clearCache}
           disabled={isClearingCache || isPreloading}
@@ -605,7 +606,7 @@ export default function HomePage() {
             </>
           )}
         </button>
-      </div>
+      </div>  */}
 
       {/* Bottom Right - Vel'Koz Agent & Start Recap Button */}
       <div className="absolute bottom-0 right-0 z-10 flex items-end gap-6">
