@@ -517,7 +517,7 @@ export default function Viz({ kind, data }: VizProps) {
           return (
             <div className="bg-linear-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border-2 border-gray-700 shadow-2xl">
               <div className="text-center mb-4">
-                <h2 className="text-2xl font-bold text-white mb-2">{queueType}</h2>
+                <h2 className="text-2xl font-bold text-white mb-2 font-friz">{queueType}</h2>
               </div>
               
               <div className="flex flex-col items-center justify-center py-4">
@@ -526,8 +526,8 @@ export default function Viz({ kind, data }: VizProps) {
                   alt="Unranked"
                   className="w-24 h-24 object-contain mb-4"
                 />
-                <div className="text-2xl font-bold text-gray-400">Unranked</div>
-                <div className="text-sm text-gray-500 mt-2">Play placements</div>
+                <div className="text-2xl font-bold text-gray-400 font-friz">Unranked</div>
+                <div className="text-sm text-gray-500 mt-2 font-friz">Play placements</div>
               </div>
             </div>
           );
@@ -539,7 +539,7 @@ export default function Viz({ kind, data }: VizProps) {
         return (
           <div className="bg-linear-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border-2 border-gray-700 shadow-2xl">
             <div className="text-center mb-4">
-              <h2 className="text-2xl font-bold text-white mb-2">{queueType}</h2>
+              <h2 className="text-2xl font-bold text-white mb-2 font-friz">{queueType}</h2>
             </div>
             
             <div className="flex items-center justify-between mb-4">
@@ -558,10 +558,10 @@ export default function Viz({ kind, data }: VizProps) {
               {/* Rank Info */}
               <div className="flex-1 ml-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-white mb-1">
-                    {queueData.tier} {queueData.rankDivision}
+                  <div className="text-2xl font-bold text-white mb-1 font-friz">
+                    {queueData.tier.charAt(0).toUpperCase() + queueData.tier.slice(1).toLowerCase()} {queueData.rankDivision}
                   </div>
-                  <div className="text-xl text-cyan-400 font-semibold">
+                  <div className="text-xl text-cyan-400 font-semibold font-friz">
                     {queueData.lp} LP
                   </div>
                 </div>
@@ -581,16 +581,16 @@ export default function Viz({ kind, data }: VizProps) {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-3">
               <div className="text-center">
-                <div className="text-2xl font-bold text-cyan-400">
+                <div className="text-2xl font-bold text-cyan-400 font-friz">
                   {queueData.winRate}%
                 </div>
-                <div className="text-xs text-gray-400 mt-1">WR</div>
+                <div className="text-xs text-gray-400 mt-1 font-friz">WR</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-white">
+                <div className="text-lg font-bold text-white font-friz">
                   {queueData.wins}W - {queueData.losses}L
                 </div>
-                <div className="text-xs text-gray-400 mt-1">{queueData.totalGames} Games</div>
+                <div className="text-xs text-gray-400 mt-1 font-friz">{queueData.totalGames} Games</div>
               </div>
             </div>
           </div>
