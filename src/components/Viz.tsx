@@ -69,6 +69,13 @@ export default function Viz({ kind, data }: VizProps) {
                 dataKey="month" 
                 stroke="#9CA3AF" 
                 tick={{ fontSize: 11 }}
+                tickFormatter={(value) => {
+                  const monthNames = [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                  ];
+                  return monthNames[value - 1] || value;
+                }}
                 label={{ value: 'Month', position: 'insideBottom', offset: -5, fill: '#9CA3AF' }}
               />
               {/* Left Y-axis for primary metric */}
@@ -77,7 +84,9 @@ export default function Viz({ kind, data }: VizProps) {
                 stroke={data.type === 'cs_statistics' ? '#10B981' : '#EF4444'}
                 label={{ 
                   value: data.type === 'cs_statistics' ? 'CS Per Minute' : 'Damage to Champions', 
-                  angle: -90, 
+                  angle: -90,
+                  offset: -1,
+                  dy: 30,
                   position: 'insideLeft', 
                   fill: data.type === 'cs_statistics' ? '#10B981' : '#EF4444', 
                   fontSize: 11 
@@ -102,6 +111,13 @@ export default function Viz({ kind, data }: VizProps) {
                   backgroundColor: '#1F2937', 
                   border: '1px solid #374151',
                   borderRadius: '8px'
+                }}
+                labelFormatter={(value) => {
+                  const monthNames = [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                  ];
+                  return monthNames[value - 1] || value;
                 }}
                 formatter={(value: number, name: string) => {
                   if (data.type === 'gold_statistics') {
