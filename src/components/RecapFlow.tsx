@@ -261,7 +261,7 @@ export default function RecapFlow({
   }, []);
 
   // Fetch scene data - use stable cache key to prevent refetching
-  const sceneKey = currentSceneId ? `scene-${currentSceneId}-${puuid}` : null;
+  const sceneKey = currentSceneId ? `scene:${puuid}:${currentSceneId}:2025` : null;
 
   const {
     data: sceneData,
