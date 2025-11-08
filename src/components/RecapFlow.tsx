@@ -25,7 +25,7 @@ const fetcher = async (url: string, options?: RequestInit) => {
 
 // Helper to safely access vizData properties
 const getVizData = (sceneData: ScenePayload | undefined): any => {
-  return getVizData(sceneData) as any;
+  return sceneData?.insight?.vizData;
 };
 
 // Component to display best friend's profile with stats
