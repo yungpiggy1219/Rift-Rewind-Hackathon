@@ -27,10 +27,11 @@ export async function computeDragonSlayer(ctx: { puuid: string; matchIds: string
     let totalSoloKills = 0;
     let processedMatches = 0;
     
-    // Track team objectives (estimated from match context)
-    let teamBaronsSecured = 0;
-    let teamDragonsSecured = 0;
-    let teamElderDragonsSecured = 0;
+    // Track team objectives
+    let totalTeamBaronKills = 0;
+    let totalTeamDragonTakedowns = 0;
+    let totalTeamElderDragonKills = 0;
+    let totalTeamRiftHeraldKills = 0;
     
     // Track best objective game
     let bestObjectiveGame = {
@@ -94,21 +95,39 @@ export async function computeDragonSlayer(ctx: { puuid: string; matchIds: string
         totalObjectivesStolenAssists += objectivesStolenAssists;
         totalSoloKills += soloKills;
         
-        // Estimate team objectives
-        // If player participated in baron/dragon, their team likely secured it
-        if (baronKills > 0) {
-          teamBaronsSecured++;
-        }
-        if (dragonKills > 0) {
-          teamDragonsSecured++;
-          
-          // Estimate dragon souls (rough heuristic: if team got 4+ dragons in winning game)
-          if (playerParticipant.win && dragonKills >= 4) {
-            dragonSoulsWon++;
+        // Aggregate team objectives from all participants
+        const playerTeamId = playerParticipant.teamId;
+        const teamParticipants = match.participants.filter((p) => {
+          if (!isMatchParticipant(p)) return false;
+          return p.teamId === playerTeamId;
+        });
+        
+        let matchTeamBaronKills = 0;
+        let matchTeamDragonTakedowns = 0;
+        let matchTeamElderDragonKills = 0;
+        let matchTeamRiftHeraldKills = 0;
+        
+        for (const teamParticipant of teamParticipants) {
+          if (isMatchParticipant(teamParticipant)) {
+            matchTeamBaronKills += teamParticipant.baronKills || 0;
+            matchTeamDragonTakedowns += teamParticipant.dragonKills || 0;
+            matchTeamElderDragonKills += teamParticipant.elderDragonKills || 0;
+            // Note: riftHeraldKills is not in MatchParticipant type, but we'll count it if available
+            if ('riftHeraldKills' in teamParticipant) {
+              const participant = teamParticipant as MatchParticipant & { riftHeraldKills: number };
+              matchTeamRiftHeraldKills += participant.riftHeraldKills || 0;
+            }
           }
         }
-        if (elderDragonKills > 0) {
-          teamElderDragonsSecured++;
+        
+        totalTeamBaronKills += matchTeamBaronKills;
+        totalTeamDragonTakedowns += matchTeamDragonTakedowns;
+        totalTeamElderDragonKills += matchTeamElderDragonKills;
+        totalTeamRiftHeraldKills += matchTeamRiftHeraldKills;
+        
+        // Estimate dragon souls (rough heuristic: if team got 4+ dragons in a winning game)
+        if (playerParticipant.win && matchTeamDragonTakedowns >= 4) {
+          dragonSoulsWon++;
         }
         
         // Track best objective game
@@ -135,8 +154,11 @@ export async function computeDragonSlayer(ctx: { puuid: string; matchIds: string
     const avgBaronKills = totalBaronKills / processedMatches;
     const avgDragonKills = totalDragonKills / processedMatches;
     const avgElderDragonKills = totalElderDragonKills / processedMatches;
-    const avgObjectivesStolen = totalObjectivesStolen / processedMatches;
     const avgSoloKills = totalSoloKills / processedMatches;
+    const avgTeamBaronKills = totalTeamBaronKills / processedMatches;
+    const avgTeamDragonTakedowns = totalTeamDragonTakedowns / processedMatches;
+    const avgTeamElderDragonKills = totalTeamElderDragonKills / processedMatches;
+    const avgTeamRiftHeraldKills = totalTeamRiftHeraldKills / processedMatches;
     
     // Objective participation rate
     const objectiveParticipation = ((totalBaronKills + totalDragonKills + totalElderDragonKills) / processedMatches) * 100;
@@ -197,6 +219,30 @@ export async function computeDragonSlayer(ctx: { puuid: string; matchIds: string
           value: totalObjectivesStolen,
           color: '#F39C12', // Gold
           maxValue: Math.max(5, totalObjectivesStolen)
+        },
+        {
+          label: 'Team Dragon Takedowns',
+          value: totalTeamDragonTakedowns,
+          color: '#E67E22', // Dark Orange
+          maxValue: Math.max(50, totalTeamDragonTakedowns)
+        },
+        {
+          label: 'Team Baron Kills',
+          value: totalTeamBaronKills,
+          color: '#8E44AD', // Dark Purple
+          maxValue: Math.max(10, totalTeamBaronKills)
+        },
+        {
+          label: 'Team Elder Dragons',
+          value: totalTeamElderDragonKills,
+          color: '#2980B9', // Dark Blue
+          maxValue: Math.max(10, totalTeamElderDragonKills)
+        },
+        {
+          label: 'Team Rift Heralds',
+          value: totalTeamRiftHeraldKills,
+          color: '#27AE60', // Green
+          maxValue: Math.max(10, totalTeamRiftHeraldKills)
         }
       ]
     };
@@ -297,6 +343,26 @@ export async function computeDragonSlayer(ctx: { puuid: string; matchIds: string
             label: 'Elder Dragons',
             value: totalElderDragonKills,
             context: `${avgElderDragonKills.toFixed(2)} per game`
+          },
+          {
+            label: 'Team Dragon Takedowns',
+            value: totalTeamDragonTakedowns,
+            context: `${avgTeamDragonTakedowns.toFixed(2)} per game`
+          },
+          {
+            label: 'Team Baron Kills',
+            value: totalTeamBaronKills,
+            context: `${avgTeamBaronKills.toFixed(2)} per game`
+          },
+          {
+            label: 'Team Elder Dragons',
+            value: totalTeamElderDragonKills,
+            context: `${avgTeamElderDragonKills.toFixed(2)} per game`
+          },
+          {
+            label: 'Team Rift Heralds',
+            value: totalTeamRiftHeraldKills,
+            context: `${avgTeamRiftHeraldKills.toFixed(2)} per game`
           },
           {
             label: 'Objectives Stolen',

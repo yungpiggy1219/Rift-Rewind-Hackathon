@@ -1550,7 +1550,7 @@ export default function RecapFlow({
                         segments={[
                           `${
                             sceneData?.insight?.metrics?.[0]?.value || 0
-                          } dragons slain.`,
+                          } dragons takedowns.`,
                           `${
                             sceneData?.insight?.metrics?.[1]?.value || 0
                           } barons secured.`,
@@ -1566,13 +1566,105 @@ export default function RecapFlow({
                     </div>
                     {showHeatmap && (
                       <div
-                        className="flex-1 overflow-auto"
+                        className="flex-1 overflow-auto flex items-center justify-center"
                         style={{
                           animation: "slideInFromBottom 0.6s ease-out forwards",
                           opacity: 0,
                         }}
                       >
-                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                        {/* Dragon Slayer Objectives Card */}
+                        <div className="max-w-4xl w-full">
+                          <div className="bg-gradient-to-br from-purple-900/30 to-red-900/30 border border-purple-700/50 rounded-xl p-8">
+                            <div className="flex flex-col items-center gap-6">
+                              {/* Objective Images Placeholder */}
+                              <div className="flex gap-8 items-center justify-center flex-wrap">
+                                {/* Dragon */}
+                                <div className="flex flex-col items-center">
+                                  <div className="w-32 h-32 bg-gray-700/50 rounded-lg border-2 border-red-500/50 flex items-center justify-center mb-3 p-2 relative">
+                                    <div className="absolute inset-0 flex items-center justify-center text-4xl">
+                                      🐉
+                                    </div>
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-sm text-gray-400">
+                                      Dragons Slain
+                                    </p>
+                                    <p className="text-2xl font-bold text-red-400">
+                                      {((sceneData?.insight?.vizData as Record<string, unknown>)?.bars as Array<{value: number}>)?.[1]?.value || 0}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      total
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Baron */}
+                                <div className="flex flex-col items-center">
+                                  <div className="w-32 h-32 bg-gray-700/50 rounded-lg border-2 border-purple-500/50 flex items-center justify-center mb-3 p-2 relative">
+                                    <div className="absolute inset-0 flex items-center justify-center text-4xl">
+                                      👹
+                                    </div>
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-sm text-gray-400">
+                                      Barons Secured
+                                    </p>
+                                    <p className="text-2xl font-bold text-purple-400">
+                                      {((sceneData?.insight?.vizData as Record<string, unknown>)?.bars as Array<{value: number}>)?.[0]?.value || 0}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      total
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Elder Dragon */}
+                                <div className="flex flex-col items-center">
+                                  <div className="w-32 h-32 bg-gray-700/50 rounded-lg border-2 border-blue-500/50 flex items-center justify-center mb-3 p-2 relative">
+                                    <div className="absolute inset-0 flex items-center justify-center text-4xl">
+                                      🔮
+                                    </div>
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-sm text-gray-400">
+                                      Elder Dragons
+                                    </p>
+                                    <p className="text-2xl font-bold text-blue-400">
+                                      {((sceneData?.insight?.vizData as Record<string, unknown>)?.bars as Array<{value: number}>)?.[2]?.value || 0}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      total
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Objectives Summary */}
+                              <div className="w-full grid grid-cols-2 gap-4">
+                                <div className="bg-black/30 rounded-lg p-6">
+                                  <div className="text-center">
+                                    <p className="text-sm text-gray-400 mb-2 font-friz">
+                                      Team Dragons
+                                    </p>
+                                    <p className="text-3xl font-bold text-orange-400 font-friz">
+                                      {((sceneData?.insight?.vizData as Record<string, unknown>)?.bars as Array<{value: number}>)?.[4]?.value || 0}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="bg-black/30 rounded-lg p-6">
+                                  <div className="text-center">
+                                    <p className="text-sm text-gray-400 mb-2">
+                                      Team Barons
+                                    </p>
+                                    <p className="text-3xl font-bold text-indigo-400 font-friz">
+                                      {((sceneData?.insight?.vizData as Record<string, unknown>)?.bars as Array<{value: number}>)?.[5]?.value || 0}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>
