@@ -74,6 +74,10 @@ export default function HomePage() {
   // State to show start button after intro completes
   const [showStartButton, setShowStartButton] = useState(false);
   
+  // Transition states
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionStage, setTransitionStage] = useState(0); // 0: none, 1: zoom in, 2: zoom out, 3: fade to black, 4: complete
+  
   // Function to change Vel'Koz narration
   const updateVelkozNarration = (newText: string | string[]) => {
     setVelkozNarration(newText);
@@ -189,6 +193,20 @@ export default function HomePage() {
     };
   }, []);
 
+  // Handle stage 4 - navigate when animation completes
+  useEffect(() => {
+    if (transitionStage === 4 && isPreloading) {
+      console.log('[Menu] Stage 4 reached, checking if ready to navigate...');
+      // Give a small delay to ensure data loading has progressed
+      const checkReady = () => {
+        console.log('[Menu] Attempting navigation at stage 4');
+        router.push(`/recap/${puuid}?agent=velkoz&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
+      };
+      const timer = setTimeout(checkReady, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [transitionStage, isPreloading, puuid, playerName, tagLine, router]);
+
   // Fetch summoner profile (from cache)
   const { data: profile, error: profileError } = useSWR<SummonerProfile>(
     puuid ? `/api/profile/${puuid}` : null,
@@ -278,6 +296,9 @@ export default function HomePage() {
     // Hide the button when starting
     setShowStartButton(false);
     
+    // Start transition sequence
+    setIsTransitioning(true);
+    
     // Play smite sound immediately
     if (smiteSfxRef.current) {
       smiteSfxRef.current.play().catch((error) => {
@@ -285,24 +306,45 @@ export default function HomePage() {
       });
     }
     
-    // Play teleport sound 2 seconds after smite
+    updateVelkozNarration([
+      'Initiating comprehensive analysis.',
+      'Knowledge through disintegration...',
+      'Prepare yourself, summoner.'
+    ]);
+    
+    // Start loading data immediately in the background
+    setTimeout(() => {
+      startRecap();
+    }, 100);
+    
+    // Stage 1: Zoom IN (starts at 0.5s, duration 1.5s)
+    setTimeout(() => {
+      setTransitionStage(1);
+    }, 500);
+    
+    // Stage 2: Zoom OUT (starts at 2s, duration 1.5s)
+    setTimeout(() => {
+      setTransitionStage(2);
+    }, 2000);
+    
+    // Stage 3: Fade to black (starts at 3.5s, duration 2s)
+    setTimeout(() => {
+      setTransitionStage(3);
+    }, 3500);
+    
+    // Play teleport sound during fade to black
     setTimeout(() => {
       if (teleportSfxRef.current) {
         teleportSfxRef.current.play().catch((error) => {
           console.log('Teleport sound failed:', error);
         });
       }
-    }, 2000);
+    }, 3500);
     
-    updateVelkozNarration([
-      'Initiating comprehensive analysis.',
-      'Knowledge through disintegration...',
-      'Prepare yourself, summoner.'
-    ]);
-    // Wait a moment for the narration, then start preloading
+    // Stage 4: Complete transition (navigation happens in startRecap when ready)
     setTimeout(() => {
-      startRecap();
-    }, 2000);
+      setTransitionStage(4);
+    }, 5500);
   };
 
   const startRecap = async () => {
@@ -321,9 +363,6 @@ export default function HomePage() {
       
       if (matchIds.length === 0) {
         setPreloadStatus('No matches found for 2025. Continuing anyway...');
-        setTimeout(() => {
-          router.push(`/recap/${puuid}?agent=velkoz&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
-        }, 1500);
         return;
       }
       
@@ -350,7 +389,7 @@ export default function HomePage() {
             const response = await fetch(`/api/matches/${matchId}`);
             
             if (response.ok) {
-              const matchData = await response.json();
+              await response.json();
               console.log(`[Menu] ✓ Successfully cached match ${matchId}`);
               return { success: true, matchId };
             } else {
@@ -413,19 +452,9 @@ export default function HomePage() {
       
       setPreloadStatus(`Loaded ${successCount}/${matchIds.length} matches. Starting recap...`);
       
-      // Step 3: Navigate to recap after caching is complete
-      setTimeout(() => {
-        router.push(`/recap/${puuid}?agent=velkoz&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
-      }, 1000);
-      
     } catch (error) {
       console.error('Error preloading match data:', error);
       setPreloadStatus('Error loading matches. Continuing anyway...');
-      
-      // Navigate anyway after a short delay
-      setTimeout(() => {
-        router.push(`/recap/${puuid}?agent=velkoz&name=${encodeURIComponent(playerName)}&tag=${encodeURIComponent(tagLine)}`);
-      }, 2000);
     }
   };
 
@@ -515,11 +544,38 @@ export default function HomePage() {
         backgroundImage: 'url(/images/backgrounds/background_menu.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: 'no-repeat',
+        transform: transitionStage === 1 
+          ? 'scale(1.3)' 
+          : transitionStage === 2 
+          ? 'scale(1.0)' 
+          : 'scale(1)',
+        transition: 'transform 1.5s ease-in-out',
       }}
     >
       {/* Background Overlay */}
-      <div className="absolute inset-0 bg-black/40"></div>
+      <div 
+        className="absolute inset-0 bg-black/40"
+        style={{
+          opacity: transitionStage === 1 
+            ? 0.8 
+            : transitionStage === 2 
+            ? 0.4 
+            : 0.4,
+          transition: 'opacity 1.5s ease-in-out',
+        }}
+      ></div>
+
+      {/* Fade to Black Overlay */}
+      {transitionStage >= 3 && (
+        <div 
+          className="absolute inset-0 bg-black z-50"
+          style={{
+            opacity: transitionStage >= 3 ? 1 : 0,
+            transition: 'opacity 2.5s ease-in',
+          }}
+        ></div>
+      )}
 
       {/* Top Left - Summoner Info (reusable component) */}
       <SummonerCard
@@ -554,7 +610,20 @@ export default function HomePage() {
       {/* Bottom Right - Vel'Koz Agent & Start Recap Button */}
       <div className="absolute bottom-0 right-0 z-10 flex items-end gap-6">
         {/* Vel'Koz Agent Image - positioned lower and cropped right/bottom */}
-        <div className="relative group overflow-hidden" style={{ marginBottom: '-10vh', marginRight: '-5vw' }}>
+        <div 
+          className="relative group overflow-hidden" 
+          style={{ 
+            marginBottom: '-10vh', 
+            marginRight: '-5vw',
+            transform: transitionStage === 1 
+              ? 'scale(1.4)' 
+              : transitionStage === 2 
+              ? 'scale(1.0)' 
+              : 'scale(1)',
+            opacity: transitionStage >= 3 ? 0 : 1,
+            transition: 'transform 1.5s ease-in-out, opacity 2.5s ease-in',
+          }}
+        >
           <div className="absolute inset-20 bg-purple-500/20 rounded-full blur-xl group-hover:bg-purple-500/30 transition-all duration-300"></div>
           <img 
             src="/images/ai-agents/velkoz.png"

@@ -139,6 +139,7 @@ export default function RecapFlow({
   const [aiAnswer, setAiAnswer] = useState<string | null>(null); // Track AI answer
   const [isLoadingAnswer, setIsLoadingAnswer] = useState(false); // Track loading state for answer
   const [followUpDialogue, setFollowUpDialogue] = useState<string | null>(null); // Track follow-up dialogue after Q&A
+  const [fadeIn, setFadeIn] = useState(false); // Track fade-in animation
   const [particles] = useState(() =>
     Array.from({ length: 15 }, () => ({
       left: Math.random() * 100,
@@ -155,6 +156,14 @@ export default function RecapFlow({
   const healSfxRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
   const currentSceneId = SCENE_ORDER[currentSceneIndex];
+
+  // Trigger fade-in animation on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFadeIn(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Initialize sound effects
   useEffect(() => {
@@ -495,6 +504,15 @@ export default function RecapFlow({
       ref={containerRef}
       className="w-screen h-screen relative overflow-hidden"
     >
+      {/* Fade-in from black overlay */}
+      <div 
+        className="absolute inset-0 bg-black z-50 pointer-events-none"
+        style={{
+          opacity: fadeIn ? 0 : 1,
+          transition: 'opacity 1.5s ease-out',
+        }}
+      />
+      
       {/* Background Image with Tilt Effect */}
       <div
         className="absolute inset-0 w-full h-full"
