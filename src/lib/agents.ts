@@ -65,24 +65,7 @@ export function buildNarration(request: NarrationRequest): NarrationResponse {
         actionable: `My academic recommendation is clear: ${insight.action}. Indeed, this approach has been proven effective through extensive research. Eureka - knowledge is power!`,
         tags: ["academic", "scientific", "professorial"]
       };
-      
-    case "kayle":
-      return {
-        title: `Divine Judgment: ${insight.summary}`,
-        opening: `${playerName}, I have observed your trials upon the Rift. Justice demands truth, and truth reveals both strength and areas requiring purification.`,
-        analysis: `My judgment reveals: ${insight.summary}. Your ${primaryMetric?.label} stands at ${primaryMetric?.value}${primaryMetric?.unit || ''} - a measure of your current state. ${insight.details.join(' ')} Weakness is a choice, and you have the power to transcend your limitations.`,
-        actionable: `The path to righteousness is clear: ${insight.action}. Into the fray with purpose and determination. Justice takes wing when you commit to improvement.`,
-        tags: ["righteous", "divine", "judgment"]
-      };
-      
-    case "draven":
-      return {
-        title: `The Draven Show: ${insight.summary}!`,
-        opening: `Welcome to the League of Draven! That's right, ${playerName}, you're now part of the most glorious performance on the Rift!`,
-        analysis: `Draven has analyzed your performance, and here's what the star of the show discovered: ${insight.summary}! Your ${primaryMetric?.label} of ${primaryMetric?.value}${primaryMetric?.unit || ''} shows you're learning from the master! ${insight.details.join(' ')} It's all skill, baby!`,
-        actionable: `Draven's expert advice? ${insight.action}! Follow the Draven way and you'll be catching axes and glory in no time. Draven does it all, and now you can too!`,
-        tags: ["dramatic", "glorious", "performance"]
-      };
+    
       
     default:
       return {

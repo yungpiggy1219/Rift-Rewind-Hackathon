@@ -158,6 +158,10 @@ function generateFollowUpQuestions(sceneId: SceneId) {
       { question: 'How many wards should I place per game?', context: 'Vision benchmarks' },
       { question: 'When should I buy control wards?', context: 'Vision strategy' },
     ],
+    'peak_performance': [
+      { question: 'What made this my best game?', context: 'Peak performance analysis' },
+      { question: 'How can I replicate this performance?', context: 'Consistency tips' },
+    ],
     'weaknesses': [
       { question: 'How can I die less in lane?', context: 'Lane survival' },
       { question: 'What are common mistakes causing my deaths?', context: 'Error analysis' },

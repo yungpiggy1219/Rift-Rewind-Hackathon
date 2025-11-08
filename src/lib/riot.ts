@@ -56,7 +56,7 @@ function getPlatformRegion(routingRegion: string): string {
 export async function getAccountByPuuid(puuid: string): Promise<RiotAccount | null> {
   const cacheKey = cache.cacheKeys.summonerByPuuid(puuid);
   console.log(`[getAccountByPuuid] Looking for cache key: ${cacheKey}`);
-  const cached = await cache.get<RiotAccount>(cacheKey);
+  const cached = await cache.get(cacheKey);
   if (cached) {
     console.log(`[getAccountByPuuid] Cache hit for ${puuid}:`, cached);
     return cached;
@@ -67,7 +67,7 @@ export async function getAccountByPuuid(puuid: string): Promise<RiotAccount | nu
 
 export async function resolveSummoner(gameName: string, tagLine: string): Promise<RiotAccount> {
   const cacheKey = cache.cacheKeys.summoner(gameName, tagLine);
-  const cached = await cache.get<RiotAccount>(cacheKey);
+  const cached = await cache.get(cacheKey);
   if (cached) {
     console.log(`[resolveSummoner] Cache hit for ${gameName}#${tagLine}`);
     return cached;
@@ -214,7 +214,7 @@ export async function fetchMatchDetail(matchId: string, targetPuuid?: string): P
   try {
     // Check cache first
     const cacheKey = `match-detail-${matchId}`;
-    const cached = await cache.get<MatchData>(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) {
       console.log(`[fetchMatchDetail] Cache hit for ${matchId}`);
       return cached;

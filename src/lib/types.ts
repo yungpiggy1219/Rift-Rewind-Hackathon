@@ -10,7 +10,7 @@ export type SceneId =
   | "farmer"
   | "growth_over_time"
   | "vision_score"
-  // | "peak_performance" 
+  | "peak_performance" 
   | "weaknesses" 
   | "best_friend"
   | "aram"

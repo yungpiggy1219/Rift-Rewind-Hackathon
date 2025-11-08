@@ -7,9 +7,7 @@ import { useRouter } from "next/navigation";
 import { AgentId, ScenePayload, NarrationResponse } from "@/src/lib/types";
 import { SCENE_ORDER } from "@/src/lib/sceneRegistry";
 import DialogueBubble from "../../app/components/DialogueBubble";
-import SummonerCard from "../../app/components/SummonerCard";
 import Viz from "./Viz";
-import ShareCardButton from "./ShareCardButton";
 import ProgressiveText from "./ProgressiveText";
 import ChampionCard from "./ChampionCard";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
@@ -23,6 +21,11 @@ interface RecapFlowProps {
 const fetcher = async (url: string, options?: RequestInit) => {
   const response = await fetch(url, options);
   return response.json();
+};
+
+// Helper to safely access vizData properties
+const getVizData = (sceneData: ScenePayload | undefined): any => {
+  return getVizData(sceneData) as any;
 };
 
 // Component to display best friend's profile with stats
@@ -655,13 +658,13 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${
-                            sceneData?.insight?.vizData?.totalMatches || 0
+                            getVizData(sceneData)?.totalMatches || 0
                           } matches.`,
                           `${
-                            sceneData?.insight?.vizData?.totalHours || 0
+                            getVizData(sceneData)?.totalHours || 0
                           } hours of data collected.`,
                           `${
-                            sceneData?.insight?.vizData?.peakMonth || "N/A"
+                            getVizData(sceneData)?.peakMonth || "N/A"
                           } — your peak of activity — demonstrated unrelenting commitment.`,
                           `Fascinating levels of consistency... for a human.`,
                         ]}
@@ -683,7 +686,7 @@ export default function RecapFlow({
                       >
                         <Viz
                           kind="heatmap"
-                          data={sceneData?.insight?.vizData}
+                          data={getVizData(sceneData)}
                         />
                       </div>
                     )}
@@ -695,12 +698,12 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${
-                            ((sceneData?.insight?.vizData as Record<string, any>)?.mostPlayed as any)
+                            ((getVizData(sceneData) as Record<string, any>)?.mostPlayed as any)
                               ?.championName || "Unknown"
                           } — ${
-                            ((sceneData?.insight?.vizData as Record<string, any>)?.mostPlayed as any)?.games || 0
+                            ((getVizData(sceneData) as Record<string, any>)?.mostPlayed as any)?.games || 0
                           } matches, ${
-                            ((sceneData?.insight?.vizData as Record<string, any>)?.mostPlayed as any)?.winRate?.toFixed(
+                            ((getVizData(sceneData) as Record<string, any>)?.mostPlayed as any)?.winRate?.toFixed(
                               1
                             ) || 0
                           }% win rate.`,
@@ -724,30 +727,30 @@ export default function RecapFlow({
                         }}
                       >
                         <ChampionCard
-                          championName={((sceneData?.insight?.vizData as Record<string, any>)?.mostPlayed as any)?.championName || "Unknown"}
+                          championName={((getVizData(sceneData) as Record<string, any>)?.mostPlayed as any)?.championName || "Unknown"}
                           championImageUrl={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${
-                            ((sceneData?.insight?.vizData as Record<string, any>)?.mostPlayed as any)?.championName || "Aatrox"
+                            ((getVizData(sceneData) as Record<string, any>)?.mostPlayed as any)?.championName || "Aatrox"
                           }_0.jpg`}
                           title="Most Played Champion"
                           stats={[
                             {
                               label: "Avg. nWin Rate",
-                              value: `${((sceneData?.insight?.vizData as Record<string, any>)?.stats as any)?.winRate || 0}%`,
+                              value: `${((getVizData(sceneData) as Record<string, any>)?.stats as any)?.winRate || 0}%`,
                               color: "#06b6d4"
                             },
                             {
                               label: "Avg. KDA",
-                              value: ((sceneData?.insight?.vizData as Record<string, any>)?.stats as any)?.kda || "0.00",
+                              value: ((getVizData(sceneData) as Record<string, any>)?.stats as any)?.kda || "0.00",
                               color: "#ffffff"
                             },
                             {
                               label: "Avg. Damage to Champions",
-                              value: ((sceneData?.insight?.vizData as Record<string, any>)?.stats as any)?.damageToChampions || 0,
+                              value: ((getVizData(sceneData) as Record<string, any>)?.stats as any)?.damageToChampions || 0,
                               color: "#fb923c"
                             },
                             {
                               label: "Avg. Vision Score",
-                              value: ((sceneData?.insight?.vizData as Record<string, any>)?.stats as any)?.visionScore || 0,
+                              value: ((getVizData(sceneData) as Record<string, any>)?.stats as any)?.visionScore || 0,
                               color: "#eab308"
                             },
                           ]}
@@ -764,18 +767,18 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${Math.round(
-                            (sceneData?.insight?.vizData
-                              ?.totalDamageDealtToChampions || 0) / 1000
+                            (Number(getVizData(sceneData)
+                              ?.totalDamageDealtToChampions) || 0) / 1000
                           )}K total damage to champions.`,
                           `Average of ${(
-                            sceneData?.insight?.vizData?.avgDamageToChampions ||
+                            Number(getVizData(sceneData)?.avgDamageToChampions) ||
                             0
                           ).toLocaleString()} per game.`,
                           `Your best match dealt ${Math.round(
-                            (sceneData?.insight?.vizData?.maxDamageMatch
-                              ?.damage || 0) / 1000
+                            (Number((getVizData(sceneData)?.maxDamageMatch as any)
+                              ?.damage) || 0) / 1000
                           )}K damage with ${
-                            sceneData?.insight?.vizData?.maxDamageMatch
+                            (getVizData(sceneData)?.maxDamageMatch as any)
                               ?.championName || "Unknown"
                           }.`,
                         ]}
@@ -796,27 +799,27 @@ export default function RecapFlow({
                         }}
                       >
                         <ChampionCard
-                          championName={sceneData?.insight?.vizData?.maxDamageMatch?.championName || "Unknown"}
+                          championName={(getVizData(sceneData)?.maxDamageMatch as any)?.championName || "Unknown"}
                           championImageUrl={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${
-                            sceneData?.insight?.vizData?.maxDamageMatch?.championName || "Aatrox"
+                            (getVizData(sceneData)?.maxDamageMatch as any)?.championName || "Aatrox"
                           }_0.jpg`}
                           title="Highest Damage Dealt Game"
                           stats={[
                             {
                               label: "KDA",
-                              value: sceneData?.insight?.vizData?.maxDamageMatch?.kda || "0/0/0",
+                              value: (getVizData(sceneData)?.maxDamageMatch as any)?.kda || "0/0/0",
                               color: "#06b6d4"
                             },
                             {
                               label: "Total Damage to Champions",
-                              value: `${Math.round((sceneData?.insight?.vizData?.stats?.highestDamage || 0) / 1000)}K`,
+                              value: `${Math.round((Number((getVizData(sceneData)?.stats as any)?.highestDamage) || 0) / 1000)}K`,
                               color: "#eab308"
                             }
                           ]}
-                          items={sceneData?.insight?.vizData?.maxDamageMatch?.items}
+                          items={(getVizData(sceneData)?.maxDamageMatch as any)?.items}
                           summonerSpells={{
-                            spell1Id: sceneData?.insight?.vizData?.maxDamageMatch?.summoner1Id || 4,
-                            spell2Id: sceneData?.insight?.vizData?.maxDamageMatch?.summoner2Id || 4
+                            spell1Id: (getVizData(sceneData)?.maxDamageMatch as any)?.summoner1Id || 4,
+                            spell2Id: (getVizData(sceneData)?.maxDamageMatch as any)?.summoner2Id || 4
                           }}
                           backgroundGradient="from-red-900/30 to-orange-900/30"
                           borderColor="border-red-700/50"
@@ -831,17 +834,17 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${Math.round(
-                            (sceneData?.insight?.vizData?.totalDamageTaken ||
+                            (getVizData(sceneData)?.totalDamageTaken ||
                               0) / 1000
                           )}K total damage absorbed.`,
                           `You tanked ${(
-                            sceneData?.insight?.vizData?.avgDamageTaken || 0
+                            getVizData(sceneData)?.avgDamageTaken || 0
                           ).toLocaleString()} damage per game on average.`,
                           `Your best match absorbed ${Math.round(
-                            (sceneData?.insight?.vizData?.maxDamageTakenMatch
+                            (getVizData(sceneData)?.maxDamageTakenMatch
                               ?.damageTaken || 0) / 1000
                           )}K damage taken with ${
-                            sceneData?.insight?.vizData?.maxDamageTakenMatch
+                            getVizData(sceneData)?.maxDamageTakenMatch
                               ?.championName || "Unknown"
                           }.`,
                         ]}
@@ -862,27 +865,27 @@ export default function RecapFlow({
                         }}
                       >
                         <ChampionCard
-                          championName={sceneData?.insight?.vizData?.maxDamageTakenMatch?.championName || "Unknown"}
+                          championName={getVizData(sceneData)?.maxDamageTakenMatch?.championName || "Unknown"}
                           championImageUrl={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${
-                            sceneData?.insight?.vizData?.maxDamageTakenMatch?.championName || "Aatrox"
+                            getVizData(sceneData)?.maxDamageTakenMatch?.championName || "Aatrox"
                           }_0.jpg`}
                           title="Highest Damage Taken Game"
                           stats={[
                             {
                               label: "KDA",
-                              value: sceneData?.insight?.vizData?.maxDamageTakenMatch?.kda || "0/0/0",
+                              value: getVizData(sceneData)?.maxDamageTakenMatch?.kda || "0/0/0",
                               color: "#eab308"
                             },
                             {
                               label: "Total Damage Taken",
-                              value: `${Math.round((sceneData?.insight?.vizData?.stats?.highestDamageTaken || 0) / 1000)}K`,
+                              value: `${Math.round((getVizData(sceneData)?.stats?.highestDamageTaken || 0) / 1000)}K`,
                               color: "#3b82f6"
                             }
                           ]}
-                          items={sceneData?.insight?.vizData?.maxDamageTakenMatch?.items}
+                          items={getVizData(sceneData)?.maxDamageTakenMatch?.items}
                           summonerSpells={{
-                            spell1Id: sceneData?.insight?.vizData?.maxDamageTakenMatch?.summoner1Id || 4,
-                            spell2Id: sceneData?.insight?.vizData?.maxDamageTakenMatch?.summoner2Id || 4
+                            spell1Id: getVizData(sceneData)?.maxDamageTakenMatch?.summoner1Id || 4,
+                            spell2Id: getVizData(sceneData)?.maxDamageTakenMatch?.summoner2Id || 4
                           }}
                           backgroundGradient="from-purple-900/30 to-blue-900/30"
                           borderColor="border-purple-700/50"
@@ -897,16 +900,16 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${Math.round(
-                            (sceneData?.insight?.vizData?.totalHeal || 0) / 1000
+                            (getVizData(sceneData)?.totalHeal || 0) / 1000
                           )}K total healing.`,
                           `Average of ${(
-                            sceneData?.insight?.vizData?.averages?.avgHeal || 0
+                            getVizData(sceneData)?.averages?.avgHeal || 0
                           ).toLocaleString()} healing per game.`,
                           `Your best match healed ${Math.round(
-                            (sceneData?.insight?.vizData?.maxHealMatch
+                            (getVizData(sceneData)?.maxHealMatch
                               ?.healing || 0) / 1000
                           )}K with ${
-                            sceneData?.insight?.vizData?.maxHealMatch
+                            getVizData(sceneData)?.maxHealMatch
                               ?.championName || "Unknown"
                           }.`,
                         ]}
@@ -927,27 +930,27 @@ export default function RecapFlow({
                         }}
                       >
                         <ChampionCard
-                          championName={sceneData?.insight?.vizData?.maxHealMatch?.championName || "Unknown"}
+                          championName={getVizData(sceneData)?.maxHealMatch?.championName || "Unknown"}
                           championImageUrl={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${
-                            sceneData?.insight?.vizData?.maxHealMatch?.championName || "Soraka"
+                            getVizData(sceneData)?.maxHealMatch?.championName || "Soraka"
                           }_0.jpg`}
                           title="Highest Healing Game"
                           stats={[
                             {
                               label: "KDA",
-                              value: sceneData?.insight?.vizData?.maxHealMatch?.kda || "0/0/0",
+                              value: getVizData(sceneData)?.maxHealMatch?.kda || "0/0/0",
                               color: "#eab308"
                             },
                             {
                               label: "Damage Healed",
-                              value: `${Math.round((sceneData?.insight?.vizData?.stats?.highestHealing || 0) / 1000)}K`,
+                              value: `${Math.round((getVizData(sceneData)?.stats?.highestHealing || 0) / 1000)}K`,
                               color: "#65a30d"
                             }
                           ]}
-                          items={sceneData?.insight?.vizData?.maxHealMatch?.items}
+                          items={getVizData(sceneData)?.maxHealMatch?.items}
                           summonerSpells={{
-                            spell1Id: sceneData?.insight?.vizData?.maxHealMatch?.summoner1Id || 4,
-                            spell2Id: sceneData?.insight?.vizData?.maxHealMatch?.summoner2Id || 4
+                            spell1Id: getVizData(sceneData)?.maxHealMatch?.summoner1Id || 4,
+                            spell2Id: getVizData(sceneData)?.maxHealMatch?.summoner2Id || 4
                           }}
                           backgroundGradient="from-green-900/30 to-emerald-900/30"
                           borderColor="border-green-700/50"
@@ -962,11 +965,11 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${Math.round(
-                            (sceneData?.insight?.vizData?.totalGoldEarned ||
+                            (getVizData(sceneData)?.totalGoldEarned ||
                               0) / 1000
                           )}K total gold earned.`,
                           `Average of ${
-                            sceneData?.insight?.vizData?.averages
+                            getVizData(sceneData)?.averages
                               ?.avgGoldPerMinute || 0
                           } gold per minute.`,
                           `Your gold income throughout the year — economic efficiency tracked.`,
@@ -987,7 +990,7 @@ export default function RecapFlow({
                           opacity: 0,
                         }}
                       >
-                        <Viz kind="line" data={sceneData?.insight?.vizData} />
+                        <Viz kind="line" data={getVizData(sceneData)} />
                       </div>
                     )}
                   </>
@@ -998,15 +1001,15 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${(
-                            sceneData?.insight?.vizData?.stats?.totalCS || 0
+                            getVizData(sceneData)?.stats?.totalCS || 0
                           ).toLocaleString()} total minions slain.`,
                           `Average CS per minute: ${
-                            sceneData?.insight?.vizData?.stats?.avgCSPerMin || 0
+                            getVizData(sceneData)?.stats?.avgCSPerMin || 0
                           }.`,
                           `Your best performance: ${
-                            sceneData?.insight?.vizData?.bestCSGame?.cs || 0
+                            getVizData(sceneData)?.bestCSGame?.cs || 0
                           } CS on ${
-                            sceneData?.insight?.vizData?.bestCSGame
+                            getVizData(sceneData)?.bestCSGame
                               ?.championName || "Unknown"
                           }.`,
                           `Every minion matters. Gold is power.`,
@@ -1027,7 +1030,7 @@ export default function RecapFlow({
                           opacity: 0,
                         }}
                       >
-                        <Viz kind="line" data={sceneData?.insight?.vizData} />
+                        <Viz kind="line" data={getVizData(sceneData)} />
                       </div>
                     )}
                   </>
@@ -1038,14 +1041,14 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${
-                            sceneData?.insight?.vizData?.mostPlayedPosition
+                            getVizData(sceneData)?.mostPlayedPosition
                               ?.position || "Unknown"
                           } — ${
-                            sceneData?.insight?.vizData?.mostPlayedPosition
+                            getVizData(sceneData)?.mostPlayedPosition
                               ?.games || 0
                           } games played.`,
                           `Your win rate is ${
-                            sceneData?.insight?.vizData?.mostPlayedPosition?.winRate?.toFixed(
+                            getVizData(sceneData)?.mostPlayedPosition?.winRate?.toFixed(
                               1
                             ) || 0
                           }% in this role.`,
@@ -1068,33 +1071,33 @@ export default function RecapFlow({
                         }}
                       >
                         <ChampionCard
-                          championName={sceneData?.insight?.vizData?.mostPlayedPosition?.position || "Unknown Position"}
+                          championName={getVizData(sceneData)?.mostPlayedPosition?.position || "Unknown Position"}
                           championImageUrl=""
                           title="Most Played Position"
                           stats={[
                             {
                               label: "Matches",
-                              value: sceneData?.insight?.vizData?.stats?.matches || 0,
+                              value: getVizData(sceneData)?.stats?.matches || 0,
                               color: "#ffffff"
                             },
                             {
                               label: "Avg. Win Rate",
-                              value: `${sceneData?.insight?.vizData?.stats?.winRate || 0}%`,
+                              value: `${getVizData(sceneData)?.stats?.winRate || 0}%`,
                               color: "#06b6d4"
                             },
                             {
                               label: "Avg Damage to Champions",
-                              value: sceneData?.insight?.vizData?.stats?.avgDamagePerMin || 0,
+                              value: getVizData(sceneData)?.stats?.avgDamagePerMin || 0,
                               color: "#fb923c"
                             },
                             {
                               label: "Avg Vision Score",
-                              value: sceneData?.insight?.vizData?.stats?.avgVisionScore || 0,
+                              value: getVizData(sceneData)?.stats?.avgVisionScore || 0,
                               color: "#eab308"
                             },
                           ]}
                           showPosition={true}
-                          topChampions={sceneData?.insight?.vizData?.mostPlayedPosition?.topChampions}
+                          topChampions={getVizData(sceneData)?.mostPlayedPosition?.topChampions}
                           backgroundGradient="from-indigo-900/30 to-purple-900/30"
                           borderColor="border-indigo-700/50"
                         />
@@ -1134,7 +1137,7 @@ export default function RecapFlow({
                           opacity: 0,
                         }}
                       >
-                        <Viz kind="line" data={sceneData?.insight?.vizData} />
+                        <Viz kind="line" data={getVizData(sceneData)} />
                       </div>
                     )}
                   </>
@@ -1145,18 +1148,18 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${
-                            sceneData?.insight?.vizData?.averages
+                            getVizData(sceneData)?.averages
                               ?.avgVisionScore || 0
                           } average vision score per game.`,
                           `${
-                            sceneData?.insight?.vizData?.totals
+                            getVizData(sceneData)?.totals
                               ?.totalWardsPlaced || 0
                           } wards placed, ${
-                            sceneData?.insight?.vizData?.totals
+                            getVizData(sceneData)?.totals
                               ?.totalWardsKilled || 0
                           } wards cleared.`,
                           `${
-                            sceneData?.insight?.vizData?.totals
+                            getVizData(sceneData)?.totals
                               ?.totalVisionWardsBought || 0
                           } control wards purchased.`,
                         ]}
@@ -1196,7 +1199,7 @@ export default function RecapFlow({
                                       Avg. Wards Placed
                                     </p>
                                     <p className="text-2xl font-bold text-yellow-400 font-friz">
-                                      {sceneData?.insight?.vizData?.averages
+                                      {getVizData(sceneData)?.averages
                                         ?.avgWardsPlaced || 0}
                                     </p>
                                     <p className="text-xs text-gray-500 mt-1 font-friz">
@@ -1219,7 +1222,7 @@ export default function RecapFlow({
                                       Avg. Control Wards
                                     </p>
                                     <p className="text-2xl font-bold text-pink-400 font-friz">
-                                      {sceneData?.insight?.vizData?.averages
+                                      {getVizData(sceneData)?.averages
                                         ?.avgVisionWardsBought || 0}
                                     </p>
                                     <p className="text-xs text-gray-500 mt-1 font-friz">
@@ -1242,7 +1245,7 @@ export default function RecapFlow({
                                       Avg. Wards Cleared
                                     </p>
                                     <p className="text-2xl font-bold text-red-400 font-friz">
-                                      {sceneData?.insight?.vizData?.averages
+                                      {getVizData(sceneData)?.averages
                                         ?.avgWardsKilled || 0}
                                     </p>
                                     <p className="text-xs text-gray-500 mt-1 font-friz">
@@ -1259,11 +1262,11 @@ export default function RecapFlow({
                                     Avg. Vision Score
                                   </p>
                                   <p className="text-4xl font-bold text-white font-friz">
-                                    {sceneData?.insight?.vizData?.averages
+                                    {getVizData(sceneData)?.averages
                                       ?.avgVisionScore || 0}
                                   </p>
                                   <p className="text-sm text-gray-500 mt-2 font-friz">
-                                    {sceneData?.insight?.vizData?.averages
+                                    {getVizData(sceneData)?.averages
                                       ?.avgVisionScorePerMinute || 0}{" "}
                                     per minute
                                   </p>
@@ -1283,13 +1286,13 @@ export default function RecapFlow({
                         segments={[
                           `Areas for improvement identified.`,
                           `Average deaths per game: ${
-                            sceneData?.insight?.vizData?.stats
+                            getVizData(sceneData)?.stats
                               ?.avgDeathsPerGame ||
                             sceneData?.insight?.metrics?.[0]?.value ||
                             0
                           } — optimization required.`,
                           `Time spent dead: ${
-                            sceneData?.insight?.vizData?.stats?.avgDeadPercentage?.toFixed(
+                            getVizData(sceneData)?.stats?.avgDeadPercentage?.toFixed(
                               1
                             ) || 0
                           }% of each game on average.`,
@@ -1322,7 +1325,7 @@ export default function RecapFlow({
                                 <PieChart>
                                   <Pie
                                     data={
-                                      sceneData?.insight?.vizData
+                                      getVizData(sceneData)
                                         ?.totalPieChart || []
                                     }
                                     cx="50%"
@@ -1336,7 +1339,7 @@ export default function RecapFlow({
                                     dataKey="value"
                                   >
                                     {(
-                                      sceneData?.insight?.vizData
+                                      getVizData(sceneData)
                                         ?.totalPieChart || []
                                     ).map((entry: any, index: number) => (
                                       <Cell
@@ -1373,7 +1376,7 @@ export default function RecapFlow({
                                 <PieChart>
                                   <Pie
                                     data={
-                                      sceneData?.insight?.vizData
+                                      getVizData(sceneData)
                                         ?.avgPieChart || []
                                     }
                                     cx="50%"
@@ -1387,7 +1390,7 @@ export default function RecapFlow({
                                     dataKey="value"
                                   >
                                     {(
-                                      sceneData?.insight?.vizData
+                                      getVizData(sceneData)
                                         ?.avgPieChart || []
                                     ).map((entry: any, index: number) => (
                                       <Cell
@@ -1422,7 +1425,7 @@ export default function RecapFlow({
                               Avg Deaths/Game
                             </p>
                             <p className="text-3xl font-bold text-red-400 font-friz">
-                              {sceneData?.insight?.vizData?.stats?.avgDeathsPerGame?.toFixed(
+                              {getVizData(sceneData)?.stats?.avgDeathsPerGame?.toFixed(
                                 2
                               ) || 0}
                             </p>
@@ -1432,7 +1435,7 @@ export default function RecapFlow({
                               Avg Time Dead
                             </p>
                             <p className="text-3xl font-bold text-orange-400 font-friz">
-                              {sceneData?.insight?.vizData?.stats?.avgTimeSpentDeadMinutes?.toFixed(
+                              {getVizData(sceneData)?.stats?.avgTimeSpentDeadMinutes?.toFixed(
                                 1
                               ) || 0}{" "}
                               min
@@ -1449,13 +1452,13 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${
-                            sceneData?.insight?.vizData?.title || "Unknown Ally"
+                            getVizData(sceneData)?.title || "Unknown Ally"
                           } — your most frequent partner.`,
                           `${
-                            sceneData?.insight?.vizData?.stats?.[0]?.value || 0
+                            getVizData(sceneData)?.stats?.[0]?.value || 0
                           } games together.`,
                           `Win rate: ${
-                            sceneData?.insight?.vizData?.stats?.[1]?.value ||
+                            getVizData(sceneData)?.stats?.[1]?.value ||
                             "0%"
                           }.`,
                           `Cooperation yields interesting results.`,
@@ -1476,18 +1479,18 @@ export default function RecapFlow({
                           opacity: 0,
                         }}
                       >
-                        {sceneData?.insight?.vizData?.puuid ? (
+                        {getVizData(sceneData)?.puuid ? (
                           <BestFriendProfile
                             puuid={sceneData.insight.vizData.puuid as string}
-                            stats={sceneData?.insight?.vizData?.stats}
+                            stats={getVizData(sceneData)?.stats}
                             recentGames={
-                              sceneData?.insight?.vizData?.recentGames
+                              getVizData(sceneData)?.recentGames
                             }
                           />
                         ) : (
                           <Viz
                             kind="badge"
-                            data={sceneData?.insight?.vizData}
+                            data={getVizData(sceneData)}
                           />
                         )}
                       </div>
@@ -1500,12 +1503,12 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `${
-                            sceneData?.insight?.vizData?.stats?.totalGames ||
+                            getVizData(sceneData)?.stats?.totalGames ||
                             sceneData?.insight?.metrics?.[0]?.value ||
                             0
                           } ARAM games detected.`,
                           `Win rate: ${
-                            sceneData?.insight?.vizData?.stats?.winRate ||
+                            getVizData(sceneData)?.stats?.winRate ||
                             sceneData?.insight?.metrics?.[1]?.value ||
                             0
                           }%.`,
@@ -1527,7 +1530,7 @@ export default function RecapFlow({
                           opacity: 0,
                         }}
                       >
-                        {sceneData?.insight?.vizData?.bestGame ? (
+                        {getVizData(sceneData)?.bestGame ? (
                           <div className="max-w-2xl w-full">
                             {(() => {
                               const bestGame = (sceneData.insight.vizData as Record<string, unknown>)?.bestGame as Record<string, unknown>;
@@ -1569,7 +1572,7 @@ export default function RecapFlow({
                         ) : (
                           <Viz
                             kind="infographic"
-                            data={sceneData?.insight?.vizData}
+                            data={getVizData(sceneData)}
                           />
                         )}
                       </div>
@@ -1601,7 +1604,7 @@ export default function RecapFlow({
                           opacity: 0,
                         }}
                       >
-                        <Viz kind="ranked" data={sceneData?.insight?.vizData} />
+                        <Viz kind="ranked" data={getVizData(sceneData)} />
                       </div>
                     )}
                   </>
@@ -1612,12 +1615,12 @@ export default function RecapFlow({
                         key={`${currentSceneId}-${currentSceneIndex}`}
                         segments={[
                           `Highest killing spree: ${
-                            sceneData?.insight?.vizData?.stats?.longestSpree ||
+                            getVizData(sceneData)?.stats?.longestSpree ||
                             sceneData?.insight?.metrics?.[2]?.value ||
                             0
                           } consecutive kills.`,
                           `${
-                            sceneData?.insight?.vizData?.stats?.pentaKills ||
+                            getVizData(sceneData)?.stats?.pentaKills ||
                             sceneData?.insight?.metrics?.[0]?.value ||
                             0
                           } pentakills achieved.`,
@@ -1639,7 +1642,7 @@ export default function RecapFlow({
                           opacity: 0,
                         }}
                       >
-                        <Viz kind="bar" data={sceneData?.insight?.vizData} />
+                        <Viz kind="bar" data={getVizData(sceneData)} />
                       </div>
                     )}
                   </>
@@ -1686,7 +1689,7 @@ export default function RecapFlow({
                                       Team Dragons
                                     </p>
                                     <p className="text-3xl font-bold text-orange-400 font-friz">
-                                      {((sceneData?.insight?.vizData as Record<string, unknown>)?.bars as Array<{value: number}>)?.[4]?.value || 0}
+                                      {((getVizData(sceneData) as Record<string, unknown>)?.bars as Array<{value: number}>)?.[4]?.value || 0}
                                     </p>
                                   </div>
                                 </div>
@@ -1696,7 +1699,7 @@ export default function RecapFlow({
                                       Team Barons
                                     </p>
                                     <p className="text-3xl font-bold text-indigo-400 font-friz">
-                                      {((sceneData?.insight?.vizData as Record<string, unknown>)?.bars as Array<{value: number}>)?.[5]?.value || 0}
+                                      {((getVizData(sceneData) as Record<string, unknown>)?.bars as Array<{value: number}>)?.[5]?.value || 0}
                                     </p>
                                   </div>
                                 </div>
@@ -1739,7 +1742,7 @@ export default function RecapFlow({
                       >
                         <Viz
                           kind="highlight"
-                          data={sceneData?.insight?.vizData}
+                          data={getVizData(sceneData)}
                         />
                       </div>
                     )}
@@ -1776,7 +1779,7 @@ export default function RecapFlow({
                       >
                         <Viz
                           kind="highlight"
-                          data={sceneData?.insight?.vizData}
+                          data={getVizData(sceneData)}
                         />
                       </div>
                     )}
@@ -1808,7 +1811,7 @@ export default function RecapFlow({
                         }}
                       />
                     </div>
-                    {showHeatmap && sceneData?.insight?.vizData?.mvpMatch && (
+                    {showHeatmap && getVizData(sceneData)?.mvpMatch && (
                       <div
                         className="flex-1 overflow-auto flex items-center justify-center"
                         style={{
@@ -1864,7 +1867,7 @@ export default function RecapFlow({
                     <div className="flex-1 mb-4 overflow-hidden">
                       <Viz
                         kind={sceneData?.vizKind || "highlight"}
-                        data={sceneData?.insight?.vizData}
+                        data={getVizData(sceneData)}
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3 flex-shrink-0">

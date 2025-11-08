@@ -18,6 +18,7 @@ import { computeSniper } from "./compute/computeSniper";
 import { computeFancyFeet } from "./compute/computeFancyFeet";
 import { computeCS } from "./compute/computeCS";
 import { computeMVP } from "./compute/computeMVP";
+import { computePeak } from "./compute/computePeak";
 
 export interface SceneDefinition {
   label: string;
@@ -69,6 +70,12 @@ export const sceneRegistry: Record<SceneId, SceneDefinition> = {
     label: "Vision Score",
     compute: computeVisionScore,
     vizKind: "bar",
+  },
+
+  peak_performance: {
+    label: "Peak Performance",
+    compute: computePeak,
+    vizKind: "highlight",
   },
 
   weaknesses: {

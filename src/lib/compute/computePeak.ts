@@ -35,8 +35,8 @@ export async function computePeak(ctx: { puuid: string; matchIds: string[] }): P
     }
 
     // Calculate how much better this was than average
-    const avgKda = aggregates.kda.series.reduce((sum, val) => sum + val, 0) / aggregates.kda.series.length;
-    const avgGpm = aggregates.gpm.series.reduce((sum, val) => sum + val, 0) / aggregates.gpm.series.length;
+    const avgKda = aggregates.kda.series.reduce((sum: number, val: number) => sum + val, 0) / aggregates.kda.series.length;
+    const avgGpm = aggregates.gpm.series.reduce((sum: number, val: number) => sum + val, 0) / aggregates.gpm.series.length;
     
     const kdaImprovement = ((kdaScore - avgKda) / avgKda) * 100;
     const gpmImprovement = ((gpmScore - avgGpm) / avgGpm) * 100;
