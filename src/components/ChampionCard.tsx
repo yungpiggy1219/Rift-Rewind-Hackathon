@@ -59,7 +59,7 @@ export default function ChampionCard({
 
   if (showPosition && topChampions) {
     return (
-      <div className={`bg-linear-to-br ${backgroundGradient} border ${borderColor} rounded-xl p-6`}>
+      <div className={`bg-linear-to-br ${backgroundGradient} border ${borderColor} rounded-xl p-6 w-full`}>
         <div className="flex gap-8 items-center">
           {/* Top 3 Champions - Left */}
           <div className="shrink-0 flex flex-col gap-3">
@@ -115,7 +115,7 @@ export default function ChampionCard({
   }
 
   return (
-    <div className={`bg-linear-to-br ${backgroundGradient} border ${borderColor} rounded-xl p-6`}>
+    <div className={`bg-linear-to-br ${backgroundGradient} border ${borderColor} rounded-xl p-6 w-full`}>
       <div className="flex gap-8 items-center">
         {/* Champion Loading Screen Image - Left */}
         <div className="shrink-0">
