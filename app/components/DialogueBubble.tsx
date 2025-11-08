@@ -109,7 +109,7 @@ export default function DialogueBubble({
   return (
     <div 
       onClick={handleAdvance}
-      className={`bg-purple-600/95 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-2xl border border-purple-400/50 font-medium shadow-2xl max-w-xs relative cursor-pointer hover:bg-purple-500/95 transition-colors ${className}`}
+      className={`bg-purple-600/95 backdrop-blur-sm text-white text-sm px-8 py-6 rounded-m border border-purple-400/50 font-medium shadow-2xl max-w-s relative cursor-pointer hover:bg-purple-500/95 transition-colors ${className}`}
       style={{
         animation: isTyping ? 'none' : 'subtle-float 3s ease-in-out infinite'
       }}
@@ -118,7 +118,7 @@ export default function DialogueBubble({
       <div className="absolute -bottom-2 left-8 w-4 h-4 bg-purple-600/95 border-b border-r border-purple-400/50 transform rotate-45"></div>
       
       {/* Text content with fallback */}
-      <p className="relative z-10 leading-relaxed">
+      <p className="relative z-10 leading-relaxed font-friz text-base">
         {safeDisplayText}
         {isTyping && (
           <span className="inline-block w-1 h-4 bg-white ml-1 animate-pulse"></span>
