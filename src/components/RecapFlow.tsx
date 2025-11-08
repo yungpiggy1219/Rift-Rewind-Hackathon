@@ -66,14 +66,14 @@ function BestFriendProfile({
 
   return (
     <div className="max-w-2xl mx-auto">
-      <SummonerCard
+{/*       <SummonerCard
         profile={profileData}
         playerName={profileData?.name}
         tagLine={profileData?.tagLine}
         rankedInfo={rankedData}
         containerClassName="relative"
         showMenuButton={false}
-      />
+      /> */}
 
       {/* Stats Grid Below Card */}
       <div className="mt-6 grid grid-cols-2 gap-4">

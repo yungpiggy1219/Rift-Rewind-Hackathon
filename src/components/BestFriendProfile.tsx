@@ -16,6 +16,15 @@ interface ProfileData {
   losses?: number;
 }
 
+interface RankedData {
+  queueType?: string;
+  tier?: string;
+  rank?: string;
+  leaguePoints?: number;
+  wins?: number;
+  losses?: number;
+}
+
 interface BestFriendProfileProps {
   puuid: string;
   stats?: Array<{
@@ -36,20 +45,33 @@ export default function BestFriendProfile({
   recentGames = []
 }: BestFriendProfileProps) {
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [rankedData, setRankedData] = useState<RankedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileData = async () => {
       try {
         setLoading(true);
+        
         // Fetch summoner profile by PUUID
-        const response = await fetch(`/api/profile/${puuid}`);
-        if (!response.ok) {
+        const profileResponse = await fetch(`/api/profile/${puuid}`);
+        if (!profileResponse.ok) {
           throw new Error('Failed to fetch profile');
         }
-        const data = await response.json();
-        setProfile(data);
+        const profileData = await profileResponse.json();
+        setProfile(profileData);
+
+        // Fetch ranked stats by PUUID
+        const rankedResponse = await fetch(`/api/ranked/${puuid}`);
+        if (rankedResponse.ok) {
+          const rankedDataArray = await rankedResponse.json();
+          // Find RANKED_SOLO_5x5 queue type, otherwise use first available
+          const soloRanked = Array.isArray(rankedDataArray) 
+            ? rankedDataArray.find((entry: RankedData) => entry.queueType === 'RANKED_SOLO_5x5') || rankedDataArray[0]
+            : rankedDataArray;
+          setRankedData(soloRanked);
+        }
       } catch (err) {
         console.error('Error fetching best friend profile:', err);
         setError(err instanceof Error ? err.message : 'Failed to load profile');
@@ -59,7 +81,7 @@ export default function BestFriendProfile({
     };
 
     if (puuid) {
-      fetchProfile();
+      fetchProfileData();
     }
   }, [puuid]);
 
@@ -76,7 +98,7 @@ export default function BestFriendProfile({
 
   if (error || !profile) {
     return (
-      <div className="bg-gradient-to-br from-red-900/30 to-orange-900/30 border border-red-700/50 rounded-xl p-8">
+      <div className="bg-linear-to-br from-red-900/30 to-orange-900/30 border border-red-700/50 rounded-xl p-8">
         <div className="text-center">
           <div className="text-3xl font-bold text-red-400 mb-2">Error</div>
           <div className="text-gray-300">{error || 'Unable to load ally profile'}</div>
@@ -88,14 +110,21 @@ export default function BestFriendProfile({
   const displayName = profile.name || 'Unknown';
   const displayTag = profile.tagLine || '';
   const displayLevel = profile.summonerLevel || 'N/A';
+  
+  // Get ranked stats from rankedData (fetched from League API)
+  const rankedTier = rankedData?.tier || profile.tier || 'Unranked';
+  const rankedRank = rankedData?.rank || profile.rank || '';
+  const rankedLP = rankedData?.leaguePoints || profile.leaguePoints || 0;
+  const rankedWins = rankedData?.wins || profile.wins || 0;
+  const rankedLosses = rankedData?.losses || profile.losses || 0;
 
   return (
     <div className="flex flex-col gap-6">
       {/* Profile Card */}
-      <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 border border-purple-700/50 rounded-xl p-8">
+      <div className="bg-linear-to-br from-purple-900/30 to-blue-900/30 border border-purple-700/50 rounded-xl p-8">
         <div className="flex items-center gap-6 mb-6">
           {/* Profile Icon */}
-          <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shrink-0">
+          <div className="w-24 h-24 bg-linear-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shrink-0">
             {profile.profileIconId ? (
               <img
                 src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/profileicon/${profile.profileIconId}.png`}
@@ -117,20 +146,20 @@ export default function BestFriendProfile({
             </h2>
             <div className="text-gray-300 space-y-1">
               <div>Summoner Level: <span className="text-purple-300 font-semibold">{displayLevel}</span></div>
-              {profile.tier && (
+              {rankedTier && rankedTier !== 'Unranked' && (
                 <div>
                   Rank: <span className="text-cyan-300 font-semibold">
-                    {profile.tier} {profile.rank} {profile.leaguePoints && `(${profile.leaguePoints} LP)`}
+                    {rankedTier} {rankedRank} {rankedLP > 0 && `(${rankedLP} LP)`}
                   </span>
                 </div>
               )}
-              {profile.wins !== undefined && profile.losses !== undefined && (
+              {rankedWins > 0 || rankedLosses > 0 ? (
                 <div>
                   Ranked Record: <span className="text-green-300 font-semibold">
-                    {profile.wins}W-{profile.losses}L
+                    {rankedWins}W-{rankedLosses}L
                   </span>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
@@ -155,7 +184,7 @@ export default function BestFriendProfile({
 
       {/* Recent Games */}
       {recentGames.length > 0 && (
-        <div className="bg-gradient-to-br from-blue-900/30 to-cyan-900/30 border border-blue-700/50 rounded-xl p-6">
+        <div className="bg-linear-to-br from-blue-900/30 to-cyan-900/30 border border-blue-700/50 rounded-xl p-6">
           <h3 className="text-xl font-bold text-white mb-4 font-friz">Recent Games Together</h3>
           <div className="space-y-3">
             {recentGames.slice(0, 5).map((game, idx) => (
