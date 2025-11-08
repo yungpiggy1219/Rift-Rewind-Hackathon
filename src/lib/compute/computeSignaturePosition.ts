@@ -107,7 +107,7 @@ export async function computeSignaturePosition(ctx: { puuid: string; matchIds: s
           stats.totalDamageDealt += playerParticipant.totalDamageDealtToChampions || 0;
           stats.totalVisionScore += playerParticipant.visionScore || 0;
           stats.totalMinionsKilled += (playerParticipant.totalMinionsKilled || 0) + (playerParticipant.neutralMinionsKilled || 0);
-          stats.totalGameDuration += match.gameDuration / 60; // Convert to minutes
+          stats.totalGameDuration += match.gameDuration || 0;
           
           // Track champion usage for this position
           const championName = playerParticipant.championName;
@@ -181,14 +181,14 @@ export async function computeSignaturePosition(ctx: { puuid: string; matchIds: s
     
     // Calculate additional stats for most played position
     const posData = positionStats[mostPlayedPosKey];
-    const avgDamagePerMin = posData.totalGameDuration > 0 
-      ? Math.round(posData.totalDamageDealt / posData.totalGameDuration)
+    const avgDamageToChampions = posData.games > 0 
+      ? Math.round(posData.totalDamageDealt / posData.games)
       : 0;
     const avgVisionScore = posData.games > 0 
       ? Math.round(posData.totalVisionScore / posData.games)
       : 0;
     const avgCSPerMin = posData.totalGameDuration > 0 
-      ? ((posData.totalMinionsKilled / posData.totalGameDuration)).toFixed(1)
+      ? ((posData.totalMinionsKilled / posData.totalGameDuration) * 60).toFixed(1)
       : '0.0';
     
     // Position name mapping for better display
@@ -284,7 +284,7 @@ export async function computeSignaturePosition(ctx: { puuid: string; matchIds: s
             losses: mostPlayedPosition.losses,
             winRate: mostPlayedPosition.winRate,
             avgKDA: mostPlayedPosition.avgKDA,
-            avgDamagePerMin,
+            avgDamageToChampions,
             avgVisionScore,
             avgCSPerMin,
             topChampions: championsList
@@ -292,9 +292,9 @@ export async function computeSignaturePosition(ctx: { puuid: string; matchIds: s
           stats: {
             matches: mostPlayedPosition.games,
             winRate: mostPlayedPosition.winRate.toFixed(1),
-            avgDamagePerMin,
+            avgDamagePerMin: avgDamageToChampions,
             avgVisionScore,
-            avgCSPerMin
+            csPerMin: avgCSPerMin
           },
           playedPositions,
           isFlexPlayer,

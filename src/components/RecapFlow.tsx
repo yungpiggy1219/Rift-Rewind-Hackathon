@@ -574,7 +574,7 @@ export default function RecapFlow({
             >
               <Loader2 className="w-10 h-10 animate-spin text-blue-400 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-white mb-2">
-                Making cookies for poros...
+                Baking cookies for poros...
               </h3>
             </div>
           ) : sceneData && narration ? (
@@ -671,30 +671,25 @@ export default function RecapFlow({
                           title="Most Played Champion"
                           stats={[
                             {
-                              label: "Win Rate",
+                              label: "Avg. nWin Rate",
                               value: `${sceneData?.insight?.vizData?.stats?.winRate || 0}%`,
                               color: "#06b6d4"
                             },
                             {
-                              label: "KDA",
+                              label: "Avg. KDA",
                               value: sceneData?.insight?.vizData?.stats?.kda || "0.00",
                               color: "#ffffff"
                             },
                             {
-                              label: "Damage/Minute",
-                              value: sceneData?.insight?.vizData?.stats?.damagePerMin || 0,
+                              label: "Avg. Damage to Champions",
+                              value: sceneData?.insight?.vizData?.stats?.damageToChampions || 0,
                               color: "#fb923c"
                             },
                             {
-                              label: "Vision Score",
+                              label: "Avg. Vision Score",
                               value: sceneData?.insight?.vizData?.stats?.visionScore || 0,
                               color: "#eab308"
                             },
-                            {
-                              label: "CS/Minute",
-                              value: sceneData?.insight?.vizData?.stats?.csPerMin || "0.0",
-                              color: "#22c55e"
-                            }
                           ]}
                           backgroundGradient="from-blue-900/30 to-purple-900/30"
                           borderColor="border-blue-700/50"
@@ -1028,7 +1023,7 @@ export default function RecapFlow({
                               color: "#06b6d4"
                             },
                             {
-                              label: "Avg Damage/Minute",
+                              label: "Avg Damage to Champions",
                               value: sceneData?.insight?.vizData?.stats?.avgDamagePerMin || 0,
                               color: "#fb923c"
                             },
@@ -1037,11 +1032,6 @@ export default function RecapFlow({
                               value: sceneData?.insight?.vizData?.stats?.avgVisionScore || 0,
                               color: "#eab308"
                             },
-                            {
-                              label: "Avg CS/Minute",
-                              value: sceneData?.insight?.vizData?.stats?.avgCSPerMin || "0.0",
-                              color: "#22c55e"
-                            }
                           ]}
                           showPosition={true}
                           topChampions={sceneData?.insight?.vizData?.mostPlayedPosition?.topChampions}

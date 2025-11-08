@@ -64,19 +64,18 @@ export async function computeCS(ctx: { puuid: string; matchIds: string[] }): Pro
         
         processedMatches++;
         
-        // Calculate CS (total minions killed + neutral minions killed)
+        // Calculate total minions killed (lane minions)
         const totalMinionsKilled = playerParticipant.totalMinionsKilled || 0;
-        const neutralMinionsKilled = playerParticipant.neutralMinionsKilled || 0;
-        const matchCS = totalMinionsKilled + neutralMinionsKilled;
+        const matchMinionsKilled = totalMinionsKilled;
         
-        totalCS += matchCS;
+        totalCS += matchMinionsKilled;
         
         // Track game duration in minutes
         const gameDurationMinutes = match.gameDuration / 60;
         totalGameTime += gameDurationMinutes;
         
-        // Calculate CS per minute for this game
-        const csPerMin = gameDurationMinutes > 0 ? matchCS / gameDurationMinutes : 0;
+        // Calculate minions per minute for this game
+        const csPerMin = gameDurationMinutes > 0 ? matchMinionsKilled / gameDurationMinutes : 0;
         
         // Track by month
         const matchDate = new Date(match.gameCreation);
@@ -87,14 +86,14 @@ export async function computeCS(ctx: { puuid: string; matchIds: string[] }): Pro
         }
         
         const monthData = csByMonth.get(month)!;
-        monthData.totalCS += matchCS;
+        monthData.totalCS += matchMinionsKilled;
         monthData.totalTime += gameDurationMinutes;
         monthData.games += 1;
         
-        // Track best CS game
-        if (matchCS > bestCSGame.cs) {
+        // Track best minions killed game
+        if (matchMinionsKilled > bestCSGame.cs) {
           bestCSGame = {
-            cs: matchCS,
+            cs: matchMinionsKilled,
             csPerMin: csPerMin,
             matchId: match.gameId,
             date: matchDate.toLocaleDateString(),

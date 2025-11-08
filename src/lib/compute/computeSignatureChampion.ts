@@ -1,5 +1,10 @@
-import { ScenePayload, MatchData } from '../types';
+import { ScenePayload, MatchData, MatchParticipant } from '../types';
 import { fetchMatchDetail } from '../riot';
+
+// Type guard to check if participant is a MatchParticipant
+function isMatchParticipant(participant: MatchParticipant | { puuid: string; riotIdGameName: string }): participant is MatchParticipant {
+  return 'goldEarned' in participant && 'win' in participant;
+}
 
 export async function computeSignatureChampion(ctx: { puuid: string; matchIds: string[] }): Promise<ScenePayload> {
   console.log(`[computeSignatureChampion] Starting for ${ctx.puuid} - ANALYZING MOST USED CHAMPION`);
@@ -26,7 +31,6 @@ export async function computeSignatureChampion(ctx: { puuid: string; matchIds: s
     
     // Process matches in batches to avoid overwhelming the API
     const batchSize = 10;
-    let processedMatches = 0;
     
     for (let i = 0; i < Math.min(matchIds.length, 100); i += batchSize) {
       const batch = matchIds.slice(i, i + batchSize);
@@ -48,9 +52,8 @@ export async function computeSignatureChampion(ctx: { puuid: string; matchIds: s
         
         // Find player's participant data
         const playerParticipant = match.participants.find(p => p.puuid === ctx.puuid);
-        if (!playerParticipant) continue;
+        if (!playerParticipant || !isMatchParticipant(playerParticipant)) continue;
         
-        processedMatches++;
         const { championId, championName, kills, deaths, assists, goldEarned, win } = playerParticipant;
         
         // Initialize champion stats if not exists
@@ -125,29 +128,28 @@ export async function computeSignatureChampion(ctx: { puuid: string; matchIds: s
         if (!match) continue;
         
         const playerParticipant = match.participants.find(p => p.puuid === ctx.puuid);
-        if (!playerParticipant || playerParticipant.championId !== mostPlayedChampion.championId) continue;
+        if (!playerParticipant || !isMatchParticipant(playerParticipant) || playerParticipant.championId !== mostPlayedChampion.championId) continue;
         
         gamesWithData++;
         totalDamageDealt += playerParticipant.totalDamageDealtToChampions || 0;
         totalVisionScore += playerParticipant.visionScore || 0;
+        // CS calculation: totalMinionsKilled includes both lane minions and neutral minions
         totalMinionsKilled += (playerParticipant.totalMinionsKilled || 0) + (playerParticipant.neutralMinionsKilled || 0);
         totalGameDuration += match.gameDuration || 0;
       }
     }
     
-    const avgDamagePerMin = gamesWithData > 0 && totalGameDuration > 0 
-      ? Math.round((totalDamageDealt / totalGameDuration) * 60)
+    const avgDamageToChampions = gamesWithData > 0 
+      ? Math.round(totalDamageDealt / gamesWithData)
       : 0;
     const avgVisionScore = gamesWithData > 0 ? Math.round(totalVisionScore / gamesWithData) : 0;
+    // CS/min calculation: (total CS / total game duration in seconds) * 60 = average CS per minute
     const avgCSPerMin = gamesWithData > 0 && totalGameDuration > 0
       ? ((totalMinionsKilled / totalGameDuration) * 60).toFixed(1)
       : '0.0';
     
     console.log(`[computeSignatureChampion] Most played: ${mostPlayedChampion.championName} (${mostPlayedChampion.games} games, ${winRate.toFixed(1)}% WR)`);
-    console.log(`[computeSignatureChampion] Dmg/Min: ${avgDamagePerMin}, Vision: ${avgVisionScore}, CS/Min: ${avgCSPerMin}`);
-    
-    // Get top 3 champions for comparison
-    const top3Champions = championList.slice(0, 3);
+    console.log(`[computeSignatureChampion] Avg Dmg to Champs: ${avgDamageToChampions}, Vision: ${avgVisionScore}, CS/Min: ${avgCSPerMin}`);
     
     return {
       sceneId: "signature_champion",
@@ -194,7 +196,7 @@ export async function computeSignatureChampion(ctx: { puuid: string; matchIds: s
             wins: mostPlayedChampion.wins,
             winRate: winRate,
             avgKDA: avgKDA,
-            avgDamagePerMin: avgDamagePerMin,
+            avgDamageToChampions: avgDamageToChampions,
             avgVisionScore: avgVisionScore,
             avgCSPerMin: parseFloat(avgCSPerMin),
             avgGold: avgGold
@@ -203,16 +205,16 @@ export async function computeSignatureChampion(ctx: { puuid: string; matchIds: s
           stats: {
             winRate: winRate.toFixed(1),
             kda: avgKDA.toFixed(2),
-            damagePerMin: avgDamagePerMin,
+            damageToChampions: avgDamageToChampions,
             visionScore: avgVisionScore,
             csPerMin: avgCSPerMin
           },
           // Radar chart data - 5 key stats only
-          categories: ["Win Rate", "KDA", "Dmg/Min", "Vision", "CS/Min"],
+          categories: ["Win Rate", "KDA", "Dmg to Champs", "Vision", "CS/Min"],
           values: [
             winRate, // Win rate (0-100%)
             Math.min(avgKDA / 5 * 100, 100), // KDA normalized (5.0 KDA = 100%)
-            Math.min(avgDamagePerMin / 1000 * 100, 100), // Dmg/Min normalized (1000 = 100%)
+            Math.min(avgDamageToChampions / 8000 * 100, 100), // Dmg to Champs normalized (8000 = 100%)
             Math.min(avgVisionScore / 50 * 100, 100), // Vision normalized (50 = 100%)
             Math.min(parseFloat(avgCSPerMin) / 8 * 100, 100) // CS/Min normalized (8 = 100%)
           ],
