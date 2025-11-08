@@ -1132,14 +1132,14 @@ export default function RecapFlow({
                                     />
                                   </div>
                                   <div className="text-center">
-                                    <p className="text-sm text-gray-400">
+                                    <p className="text-sm text-gray-400 font-friz">
                                       Avg. Wards Placed
                                     </p>
-                                    <p className="text-2xl font-bold text-yellow-400">
+                                    <p className="text-2xl font-bold text-yellow-400 font-friz">
                                       {sceneData?.insight?.vizData?.averages
                                         ?.avgWardsPlaced || 0}
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <p className="text-xs text-gray-500 mt-1 font-friz">
                                       per game
                                     </p>
                                   </div>
@@ -1155,14 +1155,14 @@ export default function RecapFlow({
                                     />
                                   </div>
                                   <div className="text-center">
-                                    <p className="text-sm text-gray-400">
+                                    <p className="text-sm text-gray-400 font-friz">
                                       Avg. Control Wards
                                     </p>
-                                    <p className="text-2xl font-bold text-pink-400">
+                                    <p className="text-2xl font-bold text-pink-400 font-friz">
                                       {sceneData?.insight?.vizData?.averages
                                         ?.avgVisionWardsBought || 0}
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <p className="text-xs text-gray-500 mt-1 font-friz">
                                       per game
                                     </p>
                                   </div>
@@ -1178,14 +1178,14 @@ export default function RecapFlow({
                                     />
                                   </div>
                                   <div className="text-center">
-                                    <p className="text-sm text-gray-400">
+                                    <p className="text-sm text-gray-400 font-friz">
                                       Avg. Wards Cleared
                                     </p>
-                                    <p className="text-2xl font-bold text-red-400">
+                                    <p className="text-2xl font-bold text-red-400 font-friz">
                                       {sceneData?.insight?.vizData?.averages
                                         ?.avgWardsKilled || 0}
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <p className="text-xs text-gray-500 mt-1 font-friz">
                                       per game
                                     </p>
                                   </div>
@@ -1195,14 +1195,14 @@ export default function RecapFlow({
                               {/* Vision Score Summary */}
                               <div className="w-full bg-black/30 rounded-lg p-6 mt-4">
                                 <div className="text-center">
-                                  <p className="text-sm text-gray-400 mb-2">
+                                  <p className="text-sm text-gray-400 mb-2 font-friz">
                                     Avg. Vision Score
                                   </p>
-                                  <p className="text-4xl font-bold text-white">
+                                  <p className="text-4xl font-bold text-white font-friz">
                                     {sceneData?.insight?.vizData?.averages
                                       ?.avgVisionScore || 0}
                                   </p>
-                                  <p className="text-sm text-gray-500 mt-2">
+                                  <p className="text-sm text-gray-500 mt-2 font-friz">
                                     {sceneData?.insight?.vizData?.averages
                                       ?.avgVisionScorePerMinute || 0}{" "}
                                     per minute
