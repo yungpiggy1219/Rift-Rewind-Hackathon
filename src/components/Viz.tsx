@@ -292,18 +292,18 @@ export default function Viz({ kind, data }: VizProps) {
                 key={month.month}
                 className="bg-gray-700 rounded-lg p-3 text-center"
                 style={{
-                  backgroundColor: `rgba(59, 130, 246, ${month.intensity || 0.1})`
+                  backgroundColor: `rgba(83, 97, 123, ${month.intensity || 0.1})`
                 }}
               >
-                <div className="text-xs text-gray-300">{month.month}</div>
-                <div className="text-lg font-bold text-white">{matches}</div>
-                <div className="text-xs text-gray-400">{hours} hours</div>
+                <div className="text-xs text-gray-300 font-friz">{month.month}</div>
+                <div className="text-lg font-bold text-white font-friz">{matches}</div>
+                <div className="text-xs text-gray-400 font-friz">{hours} hours</div>
               </div>
             );
           }) : (
             <div className="col-span-4 text-center text-gray-400 py-8">
-              <div className="text-lg font-semibold mb-2">No Data Available</div>
-              <div className="text-sm">Activity data requires match history access</div>
+              <div className="text-lg font-semibold mb-2 font-friz">No Data Available</div>
+              <div className="text-sm font-friz">Activity data requires match history access</div>
             </div>
           )}
         </div>
