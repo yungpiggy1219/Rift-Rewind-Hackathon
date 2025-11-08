@@ -66,13 +66,40 @@ async function clearCacheForPuuid(puuid: string) {
   });
 }
 
+async function clearAllCache() {
+  const keysCleared: string[] = [];
+  let totalCleared = 0;
+
+  console.log(`[clear-cache] Starting cache clear for ALL data`);
+
+  try {
+    // Clear all cache using a broad pattern
+    const count = await cache.clearPattern('*');
+    totalCleared += count;
+    keysCleared.push(`Pattern: * (${count} keys)`);
+    console.log(`[clear-cache] Cleared ${count} keys matching pattern: *`);
+  } catch (error) {
+    console.error(`[clear-cache] Error clearing all cache:`, error);
+  }
+
+  console.log(`[clear-cache] Total cleared: ${totalCleared} keys`);
+
+  return NextResponse.json({
+    success: true,
+    message: `Cleared all cache`,
+    totalCleared,
+    keysCleared
+  });
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const puuid = searchParams.get('puuid');
     
     if (!puuid) {
-      return NextResponse.json({ error: 'PUUID is required' }, { status: 400 });
+      // If no PUUID provided, clear all cache
+      return clearAllCache();
     }
 
     return clearCacheForPuuid(puuid);
@@ -91,7 +118,8 @@ export async function POST(request: NextRequest) {
     const puuid = searchParams.get('puuid');
     
     if (!puuid) {
-      return NextResponse.json({ error: 'PUUID is required' }, { status: 400 });
+      // If no PUUID provided, clear all cache
+      return clearAllCache();
     }
 
     return clearCacheForPuuid(puuid);

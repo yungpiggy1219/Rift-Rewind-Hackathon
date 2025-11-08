@@ -27,6 +27,25 @@ export default function LoginPage() {
     };
   }, []);
 
+  // Clear cache when home page loads
+  useEffect(() => {
+    const clearCache = async () => {
+      try {
+        console.log('[HomePage] Clearing cache on page load');
+        const response = await fetch('/api/clear-cache');
+        if (response.ok) {
+          console.log('[HomePage] Cache cleared successfully');
+        } else {
+          console.warn('[HomePage] Failed to clear cache');
+        }
+      } catch (error) {
+        console.error('[HomePage] Error clearing cache:', error);
+      }
+    };
+
+    clearCache();
+  }, []);
+
   // Mouse tracking for tilt effect
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
