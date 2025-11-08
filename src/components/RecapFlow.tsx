@@ -1750,235 +1750,45 @@ export default function RecapFlow({
                           opacity: 0,
                         }}
                       >
-                        {/* MVP Match Champion Card */}
-                        <div className="max-w-4xl w-full">
-                          <div className="bg-gradient-to-br from-yellow-900/30 to-amber-900/30 border border-yellow-700/50 rounded-xl p-6">
-                            <div className="text-center mb-4">
-                              <h3 className="text-2xl font-bold text-yellow-400 mb-2">
-                                🏆 MVP Match of 2025
-                              </h3>
-                              <p className="text-sm text-gray-300">
-                                Performance Score:{" "}
-                                {
-                                  sceneData.insight.vizData.mvpMatch
-                                    .performanceScore
-                                }
-                              </p>
-                            </div>
-
-                            <div className="flex gap-8 items-center">
-                              {/* Champion Image */}
-                              <div className="flex-shrink-0">
-                                <img
-                                  src={`https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${
-                                    sceneData.insight.vizData.mvpMatch
-                                      .championName || "Aatrox"
-                                  }_0.jpg`}
-                                  alt={
-                                    sceneData.insight.vizData.mvpMatch
-                                      .championName || "Champion"
+                        {(() => {
+                          const mvpMatch = (sceneData.insight.vizData as Record<string, unknown>)?.mvpMatch as Record<string, unknown>;
+                          const damage = (mvpMatch?.damage as number) || 0;
+                          const kda = (mvpMatch?.kda as number) || 0;
+                          return (
+                            <div className="max-w-2xl w-full">
+                              <ChampionCard
+                                championName={mvpMatch?.championName as string}
+                                championImageUrl={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/champion/${mvpMatch?.championName}.png`}
+                                title="🏆 MVP Performance of 2025"
+                                subtitle={`KDA Ratio: ${kda}`}
+                                stats={[
+                                  {
+                                    label: 'Kills',
+                                    value: mvpMatch?.kills as number,
+                                    color: '#10B981'
+                                  },
+                                  {
+                                    label: 'Deaths',
+                                    value: mvpMatch?.deaths as number,
+                                    color: '#EF4444'
+                                  },
+                                  {
+                                    label: 'Assists',
+                                    value: mvpMatch?.assists as number,
+                                    color: '#F59E0B'
+                                  },
+                                  {
+                                    label: 'Damage',
+                                    value: `${(damage / 1000).toFixed(1)}K`,
+                                    color: '#8B5CF6'
                                   }
-                                  className="w-64 h-auto rounded-lg border-2 border-yellow-500/50 shadow-2xl"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${
-                                      sceneData.insight.vizData.mvpMatch
-                                        .championName || "Aatrox"
-                                    }_0.jpg`;
-                                  }}
-                                />
-                              </div>
-
-                              {/* Stats Column */}
-                              <div className="flex-1 flex flex-col gap-4">
-                                <div>
-                                  <p className="text-sm text-gray-400 mb-2">
-                                    Champion
-                                  </p>
-                                  <p className="text-3xl font-bold text-white">
-                                    {sceneData.insight.vizData.mvpMatch
-                                      .championName || "Unknown"}
-                                  </p>
-                                  <p
-                                    className={`text-lg font-semibold ${
-                                      sceneData.insight.vizData.mvpMatch.win
-                                        ? "text-green-400"
-                                        : "text-red-400"
-                                    }`}
-                                  >
-                                    {sceneData.insight.vizData.mvpMatch.win
-                                      ? "Victory"
-                                      : "Defeat"}
-                                  </p>
-                                </div>
-
-                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-400">KDA</p>
-                                  <p className="text-xl font-bold text-white">
-                                    {sceneData.insight.vizData.mvpMatch.kills}/
-                                    {sceneData.insight.vizData.mvpMatch.deaths}/
-                                    {sceneData.insight.vizData.mvpMatch.assists}
-                                    <span className="text-sm text-gray-400 ml-2">
-                                      ({sceneData.insight.vizData.mvpMatch.kda}{" "}
-                                      KDA)
-                                    </span>
-                                  </p>
-                                </div>
-                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-400">
-                                    Damage
-                                  </p>
-                                  <p className="text-xl font-bold text-orange-400">
-                                    {Math.round(
-                                      (sceneData.insight.vizData.mvpMatch
-                                        .damage || 0) / 1000
-                                    )}
-                                    K
-                                  </p>
-                                </div>
-                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-400">
-                                    Vision Score
-                                  </p>
-                                  <p className="text-xl font-bold text-yellow-400">
-                                    {sceneData.insight.vizData.mvpMatch
-                                      .visionScore || 0}
-                                  </p>
-                                </div>
-                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-400">CS</p>
-                                  <p className="text-xl font-bold text-green-400">
-                                    {sceneData.insight.vizData.mvpMatch.cs || 0}
-                                  </p>
-                                </div>
-                                <div className="flex justify-between items-center bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-400">Gold</p>
-                                  <p className="text-xl font-bold text-yellow-300">
-                                    {Math.round(
-                                      (sceneData.insight.vizData.mvpMatch
-                                        .goldEarned || 0) / 1000
-                                    )}
-                                    K
-                                  </p>
-                                </div>
-
-                                {/* Items Build */}
-                                <div className="bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-300 mb-3">
-                                    Items
-                                  </p>
-                                  <div className="flex flex-wrap gap-2">
-                                    {(
-                                      sceneData.insight.vizData.mvpMatch
-                                        .items || []
-                                    )
-                                      .filter((item: number) => item !== 0)
-                                      .map((itemId: number, idx: number) => (
-                                        <img
-                                          key={idx}
-                                          src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/item/${itemId}.png`}
-                                          alt={`Item ${itemId}`}
-                                          className="w-12 h-12 rounded border border-gray-600"
-                                          onError={(e) => {
-                                            const target =
-                                              e.target as HTMLImageElement;
-                                            target.style.display = "none";
-                                          }}
-                                        />
-                                      ))}
-                                  </div>
-                                </div>
-
-                                {/* Summoner Spells */}
-                                <div className="bg-black/30 rounded-lg px-6 py-4">
-                                  <p className="text-sm text-gray-300 mb-3">
-                                    Summoner Spells
-                                  </p>
-                                  <div className="flex gap-2">
-                                    <img
-                                      src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
-                                        sceneData.insight.vizData.mvpMatch
-                                          .summoner1Id === 4
-                                          ? "Flash"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner1Id === 21
-                                          ? "Barrier"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner1Id === 1
-                                          ? "Boost"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner1Id === 14
-                                          ? "Dot"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner1Id === 3
-                                          ? "Exhaust"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner1Id === 6
-                                          ? "Haste"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner1Id === 7
-                                          ? "Heal"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner1Id === 11
-                                          ? "Smite"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner1Id === 12
-                                          ? "Teleport"
-                                          : "Flash"
-                                      }.png`}
-                                      alt="Summoner Spell 1"
-                                      className="w-12 h-12 rounded border border-gray-600"
-                                      onError={(e) => {
-                                        const target =
-                                          e.target as HTMLImageElement;
-                                        target.style.display = "none";
-                                      }}
-                                    />
-                                    <img
-                                      src={`https://ddragon.leagueoflegends.com/cdn/15.22.1/img/spell/Summoner${
-                                        sceneData.insight.vizData.mvpMatch
-                                          .summoner2Id === 4
-                                          ? "Flash"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner2Id === 21
-                                          ? "Barrier"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner2Id === 1
-                                          ? "Boost"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner2Id === 14
-                                          ? "Dot"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner2Id === 3
-                                          ? "Exhaust"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner2Id === 6
-                                          ? "Haste"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner2Id === 7
-                                          ? "Heal"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner2Id === 11
-                                          ? "Smite"
-                                          : sceneData.insight.vizData.mvpMatch
-                                              .summoner2Id === 12
-                                          ? "Teleport"
-                                          : "Ignite"
-                                      }.png`}
-                                      alt="Summoner Spell 2"
-                                      className="w-12 h-12 rounded border border-gray-600"
-                                      onError={(e) => {
-                                        const target =
-                                          e.target as HTMLImageElement;
-                                        target.style.display = "none";
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                                ]}
+                                backgroundGradient="from-yellow-900/30 to-amber-900/30"
+                                borderColor="border-yellow-700/50"
+                              />
                             </div>
-                          </div>
-                        </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </>
