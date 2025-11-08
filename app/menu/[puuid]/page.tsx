@@ -5,9 +5,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { Play, RotateCcw } from 'lucide-react';
 import useSWR from 'swr';
 import SummonerCard from '../../components/SummonerCard';
-import MatchCard from '../../components/MatchCard';
 import DialogueBubble from '../../components/DialogueBubble';
-import { getChampionName } from '../../../src/lib/champions';
 import { MatchData } from '@/src/lib/types';
 
 interface SummonerProfile {
@@ -118,7 +116,7 @@ export default function HomePage() {
   };
 
   // Clear cache function
-  const clearCache = async () => {
+/*   const clearCache = async () => {
     setIsClearingCache(true);
     updateVelkozNarration([
       'Initiating data purge.',
@@ -163,7 +161,7 @@ export default function HomePage() {
     } finally {
       setIsClearingCache(false);
     }
-  };
+  }; */
 
   // Force landscape orientation on mobile
   useEffect(() => {

@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { AgentId } from '@/src/lib/types';
-import AgentPicker from '@/src/components/AgentPicker';
 import RecapFlow from '@/src/components/RecapFlow';
 import SummonerCard from '../../components/SummonerCard';
-import { ArrowLeft } from 'lucide-react';
 import useSWR from 'swr';
 
 interface SummonerProfile {
